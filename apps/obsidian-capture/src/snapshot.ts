@@ -100,6 +100,8 @@ export async function captureComponents(specimens: RenderedSpecimen[]): Promise<
         },
         dom: captureElement(captureRoot),
       });
+    } catch (error) {
+      throw new Error(`${definition.id}/${variant.id}: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       deactivate?.();
     }

@@ -20,7 +20,7 @@ This monorepo captures and describes the current Obsidian UI so that a future Fi
 - Capture, Figma, and the future agent skill should eventually share the same versioned schema rather than separate interpretations.
 - Keep the schema generic for Obsidian plugin interface development. Do not couple it to Qualia or any other individual plugin.
 - Preserve the distinction between observed Obsidian UI, inferred abstractions, and generated outputs when designing future capture data.
-- Follow the batches in `docs/public-ui-inventory.md`. Define specimens once in `component-registry.ts`; the Atlas renderer and capture both consume those definitions. Do not add batch 5, Figma integration, or the agent skill in the batch 4 milestone.
+- Follow the batches in `docs/public-ui-inventory.md`. Define specimens once in `component-registry.ts`; the Atlas renderer and capture both consume those definitions. Batch 5 is complete; do not add batch 6, Figma integration, or the agent skill without a new milestone request.
 - Compare exports by `(id, variant)` and token name in `scripts/snapshot-diff.ts`; keep the comparison format separate from the snapshot schema until there is evidence to merge them.
 - Treat Obsidian-generated vault settings as local state. Keep only the relative plugin symlink under `dev-vault/.obsidian/` in Git.
 - Keep the `.hotreload` marker in the Capture source. Hot-Reload itself is an ignored local development dependency inside `dev-vault/.obsidian/plugins/hot-reload/`.

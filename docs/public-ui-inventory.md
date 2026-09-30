@@ -46,10 +46,10 @@ Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.1
 | `Menu` (L4245) | Menu contextual | Sim | Sim | Sim | `setUseNativeMenu(false)` permite DOM no desktop; menu nativo não oferece árvore DOM equivalente. | captured |
 | `Notice` (L4613) | Notificação | Sim | Sim | Sim | `duration: 0` mantém a notificação visível até dispensá-la. | captured |
 | `HoverPopover` (L3476) | Popover | Sim, com `HoverParent`/alvo | Sim | Sim, condicionado | Depende de contexto e posicionamento; validar fixture estável antes da captura. | candidate |
-| `PopoverSuggest<T>` (L5201) | Sugestões em popover | Não, abstrata | Sim, via subclasse | Sim, condicionado | Exige `renderSuggestion` e `selectSuggestion`; pode abrir como popup. | candidate |
-| `AbstractInputSuggest<T>` (L294) | Sugestões de input | Não, abstrata | Sim, via subclasse | Sim, condicionado | Usa input ou `contentEditable`; precisa lista de sugestões fixa. | candidate |
-| `SuggestModal<T>` (L6861) | Busca em modal | Não, abstrata | Sim, via subclasse | Sim, condicionado | Exige implementar sugestões e seleção; overlay fora da aba. | candidate |
-| `FuzzySuggestModal<T>` (L3294) | Busca fuzzy em modal | Não, abstrata | Sim, via subclasse | Sim, condicionado | Implementa busca fuzzy; exige itens e callback em subclasse. | candidate |
+| `PopoverSuggest<T>` (L5201) | Sugestões em popover | Não, abstrata | Sim, via subclasse | Sim, limitado | Captura a superfície base aberta; não há fornecedor público de itens na classe base. | captured |
+| `AbstractInputSuggest<T>` (L294) | Sugestões de input | Não, abstrata | Sim, via subclasse | Sim | Input real e lista fixa; duas consultas determinísticas. | captured |
+| `SuggestModal<T>` (L6861) | Busca em modal | Não, abstrata | Sim, via subclasse | Sim | Subclasse com sugestões fixas; captura `modalEl`. | captured |
+| `FuzzySuggestModal<T>` (L3294) | Busca fuzzy em modal | Não, abstrata | Sim, via subclasse | Sim | Subclasse com itens fixos; matching/renderização do SDK. | captured |
 | `setTooltip` (L6711) | Tooltip no hover | N/A, função | Sim | Sim, condicionado | Registra tooltip em elemento; depende de interação real para aparecer. | candidate |
 | `displayTooltip` (L2258) | Tooltip imediato | N/A, função | Sim | Sim, condicionado | Exibe tooltip manualmente; mais adequado a specimen determinístico que hover sintético. | candidate |
 | `ConfirmationButton` (L1922) | Botão de confirmação | Não, construtor privado | Sim, via modal | Não, isoladamente | Criado por `ConfirmationModal.addButton`; capturar dentro do modal. | not-applicable |
@@ -77,7 +77,7 @@ Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.1
 
 ## Contagem e lotes sugeridos
 
-Há **19 APIs/famílias capturadas** e **8 candidatas adicionais** nas tabelas: 7 overlays/interações e 1 helper visual (`setIcon`). Essa é uma contagem de APIs/famílias, não de variantes nem de ícones individuais. Itens obtidos somente dentro de outro componente, como `MenuItem` e `ConfirmationButton`, entram na captura do pai e não aumentam a contagem. Candidatos condicionados precisam de uma prova de runtime antes de entrarem no registry. APIs `not-applicable` continuam documentadas para evitar confundir uma API pública com um componente do catálogo.
+Há **23 APIs/famílias capturadas** e **4 candidatas adicionais** nas tabelas: 3 overlays/interações e 1 helper visual (`setIcon`). Essa é uma contagem de APIs/famílias, não de variantes nem de ícones individuais. Itens obtidos somente dentro de outro componente, como `MenuItem` e `ConfirmationButton`, entram na captura do pai e não aumentam a contagem. Candidatos condicionados precisam de uma prova de runtime antes de entrarem no registry. APIs `not-applicable` continuam documentadas para evitar confundir uma API pública com um componente do catálogo.
 
 Lotes pequenos possíveis, em ordem de menor dependência de contexto:
 
@@ -85,7 +85,7 @@ Lotes pequenos possíveis, em ordem de menor dependência de contexto:
 2. **Controles complementares (implementado):** `ColorComponent`, `ExtraButtonComponent`, `MomentFormatComponent`, `ProgressBarComponent`.
 3. **Settings (implementado):** `Setting`, `SettingGroup`, `DisplayValueComponent`, `SecretComponent`; somente dados fictícios, sem persistir segredo. Veja [observações do lote](settings-batch.md) e [superfícies disparadas](triggered-surfaces.md), incluindo o diálogo aberto por `SecretComponent`.
 4. **Overlays diretos (implementado):** `Modal`, `ConfirmationModal`, `Menu`, `Notice`; abertura, captura e fechamento explícitos. Veja [observações do lote](overlays-batch.md).
-5. **Sugestões:** `PopoverSuggest`, `AbstractInputSuggest`, `SuggestModal`, `FuzzySuggestModal`; testar subclasses mínimas e dados fixos antes de definir variantes.
+5. **Sugestões (implementado):** `PopoverSuggest`, `AbstractInputSuggest`, `SuggestModal`, `FuzzySuggestModal`; subclasses mínimas e dados fixos. O `PopoverSuggest` isolado captura somente sua superfície vazia; veja [observações do lote](suggestions-batch.md).
 6. **Elementos contextuais:** `HoverPopover`, `setTooltip`, `displayTooltip`, `setIcon`; validar alvo/posicionamento e evitar hover artificial frágil.
 
-O lote 1 foi validado em runtime com 13 novos specimens. O lote 2 acrescentou 11 specimens, chegando a 31. O lote 3 acrescentou 10, chegando a 41. O lote 4 acrescenta 8, para **49 specimens** de 19 famílias. Um teste de [determinismo](snapshot-determinism.md) precedeu o lote 2. O `minAppVersion` agora é `1.13.1`, exigido pelo contrato de `DisplayValueComponent`/`Setting.addDisplayValue`.
+O lote 1 foi validado em runtime com 13 novos specimens. O lote 2 acrescentou 11 specimens, chegando a 31. O lote 3 acrescentou 10, chegando a 41. O lote 4 acrescentou 8, chegando a 49. O lote 5 acrescentou 7, para **56 specimens** de 23 famílias. Um teste de [determinismo](snapshot-determinism.md) precedeu o lote 2. O `minAppVersion` agora é `1.13.1`, exigido pelo contrato de `DisplayValueComponent`/`Setting.addDisplayValue`.

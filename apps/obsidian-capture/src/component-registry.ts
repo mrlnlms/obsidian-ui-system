@@ -20,6 +20,28 @@ import {
   ToggleComponent,
 } from 'obsidian';
 import type { ComponentOrigin } from '@obsidian-ui-system/ui-schema';
+import {
+  AtlasFuzzySuggestModal,
+  AtlasInputSuggest,
+  AtlasPopoverSuggest,
+  AtlasSuggestModal,
+} from './suggestion-fixtures';
+
+/** Only accept a suggestion container created by this fixture's own open call. */
+function newSuggestionContainer(doc: Document, open: () => void): () => Element {
+  const documents = [...new Set([doc, activeWindow.document])];
+  const candidates = (): Element[] => documents.flatMap((document) =>
+    Array.from(document.querySelectorAll('.suggestion-container')));
+  const before = new Set(candidates());
+  open();
+  const created = candidates().filter((element) => !before.has(element));
+  return () => {
+    if (created.length !== 1) {
+      throw new Error(`Expected one new suggestion container, found ${created.length}`);
+    }
+    return created[0]!;
+  };
+}
 
 export interface ComponentVariant {
   id: string;
@@ -163,6 +185,116 @@ export const componentRegistry: readonly ComponentDefinition[] = [
           notice?.hide();
           notice = null;
         },
+      };
+    },
+  },
+  {
+    id: 'obsidian.popover-suggest',
+    name: 'PopoverSuggest',
+    category: 'Suggestions',
+    source: 'public-api',
+    implementation: 'obsidian.PopoverSuggest',
+    variants: [{ id: 'empty-shell', name: 'Open popover shell', state: 'open' }],
+    render(mount, _variant, app) {
+      const suggest = new AtlasPopoverSuggest(app);
+      let findRoot: (() => Element) | null = null;
+      return {
+        root: mount,
+        activate: () => { findRoot = newSuggestionContainer(mount.ownerDocument, () => suggest.open()); },
+        getCaptureRoot: () => {
+          if (!findRoot) throw new Error('PopoverSuggest has not been opened');
+          return findRoot();
+        },
+        getState: () => findRoot?.().isConnected ? 'open' : 'closed',
+        deactivate: () => { suggest.close(); findRoot = null; },
+      };
+    },
+  },
+  {
+    id: 'obsidian.abstract-input-suggest',
+    name: 'AbstractInputSuggest',
+    category: 'Suggestions',
+    source: 'public-api',
+    implementation: 'obsidian.AbstractInputSuggest',
+    variants: [
+      { id: 'all', name: 'All suggestions', state: 'results' },
+      { id: 'filtered', name: 'Filtered suggestions', state: 'results' },
+    ],
+    render(mount, variant, app) {
+      const input = new TextComponent(mount).setPlaceholder('Search Atlas examples').inputEl;
+      const suggest = new AtlasInputSuggest(app, input);
+      const query = variant.id === 'filtered' ? 'beta' : 'Atlas';
+      let findRoot: (() => Element) | null = null;
+      const getRoot = (): Element => {
+        if (!findRoot) throw new Error('AbstractInputSuggest has not been opened');
+        const root = findRoot();
+        if (!root.textContent?.includes('Atlas beta')) throw new Error('Fixture suggestions were not rendered');
+        return root;
+      };
+      return {
+        root: input,
+        activate: () => {
+          suggest.setValue(query);
+          findRoot = newSuggestionContainer(input.ownerDocument, () => {
+            input.focus();
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          });
+        },
+        getCaptureRoot: getRoot,
+        getState: () => getRoot().isConnected ? 'results' : 'closed',
+        deactivate: () => { suggest.close(); input.blur(); findRoot = null; },
+      };
+    },
+  },
+  {
+    id: 'obsidian.suggest-modal',
+    name: 'SuggestModal',
+    category: 'Suggestions',
+    source: 'public-api',
+    implementation: 'obsidian.SuggestModal',
+    variants: [
+      { id: 'all', name: 'All suggestions', state: 'results' },
+      { id: 'filtered', name: 'Filtered suggestions', state: 'results' },
+    ],
+    render(mount, variant, app) {
+      const modal = new AtlasSuggestModal(app);
+      return {
+        root: mount,
+        activate: () => {
+          modal.open();
+          modal.inputEl.value = variant.id === 'filtered' ? 'beta' : '';
+          modal.inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        },
+        getCaptureRoot: () => modal.modalEl,
+        getState: () => modal.modalEl.isConnected && modal.resultContainerEl.textContent?.includes('Atlas beta')
+          ? 'results' : 'closed',
+        deactivate: () => modal.close(),
+      };
+    },
+  },
+  {
+    id: 'obsidian.fuzzy-suggest-modal',
+    name: 'FuzzySuggestModal',
+    category: 'Suggestions',
+    source: 'public-api',
+    implementation: 'obsidian.FuzzySuggestModal',
+    variants: [
+      { id: 'all', name: 'All fuzzy suggestions', state: 'results' },
+      { id: 'filtered', name: 'Filtered fuzzy suggestions', state: 'results' },
+    ],
+    render(mount, variant, app) {
+      const modal = new AtlasFuzzySuggestModal(app);
+      return {
+        root: mount,
+        activate: () => {
+          modal.open();
+          modal.inputEl.value = variant.id === 'filtered' ? 'beta' : '';
+          modal.inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        },
+        getCaptureRoot: () => modal.modalEl,
+        getState: () => modal.modalEl.isConnected && modal.resultContainerEl.textContent?.includes('Atlas beta')
+          ? 'results' : 'closed',
+        deactivate: () => modal.close(),
       };
     },
   },
