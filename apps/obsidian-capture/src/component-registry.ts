@@ -1,4 +1,5 @@
 import {
+  type App,
   ButtonComponent,
   ColorComponent,
   DropdownComponent,
@@ -6,6 +7,9 @@ import {
   MomentFormatComponent,
   ProgressBarComponent,
   SearchComponent,
+  SecretComponent,
+  Setting,
+  SettingGroup,
   SliderComponent,
   TextAreaComponent,
   TextComponent,
@@ -31,7 +35,7 @@ export interface ComponentDefinition {
   source: ComponentOrigin;
   implementation: string;
   variants: readonly ComponentVariant[];
-  render: (mount: HTMLElement, variant: ComponentVariant) => RenderedComponent;
+  render: (mount: HTMLElement, variant: ComponentVariant, app: App) => RenderedComponent;
 }
 
 export interface RenderedSpecimen extends RenderedComponent {
@@ -269,6 +273,104 @@ export const componentRegistry: readonly ComponentDefinition[] = [
           : progress.getValue() === 50 ? 'half'
             : progress.getValue() === 100 ? 'complete' : 'unknown',
       };
+    },
+  },
+  {
+    id: 'obsidian.setting',
+    name: 'Setting',
+    category: 'Settings',
+    source: 'public-api',
+    implementation: 'obsidian.Setting',
+    variants: [
+      { id: 'standard', name: 'Standard row', state: 'standard' },
+      { id: 'heading', name: 'Heading row', state: 'heading' },
+      { id: 'disabled', name: 'Disabled row', state: 'disabled' },
+      { id: 'error', name: 'Validation error', state: 'error' },
+    ],
+    render(mount, variant) {
+      const setting = new Setting(mount).setName('Atlas setting');
+      if (variant.id === 'heading') {
+        setting.setHeading();
+      } else {
+        setting.setDesc('Example setting description');
+        setting.addText((text) => text.setValue('Example value'));
+        if (variant.id === 'disabled') setting.setDisabled(true);
+        if (variant.id === 'error') setting.setErrorMessage('Example validation error');
+      }
+      return {
+        root: setting.settingEl,
+        getState: () => setting.errorEl?.textContent ? 'error'
+          : variant.id === 'heading' ? 'heading'
+            : variant.id === 'disabled' ? 'disabled' : 'standard',
+      };
+    },
+  },
+  {
+    id: 'obsidian.setting-group',
+    name: 'SettingGroup',
+    category: 'Settings',
+    source: 'public-api',
+    implementation: 'obsidian.SettingGroup',
+    variants: [
+      { id: 'standard', name: 'Grouped settings', state: 'standard' },
+      { id: 'with-search', name: 'Group with search', state: 'with-search' },
+    ],
+    render(mount, variant) {
+      const group = new SettingGroup(mount).setHeading('Atlas group');
+      if (variant.id === 'with-search') {
+        group.addSearch((search) => search.setPlaceholder('Search group'));
+      }
+      group.addSetting((setting) => setting.setName('First option').addToggle((toggle) => toggle.setValue(true)));
+      group.addSetting((setting) => setting.setName('Second option').setDesc('Example grouped setting'));
+      const root = mount.firstElementChild;
+      if (!root || (root !== group.listEl && !root.contains(group.listEl))) {
+        throw new Error('SettingGroup did not render a root element');
+      }
+      return { root, getState: () => variant.id === 'with-search' ? 'with-search' : 'standard' };
+    },
+  },
+  {
+    id: 'obsidian.display-value',
+    name: 'DisplayValueComponent',
+    category: 'Settings',
+    source: 'public-api',
+    implementation: 'obsidian.DisplayValueComponent',
+    variants: [
+      { id: 'value', name: 'Value', state: 'value' },
+      { id: 'warning', name: 'Warning', state: 'warning' },
+      { id: 'empty', name: 'Empty value', state: 'empty' },
+    ],
+    render(mount, variant) {
+      const setting = new Setting(mount).setName('Atlas display value');
+      let valueEl: HTMLElement | null = null;
+      setting.addDisplayValue((display) => {
+        display.setValue(variant.id === 'empty' ? null : 'Example value');
+        if (variant.id === 'warning') display.setStatus('warning');
+        valueEl = display.valueEl;
+      });
+      if (!valueEl || !setting.settingEl.contains(valueEl)) {
+        throw new Error('Setting.addDisplayValue did not render a display value');
+      }
+      return {
+        root: setting.settingEl,
+        getState: () => variant.id === 'warning' ? 'warning'
+          : valueEl?.textContent ? 'value' : 'empty',
+      };
+    },
+  },
+  {
+    id: 'obsidian.secret',
+    name: 'SecretComponent',
+    category: 'Settings',
+    source: 'public-api',
+    implementation: 'obsidian.SecretComponent',
+    variants: [
+      { id: 'unselected', name: 'No secret selected', state: 'unselected' },
+    ],
+    render(mount, _variant, app) {
+      const setting = new Setting(mount).setName('Atlas secret');
+      setting.addComponent((container) => new SecretComponent(app, container).setValue(''));
+      return { root: setting.settingEl, getState: () => 'unselected' };
     },
   },
   {

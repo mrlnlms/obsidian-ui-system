@@ -24,6 +24,10 @@
   margin-bottom: 0;
 }
 
+.obsidian-ui-atlas-composite {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .obsidian-ui-atlas-specimen {
   min-width: 0;
   padding: var(--size-4-3);

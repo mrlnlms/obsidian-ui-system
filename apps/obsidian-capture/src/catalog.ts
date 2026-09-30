@@ -76,11 +76,12 @@ export class AtlasView extends ItemView {
         categories.set(definition.category, category);
       }
       const component = category.createDiv({ cls: 'obsidian-ui-atlas-component' });
+      if (definition.category === 'Settings') component.addClass('obsidian-ui-atlas-composite');
       component.createEl('h4', { text: definition.name });
       for (const variant of definition.variants) {
         const specimen = component.createDiv({ cls: 'obsidian-ui-atlas-specimen' });
         specimen.createEl('div', { cls: 'obsidian-ui-atlas-variant-name', text: variant.name });
-        const rendered = definition.render(specimen.createDiv(), variant);
+        const rendered = definition.render(specimen.createDiv(), variant, this.app);
         this.specimens.push({ definition, variant, ...rendered });
       }
     }
