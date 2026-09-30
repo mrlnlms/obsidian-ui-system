@@ -8,6 +8,8 @@ import type {
 } from '@obsidian-ui-system/ui-schema';
 import type { RenderedSpecimen } from './component-registry';
 
+declare const __OBSIDIAN_SDK_VERSION__: string;
+
 function selectedStyles(style: CSSStyleDeclaration): SelectedStyles {
   const value = (name: string): string => style.getPropertyValue(name).trim();
   return {
@@ -37,7 +39,7 @@ export function captureElement(element: Element): DomSnapshot {
   const rect = element.getBoundingClientRect();
   const attributes = Object.fromEntries(
     Array.from(element.attributes)
-      .filter(({ name }) => name === 'type' || name === 'placeholder' || name === 'role' || name === 'title' || name.startsWith('aria-'))
+      .filter(({ name }) => ['type', 'placeholder', 'role', 'title', 'value', 'min', 'max', 'step'].includes(name) || name.startsWith('aria-'))
       .map(({ name, value }) => [name, value]),
   );
   const text = Array.from(element.childNodes)
@@ -46,7 +48,13 @@ export function captureElement(element: Element): DomSnapshot {
     .filter(Boolean)
     .join(' ');
   const properties = element instanceof HTMLInputElement
-    ? { value: element.value, checked: element.checked, disabled: element.disabled }
+    ? {
+        value: element.value,
+        ...(['checkbox', 'radio'].includes(element.type) ? { checked: element.checked } : {}),
+        disabled: element.disabled,
+      }
+    : element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement
+      ? { value: element.value, disabled: element.disabled }
     : element instanceof HTMLButtonElement
       ? { disabled: element.disabled }
       : undefined;
@@ -136,8 +144,9 @@ export function captureManifest(doc: Document, capturedAt: string): SnapshotMani
     : Platform.isLinux ? 'linux' : 'unknown';
 
   return {
-    schemaVersion: '0.2.0',
+    schemaVersion: '0.3.0',
     obsidianVersion: apiVersion,
+    obsidianSdkVersion: __OBSIDIAN_SDK_VERSION__,
     capturedAt,
     platform,
     theme: null,

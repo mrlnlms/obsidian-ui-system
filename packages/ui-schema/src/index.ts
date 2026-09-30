@@ -42,8 +42,11 @@ export interface ComponentSnapshot {
 }
 
 export interface SnapshotManifest {
-  schemaVersion: '0.2.0';
+  schemaVersion: '0.3.0';
+  /** Obsidian's public API version reported by the running app. */
   obsidianVersion: string;
+  /** Version of the installed `obsidian` SDK package used to build Capture. */
+  obsidianSdkVersion: string;
   capturedAt: string;
   platform: string;
   theme: string | null;

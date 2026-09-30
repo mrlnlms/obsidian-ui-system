@@ -11,10 +11,10 @@ Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.1
 | `ButtonComponent` (L1325) | Botão | Sim | Sim | Sim | `setDisabled`, `setCta` e `setDestructive`; normal, disabled e CTA já capturados. | captured |
 | `SearchComponent` (L5558) | Busca | Sim | Sim | Sim | Recebe `HTMLElement`; empty e filled já capturados. | captured |
 | `ToggleComponent` (L7155) | Alternância | Sim | Sim | Sim | `setValue(boolean)`; off e on já capturados. | captured |
-| `TextComponent` (L7030) | Texto de uma linha | Sim | Sim | Sim | `inputEl` e `setValue`; estados empty, filled e disabled são possíveis. | candidate |
-| `TextAreaComponent` (L7019) | Texto multilinha | Sim | Sim | Sim | Mesma base de texto, com `HTMLTextAreaElement`. | candidate |
-| `DropdownComponent` (L2299) | Seleção | Sim | Sim | Sim | `addOption`/`addOptions`; requer opções de exemplo estáveis. | candidate |
-| `SliderComponent` (L6722) | Intervalo numérico | Sim | Sim | Sim | `setLimits`, `setValue` e valor exibido ao lado; usar limites fixos. | candidate |
+| `TextComponent` (L7030) | Texto de uma linha | Sim | Sim | Sim | `inputEl`; empty, filled e disabled capturados. | captured |
+| `TextAreaComponent` (L7019) | Texto multilinha | Sim | Sim | Sim | `inputEl` é `textarea`; empty, filled e disabled capturados. | captured |
+| `DropdownComponent` (L2299) | Seleção | Sim | Sim | Sim | Duas opções fixas; default, selected e disabled capturados. | captured |
+| `SliderComponent` (L6722) | Intervalo numérico | Sim | Sim | Sim | Limites 0–100, passo 1; minimum, middle, maximum e disabled capturados. | captured |
 | `ColorComponent` (L1647) | Cor | Sim | Sim | Sim | `setValue` aceita cor hex; possível popover de escolha deve ser tratado separadamente. | candidate |
 | `ExtraButtonComponent` (L2841) | Botão de ícone | Sim | Sim | Sim | `setIcon` e `setTooltip`; usar ícone integrado conhecido. | candidate |
 | `MomentFormatComponent` (L4568) | Formato de data/hora | Sim, herdado | Sim | Sim | Herda `TextComponent`; pode mostrar amostra em `sampleEl`. | candidate |
@@ -77,15 +77,15 @@ Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.1
 
 ## Contagem e lotes sugeridos
 
-Há **3 APIs capturadas** e **24 candidatas adicionais** nas tabelas: 10 controles, 2 compostos, 11 overlays/interações e 1 helper visual (`setIcon`). Essa é uma contagem de APIs/famílias, não de variantes nem de ícones individuais. Itens obtidos somente dentro de outro componente, como `MenuItem` e `ConfirmationButton`, entram na captura do pai e não aumentam a contagem. Candidatos condicionados precisam de uma prova de runtime antes de entrarem no registry. APIs `not-applicable` continuam documentadas para evitar confundir uma API pública com um componente do catálogo.
+Há **7 APIs capturadas** e **20 candidatas adicionais** nas tabelas: 6 controles, 2 compostos, 11 overlays/interações e 1 helper visual (`setIcon`). Essa é uma contagem de APIs/famílias, não de variantes nem de ícones individuais. Itens obtidos somente dentro de outro componente, como `MenuItem` e `ConfirmationButton`, entram na captura do pai e não aumentam a contagem. Candidatos condicionados precisam de uma prova de runtime antes de entrarem no registry. APIs `not-applicable` continuam documentadas para evitar confundir uma API pública com um componente do catálogo.
 
 Lotes pequenos possíveis, em ordem de menor dependência de contexto:
 
-1. **Inputs básicos:** `TextComponent`, `TextAreaComponent`, `DropdownComponent`, `SliderComponent`.
+1. **Inputs básicos (implementado):** `TextComponent`, `TextAreaComponent`, `DropdownComponent`, `SliderComponent`.
 2. **Controles complementares:** `ColorComponent`, `ExtraButtonComponent`, `MomentFormatComponent`, `ProgressBarComponent`.
 3. **Settings:** `Setting`, `SettingGroup`, `DisplayValueComponent`, `SecretComponent`; usar somente dados fictícios e verificar a versão mínima exigida.
 4. **Overlays diretos:** `Modal`, `ConfirmationModal`, `Menu`, `Notice`; definir ciclo de abertura, captura e fechamento sem deixar UI residual.
 5. **Sugestões:** `PopoverSuggest`, `AbstractInputSuggest`, `SuggestModal`, `FuzzySuggestModal`; testar subclasses mínimas e dados fixos antes de definir variantes.
 6. **Elementos contextuais:** `HoverPopover`, `setTooltip`, `displayTooltip`, `setIcon`; validar alvo/posicionamento e evitar hover artificial frágil.
 
-O próximo passo recomendado é **somente o lote 1**, com revisão do resultado e do contrato de captura antes de avançar. O `minAppVersion` do plugin deve ser reavaliado ao usar APIs marcadas como introduzidas após o piso atual; este inventário não altera esse piso.
+O lote 1 foi validado em runtime com 13 novos specimens. Antes de avançar para o lote 2, revisar se o contrato de captura representa bem o DOM observado. O `minAppVersion` do plugin deve ser reavaliado ao usar APIs marcadas como introduzidas após o piso atual; este inventário não altera esse piso.

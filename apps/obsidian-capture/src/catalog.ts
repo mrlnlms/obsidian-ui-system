@@ -30,10 +30,7 @@ export class AtlasView extends ItemView {
     this.contentEl.addClass('obsidian-ui-atlas-content');
     this.contentEl.createEl('h2', { text: 'Obsidian UI Atlas' });
     this.contentEl.createEl('p', { text: 'Public API components rendered in the current theme.' });
-    this.specimensEl = this.contentEl.createDiv();
-    this.renderSpecimens();
-
-    const actions = this.contentEl.createDiv();
+    const actions = this.contentEl.createDiv({ cls: 'obsidian-ui-atlas-actions' });
     const status = this.contentEl.createEl('p');
     new ButtonComponent(actions)
       .setButtonText('Export snapshot')
@@ -53,6 +50,8 @@ export class AtlasView extends ItemView {
           this.exporting = false;
         }
       });
+    this.specimensEl = this.contentEl.createDiv();
+    this.renderSpecimens();
   }
 
   async onClose(): Promise<void> {

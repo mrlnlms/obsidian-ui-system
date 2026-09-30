@@ -9,7 +9,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@obsidian-ui-system/ui-schema": "0.2.0"
+    "@obsidian-ui-system/ui-schema": "0.3.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.17",

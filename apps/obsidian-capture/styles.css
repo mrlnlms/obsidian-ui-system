@@ -8,12 +8,27 @@
   margin-block: var(--size-4-8);
 }
 
+.obsidian-ui-atlas-actions {
+  margin-block: var(--size-4-4);
+}
+
 .obsidian-ui-atlas-component {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: var(--size-4-3);
   margin-block: var(--size-4-6);
 }
 
+.obsidian-ui-atlas-component h4 {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
 .obsidian-ui-atlas-specimen {
-  margin-block: var(--size-4-4);
+  min-width: 0;
+  padding: var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
 }
 
 .obsidian-ui-atlas-variant-name {
