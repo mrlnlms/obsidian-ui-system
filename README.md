@@ -47,6 +47,8 @@ The command writes `diff.json` and `diff.md`. Without an output argument, it use
 
 The [determinism check](docs/snapshot-determinism.md) records consecutive exports from the same Obsidian environment before batch 2 and classifies the observed manifest timestamp difference.
 
+The [Light/Dark capture](docs/light-dark-capture.md) documents how to export the same Atlas under each base color scheme and the observed semantic diff for the default theme. Mode belongs to the manifest; specimen identity remains `id + variant`.
+
 Hot-Reload is a local development dependency, installed at `dev-vault/.obsidian/plugins/hot-reload/` and ignored by Git. To reinstall the pinned version after cloning, run from the repository root:
 
 ```sh
