@@ -4,6 +4,7 @@ import {
   ColorComponent,
   ConfirmationModal,
   DropdownComponent,
+  displayTooltip,
   ExtraButtonComponent,
   MomentFormatComponent,
   Menu,
@@ -11,6 +12,8 @@ import {
   Notice,
   ProgressBarComponent,
   SearchComponent,
+  setIcon,
+  setTooltip,
   SecretComponent,
   Setting,
   SettingGroup,
@@ -645,6 +648,73 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       return {
         root: toggle.toggleEl,
         getState: () => toggle.getValue() ? 'on' : 'off',
+      };
+    },
+  },
+  {
+    id: 'obsidian.set-tooltip',
+    name: 'setTooltip',
+    category: 'Contextual',
+    source: 'public-api',
+    implementation: 'obsidian.setTooltip',
+    triggeredSurfaces: [{ id: 'obsidian.tooltip', trigger: 'Real pointer hover over registered target' }],
+    variants: [{ id: 'registered', name: 'Registered tooltip', state: 'registered' }],
+    render(mount) {
+      const target = new ButtonComponent(mount).setButtonText('Hover for tooltip').buttonEl;
+      setTooltip(target, 'Atlas registered tooltip', { placement: 'top' });
+      return {
+        root: target,
+        getState: () => target.getAttribute('aria-label') === 'Atlas registered tooltip' ? 'registered' : 'unregistered',
+      };
+    },
+  },
+  {
+    id: 'obsidian.display-tooltip',
+    name: 'displayTooltip',
+    category: 'Contextual',
+    source: 'public-api',
+    implementation: 'obsidian.displayTooltip',
+    variants: [{ id: 'visible', name: 'Visible tooltip', state: 'visible' }],
+    render(mount) {
+      const target = new ButtonComponent(mount).setButtonText('Tooltip target').buttonEl;
+      let tooltip: HTMLElement | null = null;
+      const message = 'Atlas displayTooltip specimen';
+      return {
+        root: target,
+        activate: () => {
+          const doc = target.ownerDocument;
+          displayTooltip(target, message, { placement: 'top', delay: 0 });
+          const matches = Array.from(doc.querySelectorAll<HTMLElement>('.tooltip'))
+            .filter((element) => element.textContent?.trim() === message);
+          if (matches.length !== 1) throw new Error(`Expected one Atlas tooltip, found ${matches.length}`);
+          tooltip = matches[0]!;
+        },
+        getCaptureRoot: () => {
+          if (!tooltip) throw new Error('displayTooltip has not been opened');
+          return tooltip;
+        },
+        getState: () => tooltip?.isConnected ? 'visible' : 'hidden',
+        deactivate: () => {
+          // The public API has no dismiss method; remove only the Atlas-labelled tooltip.
+          if (tooltip?.textContent?.trim() === message) tooltip.remove();
+          tooltip = null;
+        },
+      };
+    },
+  },
+  {
+    id: 'obsidian.set-icon',
+    name: 'setIcon',
+    category: 'Contextual',
+    source: 'public-api',
+    implementation: 'obsidian.setIcon',
+    variants: [{ id: 'settings', name: 'Settings icon', state: 'rendered' }],
+    render(mount) {
+      const root = mount.createDiv();
+      setIcon(root, 'settings');
+      return {
+        root,
+        getState: () => root.querySelector('svg') ? 'rendered' : 'missing',
       };
     },
   },

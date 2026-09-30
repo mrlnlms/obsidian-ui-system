@@ -1,6 +1,6 @@
 # Obsidian UI System
 
-A monorepo for a structured representation of the Obsidian UI, a future Figma design system built from it, and a future coding-agent skill that uses the same representation. The **Obsidian UI Atlas** plugin currently renders 23 public API component families in a workspace tab and exports an initial snapshot.
+A monorepo for a structured representation of the Obsidian UI, a future Figma design system built from it, and a future coding-agent skill that uses the same representation. The **Obsidian UI Atlas** plugin currently renders 26 public API families in a workspace tab and exports an initial snapshot.
 
 ## Requirements and installation
 
@@ -53,6 +53,7 @@ The [Settings batch notes](docs/settings-batch.md) document the four Settings AP
 
 The [direct overlay notes](docs/overlays-batch.md) document batch 4, including opening and cleanup, capture roots, and the real export comparison.
 The [suggestion notes](docs/suggestions-batch.md) document batch 5, including the limited base popover, concrete suggestion lists, and their runtime capture boundaries.
+The [contextual API notes](docs/contextual-batch.md) document batch 6: registered and visible tooltips, an SVG icon, and the public-lifecycle limit of `HoverPopover`.
 
 Hot-Reload is a local development dependency, installed at `dev-vault/.obsidian/plugins/hot-reload/` and ignored by Git. To reinstall the pinned version after cloning, run from the repository root:
 

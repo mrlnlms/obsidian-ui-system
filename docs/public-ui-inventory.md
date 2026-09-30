@@ -2,7 +2,7 @@
 
 Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.13.1`** instalado neste checkout, confirmado por `npm ls obsidian --workspace @obsidian-ui-system/capture --depth=0` e pelo lockfile. As referências `L...` apontam para linhas desse arquivo. `canvas.d.ts` descreve dados de Canvas e `publish.d.ts` descreve a API de Publish; nenhum dos dois acrescenta um controle de plugin diretamente renderizável ao inventário abaixo. A versão do pacote de tipos não é a versão do aplicativo Obsidian em execução.
 
-**Critério.** “Direta” significa construtor público utilizável sem criar uma subclasse; “via host” significa que a API é obtida por outra API pública. “UI visual” indica se a API cria ou descreve algo visível, mesmo quando depende de um host. `captured` já tem specimen no registry; `candidate` parece capturável com uma fixture determinística usando a API pública; `not-applicable` não é um specimen independente para o Atlas atual. Candidatura é leitura das declarações, não validação em runtime. A coluna Atlas se refere a esta etapa do catálogo de componentes para interfaces de plugins.
+**Critério.** “Direta” significa construtor público utilizável sem criar uma subclasse; “via host” significa que a API é obtida por outra API pública. “UI visual” indica se a API cria ou descreve algo visível, mesmo quando depende de um host. `captured` já tem specimen no registry; `limited` foi avaliada mas não tem captura independente segura sob o contrato público; `not-applicable` não é um specimen independente para o Atlas atual. A coluna Atlas se refere a esta etapa do catálogo de componentes para interfaces de plugins.
 
 ## Controles e primitives
 
@@ -45,13 +45,13 @@ Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.1
 | `ConfirmationModal` (L1963) | Confirmação | Sim, com `App` | Sim | Sim | Introduzido em 1.13.0; `addButton`, `addCancelButton`, `addCheckbox`. | captured |
 | `Menu` (L4245) | Menu contextual | Sim | Sim | Sim | `setUseNativeMenu(false)` permite DOM no desktop; menu nativo não oferece árvore DOM equivalente. | captured |
 | `Notice` (L4613) | Notificação | Sim | Sim | Sim | `duration: 0` mantém a notificação visível até dispensá-la. | captured |
-| `HoverPopover` (L3476) | Popover | Sim, com `HoverParent`/alvo | Sim | Sim, condicionado | Depende de contexto e posicionamento; validar fixture estável antes da captura. | candidate |
+| `HoverPopover` (L3476) | Popover | Sim, com `HoverParent`/alvo | Sim | Sim, condicionado | O construtor cria uma superfície posicionada, mas o SDK não expõe fechamento público; `hide()` existe apenas no runtime. Não há fixture exportável com limpeza segura usando apenas o contrato público. | limited |
 | `PopoverSuggest<T>` (L5201) | Sugestões em popover | Não, abstrata | Sim, via subclasse | Sim, limitado | Captura a superfície base aberta; não há fornecedor público de itens na classe base. | captured |
 | `AbstractInputSuggest<T>` (L294) | Sugestões de input | Não, abstrata | Sim, via subclasse | Sim | Input real e lista fixa; duas consultas determinísticas. | captured |
 | `SuggestModal<T>` (L6861) | Busca em modal | Não, abstrata | Sim, via subclasse | Sim | Subclasse com sugestões fixas; captura `modalEl`. | captured |
 | `FuzzySuggestModal<T>` (L3294) | Busca fuzzy em modal | Não, abstrata | Sim, via subclasse | Sim | Subclasse com itens fixos; matching/renderização do SDK. | captured |
-| `setTooltip` (L6711) | Tooltip no hover | N/A, função | Sim | Sim, condicionado | Registra tooltip em elemento; depende de interação real para aparecer. | candidate |
-| `displayTooltip` (L2258) | Tooltip imediato | N/A, função | Sim | Sim, condicionado | Exibe tooltip manualmente; mais adequado a specimen determinístico que hover sintético. | candidate |
+| `setTooltip` (L6711) | Tooltip no hover | N/A, função | Sim | Sim, limitado | Capturado o alvo com `aria-label` registrado; a superfície visível só aparece em hover real e não integra este snapshot. | captured |
+| `displayTooltip` (L2258) | Tooltip imediato | N/A, função | Sim | Sim | Exibe tooltip por chamada pública; captura a superfície aberta, posicionada pelo runtime. | captured |
 | `ConfirmationButton` (L1922) | Botão de confirmação | Não, construtor privado | Sim, via modal | Não, isoladamente | Criado por `ConfirmationModal.addButton`; capturar dentro do modal. | not-applicable |
 | `MenuItem` / `MenuSeparator` (L4313/L4392) | Partes de menu | Não pelo fluxo suportado | Sim, via `Menu` | Não, isoladamente | `MenuItem` tem construtor privado; `Menu.addItem`/`addSeparator` fornecem as partes. | not-applicable |
 | `EditorSuggest<T>` (L2689) | Sugestões no editor | Não, abstrata | Sim, no editor | Não | Depende de contexto/editor Markdown, fora de um specimen independente da aba. | not-applicable |
@@ -60,7 +60,7 @@ Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.1
 
 | API (linha) | Categoria | Direta? | UI visual? | Atlas? | Observações | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| `setIcon` (L5689) | Ícone SVG | N/A, função | Sim | Sim | Insere SVG de ícone integrado em um contêiner; um specimen de ícone basta, não um por ID. | candidate |
+| `setIcon` (L5689) | Ícone SVG | N/A, função | Sim | Sim | Insere SVG de `settings` em um contêiner; um specimen demonstra a API, não cada ID de ícone. | captured |
 | `getIcon` / `getIconIds` / `addIcon` / `removeIcon` (L3351/L3357/L393/L5396) | Acesso/registro de ícones | N/A, funções | `getIcon` retorna SVG; demais não | Não, separadamente | Inventário e registro de ícones; `setIcon` cobre a representação visual reutilizável. | not-applicable |
 | `MarkdownRenderer.render` / `renderMarkdown` (L4121) | Conteúdo Markdown | N/A, métodos estáticos | Sim | Não neste Atlas | Renderiza conteúdo de nota; `renderMarkdown` está deprecated. Não é controle de interface de plugin. | not-applicable |
 | `MarkdownPreviewRenderer` / `MarkdownRenderChild` (L4036/L4104) | Extensão de preview | Não como controle | Indiretamente | Não | Registro de postprocessadores e ciclo de vida de conteúdo renderizado. | not-applicable |
@@ -77,7 +77,7 @@ Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.1
 
 ## Contagem e lotes sugeridos
 
-Há **23 APIs/famílias capturadas** e **4 candidatas adicionais** nas tabelas: 3 overlays/interações e 1 helper visual (`setIcon`). Essa é uma contagem de APIs/famílias, não de variantes nem de ícones individuais. Itens obtidos somente dentro de outro componente, como `MenuItem` e `ConfirmationButton`, entram na captura do pai e não aumentam a contagem. Candidatos condicionados precisam de uma prova de runtime antes de entrarem no registry. APIs `not-applicable` continuam documentadas para evitar confundir uma API pública com um componente do catálogo.
+Há **26 APIs/famílias com specimen no registry** e **1 API limitada sem specimen** (`HoverPopover`). Essa é uma contagem de APIs/famílias, não de variantes nem de ícones individuais. O specimen de `setTooltip` captura apenas o registro no alvo, não o tooltip visível. Itens obtidos somente dentro de outro componente, como `MenuItem` e `ConfirmationButton`, entram na captura do pai e não aumentam a contagem. APIs `not-applicable` continuam documentadas para evitar confundir uma API pública com um componente do catálogo.
 
 Lotes pequenos possíveis, em ordem de menor dependência de contexto:
 
@@ -86,6 +86,6 @@ Lotes pequenos possíveis, em ordem de menor dependência de contexto:
 3. **Settings (implementado):** `Setting`, `SettingGroup`, `DisplayValueComponent`, `SecretComponent`; somente dados fictícios, sem persistir segredo. Veja [observações do lote](settings-batch.md) e [superfícies disparadas](triggered-surfaces.md), incluindo o diálogo aberto por `SecretComponent`.
 4. **Overlays diretos (implementado):** `Modal`, `ConfirmationModal`, `Menu`, `Notice`; abertura, captura e fechamento explícitos. Veja [observações do lote](overlays-batch.md).
 5. **Sugestões (implementado):** `PopoverSuggest`, `AbstractInputSuggest`, `SuggestModal`, `FuzzySuggestModal`; subclasses mínimas e dados fixos. O `PopoverSuggest` isolado captura somente sua superfície vazia; veja [observações do lote](suggestions-batch.md).
-6. **Elementos contextuais:** `HoverPopover`, `setTooltip`, `displayTooltip`, `setIcon`; validar alvo/posicionamento e evitar hover artificial frágil.
+6. **Elementos contextuais (implementado dentro do contrato público):** `setTooltip`, `displayTooltip`, `setIcon` têm specimens; `HoverPopover` permanece limitado pela ausência de fechamento público. Veja [observações do lote](contextual-batch.md).
 
-O lote 1 foi validado em runtime com 13 novos specimens. O lote 2 acrescentou 11 specimens, chegando a 31. O lote 3 acrescentou 10, chegando a 41. O lote 4 acrescentou 8, chegando a 49. O lote 5 acrescentou 7, para **56 specimens** de 23 famílias. Um teste de [determinismo](snapshot-determinism.md) precedeu o lote 2. O `minAppVersion` agora é `1.13.1`, exigido pelo contrato de `DisplayValueComponent`/`Setting.addDisplayValue`.
+O lote 1 foi validado em runtime com 13 novos specimens. O lote 2 acrescentou 11 specimens, chegando a 31. O lote 3 acrescentou 10, chegando a 41. O lote 4 acrescentou 8, chegando a 49. O lote 5 acrescentou 7, chegando a 56. O lote 6 acrescenta 3, para **59 specimens** de 26 famílias. Um teste de [determinismo](snapshot-determinism.md) precedeu o lote 2. O `minAppVersion` agora é `1.13.1`, exigido pelo contrato de `DisplayValueComponent`/`Setting.addDisplayValue`.
