@@ -24,3 +24,11 @@ This monorepo captures and describes the current Obsidian UI so that a future Fi
 - Compare exports by `(id, variant)` and token name in `scripts/snapshot-diff.ts`; keep the comparison format separate from the snapshot schema until there is evidence to merge them.
 - Treat Obsidian-generated vault settings as local state. Keep only the relative plugin symlink under `dev-vault/.obsidian/` in Git.
 - Keep the `.hotreload` marker in the Capture source. Hot-Reload itself is an ignored local development dependency inside `dev-vault/.obsidian/plugins/hot-reload/`.
+
+## Obsidian UI validation workflow
+
+- The user operates the Obsidian interface. Do not take focus or control of their Mac to open the Atlas or click Export unless they explicitly ask.
+- After a build, tell the user when the Atlas is ready. Hot Reload may close its tab, so they may need to run **Open Obsidian UI Atlas** again.
+- While the agent's turn is active, check `dev-vault/ui-catalog-exports/` for the new timestamped export and validate its files directly. Do not repeatedly ask the user to confirm a successful export when the files provide that evidence.
+- If no new export appears or the UI reports an error that is not available in files, ask the user for the exact message or a screenshot.
+- An export does not automatically wake the agent after its turn ends; there is no background folder monitoring between turns.
