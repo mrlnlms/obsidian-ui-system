@@ -29,9 +29,17 @@ For this checkout, that is `/Users/mosx/Desktop/obsidian-ui-system/dev-vault`. T
 
 ## Develop the plugin
 
-Run `npm run dev` at the repository root to rebuild `main.js` when `apps/obsidian-capture/src/` changes. For a one-time production build, run `npm run build`; `npm run check` runs TypeScript checks only. After rebuilding, reload the plugin in Obsidian by turning it off and on in **Settings → Community plugins**, or use **Reload app without saving** from the command palette. Changes to `manifest.json` require an Obsidian restart.
+Run `npm run dev` at the repository root to rebuild `main.js` when `apps/obsidian-capture/src/` changes. For a one-time production build, run `npm run build`; `npm run check` runs TypeScript checks only. The development vault also has [Hot-Reload](https://github.com/pjeby/hot-reload) installed. Once you enable it in Obsidian, the tracked `.hotreload` marker in the Capture plugin makes Hot-Reload reload that plugin after each rebuild. Changes to `manifest.json` may still require an Obsidian restart.
 
-In the development vault, open **Settings → Community plugins**, allow community plugins if prompted, then enable **UI Capture**. Run **Open Obsidian UI Catalog** from the command palette. A short status modal confirms that the minimal plugin loaded. This does not capture UI data yet.
+In the development vault, open **Settings → Community plugins**, allow community plugins if prompted, then enable **UI Capture** and **Hot Reload**. Run **Open Obsidian UI Catalog** from the command palette. A short status modal confirms that the minimal plugin loaded. This does not capture UI data yet.
+
+Hot-Reload is a local development dependency, installed at `dev-vault/.obsidian/plugins/hot-reload/` and ignored by Git. To reinstall the pinned version after cloning, run from the repository root:
+
+```sh
+mkdir -p dev-vault/.obsidian/plugins/hot-reload
+curl -fL https://github.com/pjeby/hot-reload/releases/download/0.3.1/manifest.json -o dev-vault/.obsidian/plugins/hot-reload/manifest.json
+curl -fL https://github.com/pjeby/hot-reload/releases/download/0.3.1/main.js -o dev-vault/.obsidian/plugins/hot-reload/main.js
+```
 
 ## Why the plugin is a symlink
 

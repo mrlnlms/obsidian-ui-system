@@ -21,3 +21,4 @@ This monorepo captures and describes the current Obsidian UI so that a future Fi
 - Preserve the distinction between observed Obsidian UI, inferred abstractions, and generated outputs when designing future capture data.
 - Do not expand the current minimal command/modal into a full catalog or component extractor in this milestone.
 - Treat Obsidian-generated vault settings as local state. Keep only the relative plugin symlink under `dev-vault/.obsidian/` in Git.
+- Keep the `.hotreload` marker in the Capture source. Hot-Reload itself is an ignored local development dependency inside `dev-vault/.obsidian/plugins/hot-reload/`.
