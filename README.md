@@ -1,6 +1,6 @@
 # Obsidian UI System
 
-A monorepo for a future structured representation of the Obsidian UI, a Figma design system built from it, and a coding-agent skill that uses the same representation. This first milestone only prepares the workspace and a minimal TypeScript capture plugin.
+A monorepo for a structured representation of the Obsidian UI, a future Figma design system built from it, and a future coding-agent skill that uses the same representation. The Capture plugin currently renders three public API components and exports an initial snapshot.
 
 ## Requirements and installation
 
@@ -31,7 +31,9 @@ For this checkout, that is `/Users/mosx/Desktop/obsidian-ui-system/dev-vault`. T
 
 Run `npm run dev` at the repository root to rebuild `main.js` when `apps/obsidian-capture/src/` changes. For a one-time production build, run `npm run build`; `npm run check` runs TypeScript checks only. The development vault also has [Hot-Reload](https://github.com/pjeby/hot-reload) installed. Once you enable it in Obsidian, the tracked `.hotreload` marker in the Capture plugin makes Hot-Reload reload that plugin after each rebuild. Changes to `manifest.json` may still require an Obsidian restart.
 
-In the development vault, open **Settings → Community plugins**, allow community plugins if prompted, then enable **UI Capture** and **Hot Reload**. Run **Open Obsidian UI Catalog** from the command palette. A short status modal confirms that the minimal plugin loaded. This does not capture UI data yet.
+In the development vault, open **Settings → Community plugins**, allow community plugins if prompted, then enable **UI Capture** and **Hot Reload**. Run **Open Obsidian UI Catalog** from the command palette. The modal renders real `ButtonComponent`, `SearchComponent`, and `ToggleComponent` instances from Obsidian's public API. Change the search or toggle state if desired, then press **Export snapshot**.
+
+Each export creates a timestamped folder at `dev-vault/ui-catalog-exports/<UTC timestamp>/` with `manifest.json`, `tokens.json`, and `components.json`. These local outputs are ignored by Git. The [schema package](packages/ui-schema/README.md) describes the contract; [capture notes](docs/capture-milestone.md) explain what the export measures and its current limits.
 
 Hot-Reload is a local development dependency, installed at `dev-vault/.obsidian/plugins/hot-reload/` and ignored by Git. To reinstall the pinned version after cloning, run from the repository root:
 
@@ -58,7 +60,7 @@ If a real directory occupies that path, inspect its contents before removing it;
 
 - `apps/obsidian-capture/`: current plugin source and build configuration.
 - `apps/figma-plugin/`: future Figma importer placeholder.
-- `packages/ui-schema/`: future shared schema placeholder.
+- `packages/ui-schema/`: initial shared TypeScript snapshot contract.
 - `skills/obsidian-ui/`: future agent skill placeholder.
 - `dev-vault/`: isolated Obsidian test vault.
 - `docs/`: project documentation.

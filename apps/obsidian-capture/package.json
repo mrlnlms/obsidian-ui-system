@@ -8,6 +8,9 @@
     "build": "tsc --noEmit && node esbuild.config.mjs production",
     "check": "tsc --noEmit"
   },
+  "dependencies": {
+    "@obsidian-ui-system/ui-schema": "0.1.0"
+  },
   "devDependencies": {
     "@types/node": "^22.15.17",
     "esbuild": "^0.25.5",
