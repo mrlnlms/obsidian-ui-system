@@ -83,7 +83,7 @@ Lotes pequenos possíveis, em ordem de menor dependência de contexto:
 
 1. **Inputs básicos (implementado):** `TextComponent`, `TextAreaComponent`, `DropdownComponent`, `SliderComponent`.
 2. **Controles complementares (implementado):** `ColorComponent`, `ExtraButtonComponent`, `MomentFormatComponent`, `ProgressBarComponent`.
-3. **Settings (implementado):** `Setting`, `SettingGroup`, `DisplayValueComponent`, `SecretComponent`; somente dados fictícios, sem persistir segredo. Veja [observações do lote](settings-batch.md).
+3. **Settings (implementado):** `Setting`, `SettingGroup`, `DisplayValueComponent`, `SecretComponent`; somente dados fictícios, sem persistir segredo. Veja [observações do lote](settings-batch.md) e [superfícies disparadas](triggered-surfaces.md), incluindo o diálogo aberto por `SecretComponent`.
 4. **Overlays diretos:** `Modal`, `ConfirmationModal`, `Menu`, `Notice`; definir ciclo de abertura, captura e fechamento sem deixar UI residual.
 5. **Sugestões:** `PopoverSuggest`, `AbstractInputSuggest`, `SuggestModal`, `FuzzySuggestModal`; testar subclasses mínimas e dados fixos antes de definir variantes.
 6. **Elementos contextuais:** `HoverPopover`, `setTooltip`, `displayTooltip`, `setIcon`; validar alvo/posicionamento e evitar hover artificial frágil.

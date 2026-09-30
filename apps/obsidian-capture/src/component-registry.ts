@@ -35,6 +35,8 @@ export interface ComponentDefinition {
   source: ComponentOrigin;
   implementation: string;
   variants: readonly ComponentVariant[];
+  /** Surfaces opened by a specimen, outside its captured DOM root. */
+  triggeredSurfaces?: readonly { id: string; trigger: string }[];
   render: (mount: HTMLElement, variant: ComponentVariant, app: App) => RenderedComponent;
 }
 
@@ -364,6 +366,9 @@ export const componentRegistry: readonly ComponentDefinition[] = [
     category: 'Settings',
     source: 'public-api',
     implementation: 'obsidian.SecretComponent',
+    triggeredSurfaces: [
+      { id: 'obsidian.secret-setup-dialog', trigger: 'Link… button' },
+    ],
     variants: [
       { id: 'unselected', name: 'No secret selected', state: 'unselected' },
     ],
