@@ -1,0 +1,9 @@
+.obsidian-ui-atlas-content {
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--size-4-4);
+}
+
+.obsidian-ui-atlas-specimen {
+  margin-bottom: var(--size-4-6);
+}

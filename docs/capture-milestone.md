@@ -1,6 +1,6 @@
-# Capture milestone: public API catalog
+# Capture milestone: public API Atlas
 
-Run `npm run dev`, open the development vault in Obsidian, and use **Open Obsidian UI Catalog**. The modal instantiates Obsidian's public `ButtonComponent`, `SearchComponent`, and `ToggleComponent` classes. Press **Export snapshot** to save a timestamped folder under `dev-vault/ui-catalog-exports/`.
+Run `npm run dev`, open the development vault in Obsidian, and use **Open Obsidian UI Atlas**. The command opens or reveals the same scrollable workspace tab. This `ItemView` instantiates Obsidian's public `ButtonComponent`, `SearchComponent`, and `ToggleComponent` classes. Press **Export snapshot** to save a timestamped folder under `dev-vault/ui-catalog-exports/`.
 
 ## Files
 

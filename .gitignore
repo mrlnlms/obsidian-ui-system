@@ -9,7 +9,7 @@ apps/obsidian-capture/data.json
 dev-vault/.obsidian/*
 !dev-vault/.obsidian/plugins/
 dev-vault/.obsidian/plugins/*
-!dev-vault/.obsidian/plugins/obsidian-ui-capture
+!dev-vault/.obsidian/plugins/obsidian-ui-atlas
 
 # Local catalog exports from the development vault.
 dev-vault/ui-catalog-exports/

@@ -1,4 +1,4 @@
-import { App, ButtonComponent, Modal, SearchComponent, ToggleComponent } from 'obsidian';
+import { ButtonComponent, ItemView, SearchComponent, ToggleComponent, WorkspaceLeaf } from 'obsidian';
 import type { ComponentOrigin } from '@obsidian-ui-system/ui-schema';
 import { exportCatalog } from './export';
 
@@ -11,17 +11,32 @@ export interface CatalogEntry {
   getState: () => { current: string; known: string[] };
 }
 
-export class CatalogModal extends Modal {
+export const ATLAS_VIEW_TYPE = 'obsidian-ui-atlas-view';
+
+export class AtlasView extends ItemView {
   private entries: CatalogEntry[] = [];
   private exporting = false;
 
-  constructor(app: App) {
-    super(app);
+  constructor(leaf: WorkspaceLeaf) {
+    super(leaf);
   }
 
-  onOpen(): void {
+  getViewType(): string {
+    return ATLAS_VIEW_TYPE;
+  }
+
+  getDisplayText(): string {
+    return 'Obsidian UI Atlas';
+  }
+
+  getIcon(): string {
+    return 'layout-grid';
+  }
+
+  async onOpen(): Promise<void> {
     this.contentEl.empty();
-    this.contentEl.createEl('h2', { text: 'Obsidian UI Catalog' });
+    this.contentEl.addClass('obsidian-ui-atlas-content');
+    this.contentEl.createEl('h2', { text: 'Obsidian UI Atlas' });
     this.contentEl.createEl('p', { text: 'Public API components rendered in the current theme.' });
 
     const buttonMount = this.addSection('ButtonComponent');
@@ -90,13 +105,14 @@ export class CatalogModal extends Modal {
       });
   }
 
-  onClose(): void {
+  async onClose(): Promise<void> {
     this.entries = [];
     this.contentEl.empty();
+    this.contentEl.removeClass('obsidian-ui-atlas-content');
   }
 
   private addSection(name: string): HTMLDivElement {
-    const section = this.contentEl.createDiv();
+    const section = this.contentEl.createDiv({ cls: 'obsidian-ui-atlas-specimen' });
     section.createEl('h3', { text: name });
     return section.createDiv();
   }

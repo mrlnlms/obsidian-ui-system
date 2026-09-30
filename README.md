@@ -1,6 +1,6 @@
 # Obsidian UI System
 
-A monorepo for a structured representation of the Obsidian UI, a future Figma design system built from it, and a future coding-agent skill that uses the same representation. The Capture plugin currently renders three public API components and exports an initial snapshot.
+A monorepo for a structured representation of the Obsidian UI, a future Figma design system built from it, and a future coding-agent skill that uses the same representation. The **Obsidian UI Atlas** plugin currently renders three public API components in a workspace tab and exports an initial snapshot.
 
 ## Requirements and installation
 
@@ -29,9 +29,9 @@ For this checkout, that is `/Users/mosx/Desktop/obsidian-ui-system/dev-vault`. T
 
 ## Develop the plugin
 
-Run `npm run dev` at the repository root to rebuild `main.js` when `apps/obsidian-capture/src/` changes. For a one-time production build, run `npm run build`; `npm run check` runs TypeScript checks only. The development vault also has [Hot-Reload](https://github.com/pjeby/hot-reload) installed. Once you enable it in Obsidian, the tracked `.hotreload` marker in the Capture plugin makes Hot-Reload reload that plugin after each rebuild. Changes to `manifest.json` may still require an Obsidian restart.
+Run `npm run dev` at the repository root to rebuild `main.js` when `apps/obsidian-capture/src/` changes. For a one-time production build, run `npm run build`; `npm run check` runs TypeScript checks only. The development vault also has [Hot-Reload](https://github.com/pjeby/hot-reload) installed. Once you enable it in Obsidian, the tracked `.hotreload` marker in the Capture plugin makes Hot-Reload reload that plugin after each rebuild. The Atlas tab closes during plugin reload because the view is detached on unload; run the command again to reopen it. Changes to `manifest.json` may still require an Obsidian restart.
 
-In the development vault, open **Settings → Community plugins**, allow community plugins if prompted, then enable **UI Capture** and **Hot Reload**. Run **Open Obsidian UI Catalog** from the command palette. The modal renders real `ButtonComponent`, `SearchComponent`, and `ToggleComponent` instances from Obsidian's public API. Change the search or toggle state if desired, then press **Export snapshot**.
+In the development vault, open **Settings → Community plugins**, allow community plugins if prompted, then enable **Obsidian UI Atlas** and **Hot Reload**. Run **Open Obsidian UI Atlas** from the command palette. It opens or reveals one scrollable workspace tab. The tab renders real `ButtonComponent`, `SearchComponent`, and `ToggleComponent` instances from Obsidian's public API. Change the search or toggle state if desired, then press **Export snapshot**. Running the command again reveals the existing tab.
 
 Each export creates a timestamped folder at `dev-vault/ui-catalog-exports/<UTC timestamp>/` with `manifest.json`, `tokens.json`, and `components.json`. These local outputs are ignored by Git. The [schema package](packages/ui-schema/README.md) describes the contract; [capture notes](docs/capture-milestone.md) explain what the export measures and its current limits.
 
@@ -45,13 +45,13 @@ curl -fL https://github.com/pjeby/hot-reload/releases/download/0.3.1/main.js -o 
 
 ## Why the plugin is a symlink
 
-Obsidian loads local plugins from `<vault>/.obsidian/plugins/<plugin-id>/`. The tracked relative link at `dev-vault/.obsidian/plugins/obsidian-ui-capture` points to `../../../apps/obsidian-capture` from its containing directory. Thus Obsidian sees `manifest.json` and the built `main.js` inside the vault, while the only source tree remains under `apps/`.
+Obsidian loads local plugins from `<vault>/.obsidian/plugins/<plugin-id>/`. The tracked relative link at `dev-vault/.obsidian/plugins/obsidian-ui-atlas` points to `../../../apps/obsidian-capture` from its containing directory. Thus Obsidian sees `manifest.json`, `styles.css`, and the built `main.js` inside the vault, while the only source tree remains under `apps/`.
 
 If the link is removed, recreate it from the repository root on macOS:
 
 ```sh
 mkdir -p dev-vault/.obsidian/plugins
-ln -s ../../../apps/obsidian-capture dev-vault/.obsidian/plugins/obsidian-ui-capture
+ln -s ../../../apps/obsidian-capture dev-vault/.obsidian/plugins/obsidian-ui-atlas
 ```
 
 If a real directory occupies that path, inspect its contents before removing it; the command above intentionally will not overwrite it. The link is tracked by Git and normally returns with a clone or checkout.
@@ -65,4 +65,4 @@ If a real directory occupies that path, inspect its contents before removing it;
 - `dev-vault/`: isolated Obsidian test vault.
 - `docs/`: project documentation.
 
-The plugin ID matches the requested local folder name. Obsidian's current [manifest rules](https://docs.obsidian.md/Reference/Manifest) disallow `obsidian` in IDs submitted to the community directory; rename the ID and folder together if publication becomes a goal.
+The plugin ID matches the local folder name. Obsidian's current [manifest rules](https://docs.obsidian.md/Reference/Manifest) disallow `obsidian` in IDs submitted to the community directory; rename the ID and folder together if publication becomes a goal.
