@@ -7,6 +7,7 @@ import type {
   TokensSnapshot,
 } from '@obsidian-ui-system/ui-schema';
 import type { RenderedSpecimen } from './component-registry';
+import { captureTypographyContext } from './typography-capture';
 
 declare const __OBSIDIAN_SDK_VERSION__: string;
 
@@ -23,7 +24,9 @@ function selectedStyles(style: CSSStyleDeclaration): SelectedStyles {
     fontFamily: value('font-family'),
     fontSize: value('font-size'),
     fontWeight: value('font-weight'),
+    fontStyle: value('font-style'),
     lineHeight: value('line-height'),
+    letterSpacing: value('letter-spacing'),
     color: value('color'),
     background: value('background-color'),
     border: value('border'),
@@ -59,6 +62,7 @@ export function captureElement(element: Element): DomSnapshot {
       ? { disabled: element.disabled }
       : undefined;
 
+  const computed = view.getComputedStyle(element);
   return {
     tag: element.tagName.toLowerCase(),
     classes: Array.from(element.classList),
@@ -66,7 +70,8 @@ export function captureElement(element: Element): DomSnapshot {
     ...(properties ? { properties } : {}),
     ...(text ? { text } : {}),
     sizePx: { width: rect.width, height: rect.height },
-    styles: selectedStyles(view.getComputedStyle(element)),
+    styles: selectedStyles(computed),
+    ...(text ? { typography: captureTypographyContext(element, computed) } : {}),
     children: Array.from(element.children, captureElement),
   };
 }
@@ -160,7 +165,7 @@ export function captureManifest(doc: Document, capturedAt: string): SnapshotMani
     : Platform.isLinux ? 'linux' : 'unknown';
 
   return {
-    schemaVersion: '0.3.0',
+    schemaVersion: '0.4.0',
     obsidianVersion: apiVersion,
     obsidianSdkVersion: __OBSIDIAN_SDK_VERSION__,
     capturedAt,

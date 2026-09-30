@@ -15,6 +15,10 @@ export interface ButtonData {
   fontFamily: string;
   fontSize: number;
   fontWeight: number;
+  fontStyle: string | null;
+  lineHeight: string;
+  letterSpacing: string | null;
+  typography: { cssVariables: Record<string, string>; fontFamilyDeclaration: string };
 }
 
 const STATES = [
@@ -26,7 +30,7 @@ const STATES = [
 export function readButtonImport(components: unknown, layout: unknown): ButtonData[] {
   if (!Array.isArray(components)) throw new Error('components.json inválido: esperada uma lista de specimens do Atlas.');
   const lab = record(layout, 'layout.json inválido');
-  if (lab.experimentalFormat !== 'atlas-layout-probes-1') {
+  if (lab.experimentalFormat !== 'atlas-layout-probes-1' && lab.experimentalFormat !== 'atlas-layout-probes-2') {
     throw new Error('layout.json inválido: formato experimental do Layout Lab não reconhecido.');
   }
   if (!Array.isArray(lab.inferences) || !Array.isArray(lab.observations)) {
@@ -48,6 +52,18 @@ export function readButtonImport(components: unknown, layout: unknown): ButtonDa
       throw new Error(`Button ${variant}: anatomia com filhos ainda não suportada neste spike.`);
     }
     const styles = record(dom.styles, `Button ${variant}: styles ausentes`);
+    const typography = dom.typography && typeof dom.typography === 'object'
+      ? record(dom.typography, `Button ${variant}: contexto tipográfico inválido`)
+      : null;
+    if (lab.experimentalFormat === 'atlas-layout-probes-2' && !typography) {
+      throw new Error(`Button ${variant}: contexto tipográfico do Atlas ausente; exporte novamente o Atlas.`);
+    }
+    const declaration = typography?.fontFamilyDeclaration && typeof typography.fontFamilyDeclaration === 'object'
+      ? record(typography.fontFamilyDeclaration, `Button ${variant}: origem tipográfica inválida`)
+      : null;
+    const cssVariables = typography?.cssVariables && typeof typography.cssVariables === 'object'
+      ? record(typography.cssVariables, `Button ${variant}: variáveis tipográficas inválidas`)
+      : {};
 
     const inference = unique(inferences, variant, 'inference');
     if (!inference) throw new Error(`Layout inference ausente: obsidian.button / ${variant}.`);
@@ -95,6 +111,12 @@ export function readButtonImport(components: unknown, layout: unknown): ButtonDa
         labStyles.opacity !== styles.opacity || labStyles['font-size'] !== styles.fontSize) {
       throw new Error(`Button ${variant}: Atlas e Layout Lab têm estilos computados divergentes; selecione exports do mesmo ambiente/modo.`);
     }
+    if (lab.experimentalFormat === 'atlas-layout-probes-2' &&
+        (labStyles['font-family'] !== styles.fontFamily || labStyles['font-weight'] !== styles.fontWeight ||
+         labStyles['font-style'] !== styles.fontStyle || labStyles['line-height'] !== styles.lineHeight ||
+         labStyles['letter-spacing'] !== styles.letterSpacing)) {
+      throw new Error(`Button ${variant}: tipografia diverge entre Atlas e Layout Lab.`);
+    }
     const children = root.children;
     if (!Array.isArray(children) || children.length !== 1) throw new Error(`Button ${variant}: texto medido ausente.`);
     const textChild = record(children[0], `Button ${variant}: filho de texto inválido`);
@@ -134,6 +156,14 @@ export function readButtonImport(components: unknown, layout: unknown): ButtonDa
       fontFamily: str(styles.fontFamily, `Button ${variant}: fontFamily`),
       fontSize: px(styles.fontSize, `Button ${variant}: fontSize`),
       fontWeight: Number(str(styles.fontWeight, `Button ${variant}: fontWeight`)),
+      fontStyle: typeof styles.fontStyle === 'string' ? styles.fontStyle : null,
+      lineHeight: str(styles.lineHeight, `Button ${variant}: lineHeight`),
+      letterSpacing: typeof styles.letterSpacing === 'string' ? styles.letterSpacing : null,
+      typography: {
+        cssVariables: Object.fromEntries(Object.entries(cssVariables).filter((entry): entry is [string, string] => typeof entry[1] === 'string')),
+        fontFamilyDeclaration: declaration?.source === 'inline' && typeof declaration.value === 'string'
+          ? `inline: ${declaration.value}` : 'unresolved',
+      },
     };
   });
 }

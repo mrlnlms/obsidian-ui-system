@@ -11,12 +11,20 @@ export interface SelectedStyles {
   fontFamily: string;
   fontSize: string;
   fontWeight: string;
+  fontStyle: string;
   lineHeight: string;
+  letterSpacing: string;
   color: string;
   background: string;
   border: string;
   borderRadius: string;
   opacity: string;
+}
+
+/** Computed variables on a text-bearing element, without guessing the winning CSS rule. */
+export interface TypographyContext {
+  cssVariables: Record<string, string>;
+  fontFamilyDeclaration: { source: 'inline'; value: string } | { source: 'unresolved' };
 }
 
 export interface DomSnapshot {
@@ -27,6 +35,7 @@ export interface DomSnapshot {
   text?: string;
   sizePx: { width: number; height: number };
   styles: SelectedStyles;
+  typography?: TypographyContext;
   children: DomSnapshot[];
 }
 
@@ -42,7 +51,7 @@ export interface ComponentSnapshot {
 }
 
 export interface SnapshotManifest {
-  schemaVersion: '0.3.0';
+  schemaVersion: '0.4.0';
   /** Obsidian's public API version reported by the running app. */
   obsidianVersion: string;
   /** Version of the installed `obsidian` SDK package used to build Capture. */

@@ -8,7 +8,7 @@ This local Figma Design development plugin runs a bounded ButtonComponent spike.
 2. Open a **Figma Design** file in the **Figma Desktop** app on macOS or Windows. Local plugin development requires the desktop app.
 3. In the Figma menu, choose **Plugins → Development → Import new plugin from manifest…**. In some versions, right-click the canvas and choose **Plugins → Development → Import plugin from manifest**.
 4. Select this exact file: `/Users/mosx/Desktop/obsidian-ui-system/apps/figma-plugin/manifest.json` (or `<repository>/apps/figma-plugin/manifest.json` in another checkout). Select the manifest, not `dist/code.js`.
-5. Run **Obsidian UI System** under **Plugins → Development** (or from the Actions menu). Choose `components.json` from an Atlas export and `layout.json` from a Layout Lab export made in the same Obsidian environment. Click **Generate Button**. The selected Component Set should appear on the canvas.
+5. Run **Obsidian UI System** under **Plugins → Development** (or from the Actions menu). Choose `components.json` from an Atlas export and `layout.json` from a Layout Lab export made in the same Obsidian environment. Click **Check typography**. The plugin lists the Regular fonts available in this Figma Desktop session and shows the observed CSS stack and variables. Choose the Figma font that you want to use, then click **Generate Button**. The selected Component Set should appear on the canvas.
 
 For this checkout, the latest locally checked pair is:
 
@@ -29,7 +29,7 @@ npm run build --workspace @obsidian-ui-system/figma-plugin
 npm run dev --workspace @obsidian-ui-system/figma-plugin
 ```
 
-`dev` watches `src/*.ts` and recompiles `dist/code.js` when they change. After a rebuild, run the development plugin again in Figma Desktop. Each click on **Generate Button** adds another Component Set. Re-run `check` when changing TypeScript; watch mode only builds. If you change the manifest or `src/ui.html`, re-import or restart the plugin if the app does not pick up the change.
+`dev` watches `src/*.ts` and recompiles `dist/code.js` when they change. After a rebuild, run the development plugin again in Figma Desktop. Each click on **Generate Button** adds another Component Set. Re-run `check` when changing TypeScript; watch mode only builds. If you change the manifest or `src/ui.html`, re-import or restart the plugin if the app does not pick up the change. Font choice is explicit for every run. A prior Component Set is not changed by rebuilding or generating a new one.
 
 ## Files
 

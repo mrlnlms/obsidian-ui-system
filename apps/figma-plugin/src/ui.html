@@ -9,7 +9,12 @@
     h1 { font-size: 16px; margin: 0 0 8px; }
     p { color: #555; line-height: 1.4; margin: 0 0 16px; }
     label { display: block; font-weight: 600; margin: 12px 0; }
-    input { display: block; width: 100%; margin-top: 5px; }
+    input, select { display: block; width: 100%; margin-top: 5px; box-sizing: border-box; }
+    select { padding: 5px; }
+    #typography { margin: 12px 0; padding: 10px; background: #f4f4f4; overflow-wrap: anywhere; }
+    #typography[hidden] { display: none; }
+    #stack { max-height: 90px; overflow: auto; }
+    small { display: block; color: #555; margin-top: 5px; }
     button { margin-top: 10px; padding: 8px 12px; cursor: pointer; }
     #status { margin-top: 14px; min-height: 36px; white-space: pre-wrap; }
     #status.error { color: #b42318; }
@@ -21,13 +26,32 @@
   <p>Spike de ButtonComponent. Selecione os JSONs do Atlas e do Layout Lab do mesmo ambiente.</p>
   <label>Atlas components.json <input id="components" type="file" accept=".json,application/json"></label>
   <label>Layout Lab layout.json <input id="layout" type="file" accept=".json,application/json"></label>
-  <button id="generate" type="button">Generate Button</button>
+  <button id="inspect" type="button">Check typography</button>
+  <div id="typography" hidden>
+    <strong>Tipografia solicitada pelo Obsidian</strong>
+    <div id="stack"></div>
+    <small id="details"></small>
+    <small id="variables"></small>
+    <label>Fonte disponível no Figma (escolha explícita)
+      <select id="font"><option value="">Unresolved — selecione uma fonte</option></select>
+    </label>
+    <small>A stack CSS não comprova a fonte renderizada pelo Electron. Compare visualmente antes de escolher.</small>
+  </div>
+  <button id="generate" type="button" disabled>Generate Button</button>
   <div id="status" role="status" aria-live="polite"></div>
   <script>
     const componentsInput = document.getElementById('components');
     const layoutInput = document.getElementById('layout');
+    const inspect = document.getElementById('inspect');
     const generate = document.getElementById('generate');
+    const typography = document.getElementById('typography');
+    const stack = document.getElementById('stack');
+    const details = document.getElementById('details');
+    const variables = document.getElementById('variables');
+    const fontSelect = document.getElementById('font');
     const status = document.getElementById('status');
+    let imported = null;
+    let fonts = [];
 
     function show(text, kind = '') {
       status.textContent = text;
@@ -47,27 +71,66 @@
       });
     }
 
-    generate.onclick = async () => {
+    function reset() {
+      imported = null;
+      fonts = [];
+      fontSelect.replaceChildren(new Option('Unresolved — selecione uma fonte', ''));
+      typography.hidden = true;
       generate.disabled = true;
+    }
+
+    componentsInput.onchange = reset;
+    layoutInput.onchange = reset;
+
+    inspect.onclick = async () => {
+      reset();
+      inspect.disabled = true;
       show('Lendo arquivos…');
       try {
         const [components, layout] = await Promise.all([
           readJson(componentsInput.files[0], 'Atlas components.json'),
           readJson(layoutInput.files[0], 'Layout Lab layout.json'),
         ]);
-        show('Gerando Obsidian / Button…');
-        parent.postMessage({ pluginMessage: { type: 'generate-button', components, layout } }, '*');
+        imported = { components, layout };
+        show('Consultando fontes disponíveis no Figma…');
+        parent.postMessage({ pluginMessage: { type: 'inspect-button', ...imported } }, '*');
       } catch (error) {
         show(error.message || String(error), 'error');
-        generate.disabled = false;
+        inspect.disabled = false;
       }
+    };
+
+    fontSelect.onchange = () => { generate.disabled = !imported || !fontSelect.value; };
+
+    generate.onclick = () => {
+      const selected = fonts[Number(fontSelect.value)];
+      if (!imported || !selected) return show('Fonte unresolved: selecione uma fonte Figma.', 'error');
+      generate.disabled = true;
+      show('Gerando Obsidian / Button…');
+      parent.postMessage({ pluginMessage: { type: 'generate-button', ...imported, font: selected } }, '*');
     };
 
     onmessage = (event) => {
       const message = event.data.pluginMessage;
-      if (message?.type !== 'result') return;
-      show(message.text, message.ok ? 'success' : 'error');
-      generate.disabled = false;
+      if (message?.type === 'font-report') {
+        inspect.disabled = false;
+        if (!message.ok) return show(message.text, 'error');
+        fonts = message.fonts;
+        stack.textContent = message.requested.stack;
+        details.textContent = `CSS: ${message.requested.size}px, peso ${message.requested.weight}, estilo ${message.requested.style || 'não capturado'}, line-height ${message.requested.lineHeight}, letter-spacing ${message.requested.letterSpacing || 'não capturado'}. Origem: ${message.requested.typography.fontFamilyDeclaration}.`;
+        const vars = Object.entries(message.requested.typography.cssVariables);
+        variables.textContent = vars.length ? vars.map(([name, value]) => `${name}: ${value}`).join('\n') : 'Variáveis tipográficas não capturadas neste export.';
+        variables.style.whiteSpace = 'pre-wrap';
+        fontSelect.replaceChildren(new Option('Unresolved — selecione uma fonte', ''));
+        fonts.forEach((font, index) => fontSelect.add(new Option(`${font.family} / ${font.style}`, String(index))));
+        typography.hidden = false;
+        show(`${fonts.length} fontes Regular disponíveis no Figma. A fonte usada permanece unresolved até sua escolha.`);
+        return;
+      }
+      if (message?.type === 'result') {
+        show(message.text, message.ok ? 'success' : 'error');
+        generate.disabled = !fontSelect.value;
+      }
     };
   </script>
 </body>

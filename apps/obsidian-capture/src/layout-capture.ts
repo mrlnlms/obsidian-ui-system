@@ -3,6 +3,8 @@ import { componentRegistry, type ComponentDefinition, type ComponentVariant } fr
 import { captureManifest } from './snapshot';
 import { layoutProbeSuite, resolveLayoutProbes } from './layout-probes';
 import { inferLayout, type LayoutInference } from './layout-inference';
+import { captureTypographyContext } from './typography-capture';
+import type { TypographyContext } from '@obsidian-ui-system/ui-schema';
 
 const EXPORT_ROOT = 'layout-spike-exports';
 
@@ -17,7 +19,7 @@ const LAYOUT_PROPERTIES = [
   'overflow', 'overflow-x', 'overflow-y',
   'position', 'top', 'right', 'bottom', 'left',
   'white-space', 'overflow-wrap', 'word-break', 'text-overflow', 'text-align',
-  'font-family', 'font-size', 'font-weight', 'line-height',
+  'font-family', 'font-size', 'font-weight', 'font-style', 'line-height', 'letter-spacing',
   'color', 'background-color', 'opacity',
   'background-image', 'mask-image', '-webkit-mask-image',
 ] as const;
@@ -56,6 +58,7 @@ export interface ElementNodeSnapshot {
   relativeToParent: RectSnapshot | null;
   boxMetrics: BoxMetrics;
   styles: LayoutStyles;
+  typography?: TypographyContext;
   pseudo?: Record<string, { content: string; styles: LayoutStyles }>;
   children: Array<ElementNodeSnapshot | TextNodeSnapshot>;
 }
@@ -160,6 +163,8 @@ function captureLayoutNode(element: Element, parent: RectSnapshot | null, view: 
     relativeToParent: rect && parent ? relativeTo(rect, parent) : null,
     boxMetrics: boxMetricsOf(element),
     styles: stylesOf(styles),
+    ...(children.some((child) => child.kind === 'text')
+      ? { typography: captureTypographyContext(element, styles) } : {}),
     ...(pseudo ? { pseudo } : {}),
     children,
   };
@@ -258,7 +263,7 @@ export async function exportLayoutProbes(app: App, fixtures: LayoutFixture[]): P
   if (!view) throw new Error('Layout fixtures need a connected window');
   const capturedAt = new Date().toISOString();
   const result = {
-    experimentalFormat: 'atlas-layout-probes-1',
+    experimentalFormat: 'atlas-layout-probes-2',
     probeSuite: layoutProbeSuite,
     environment: captureManifest(doc, capturedAt),
     viewport: { widthPx: view.innerWidth, heightPx: view.innerHeight, devicePixelRatio: view.devicePixelRatio },
