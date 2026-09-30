@@ -51,6 +51,8 @@ The [Light/Dark capture](docs/light-dark-capture.md) documents how to export the
 
 The [public API phase closure](docs/public-api-phase-complete.md) records the 26-family / 59-specimen milestone and its backlog. The [Figma readiness assessment](docs/figma-readiness.md) checks six representative specimens against the information needed for editable, responsive reconstruction. It is an analysis of the current snapshot, not a Figma importer.
 
+The [Button/Search layout spike](docs/layout-spike.md) uses the same registry definitions in connected 240px and 480px hosts. Click **View layout comparison** in the Atlas to see the real specimens and measured widths in a panel at the top of the tab. Click **Export layout spike (Button + Search)** to save an experimental `layout.json` under the ignored `dev-vault/layout-spike-exports/<UTC timestamp>/` directory. This action is separate from **Export snapshot** and does not change `components.json` or the shared schema.
+
 The [Settings batch notes](docs/settings-batch.md) document the four Settings APIs, their runtime quirks, and the comparison with the preceding Dark snapshot.
 
 The [direct overlay notes](docs/overlays-batch.md) document batch 4, including opening and cleanup, capture roots, and the real export comparison.

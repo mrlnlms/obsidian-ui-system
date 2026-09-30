@@ -55,6 +55,8 @@ export interface ComponentVariant {
 interface RenderedComponent {
   root: Element;
   getState: () => string;
+  /** Optional public-API text mutation used only by the controlled layout experiment. */
+  setLabelForLayoutProbe?: (text: string) => void;
   /** Open a surface outside the Atlas before capture. */
   activate?: () => void;
   /** Return the opened surface, rather than the Atlas trigger host. */
@@ -319,6 +321,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       return {
         root: button.buttonEl,
         getState: () => button.buttonEl.disabled ? 'disabled' : 'enabled',
+        setLabelForLayoutProbe: (text) => { button.setButtonText(text); },
       };
     },
   },

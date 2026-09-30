@@ -43,3 +43,44 @@
 .obsidian-ui-atlas-inline-host {
   display: flex;
 }
+
+.obsidian-ui-atlas-layout-spike {
+  margin-block: var(--size-4-8);
+}
+
+.obsidian-ui-atlas-layout-spike > summary {
+  cursor: pointer;
+  font-weight: var(--font-semibold);
+}
+
+.obsidian-ui-atlas-layout-results {
+  overflow-x: auto;
+}
+
+.obsidian-ui-atlas-layout-results table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.obsidian-ui-atlas-layout-results th,
+.obsidian-ui-atlas-layout-results td {
+  padding: var(--size-4-2);
+  border-bottom: 1px solid var(--background-modifier-border);
+  text-align: left;
+}
+
+.obsidian-ui-atlas-layout-group {
+  margin-block: var(--size-4-6);
+}
+
+.obsidian-ui-atlas-layout-card {
+  overflow-x: auto;
+  padding: var(--size-4-3);
+  margin-block: var(--size-4-2);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+}
+
+.obsidian-ui-atlas-layout-host {
+  box-sizing: border-box;
+}

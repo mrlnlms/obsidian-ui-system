@@ -1,6 +1,7 @@
 import { ButtonComponent, ItemView, WorkspaceLeaf } from 'obsidian';
 import { componentRegistry, type RenderedSpecimen } from './component-registry';
 import { exportCatalog } from './export';
+import { exportLayoutSpike, measureLayoutFixtures, renderLayoutFixtures, type LayoutFixture, type LayoutObservation } from './layout-spike';
 
 export const ATLAS_VIEW_TYPE = 'obsidian-ui-atlas-view';
 
@@ -8,6 +9,10 @@ export class AtlasView extends ItemView {
   private specimens: RenderedSpecimen[] = [];
   private exporting = false;
   private specimensEl: HTMLDivElement | null = null;
+  private layoutDetailsEl: HTMLDetailsElement | null = null;
+  private layoutResultsEl: HTMLDivElement | null = null;
+  private layoutFixturesEl: HTMLDivElement | null = null;
+  private layoutFixtures: LayoutFixture[] = [];
 
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
@@ -32,6 +37,17 @@ export class AtlasView extends ItemView {
     this.contentEl.createEl('p', { text: 'Public API components rendered in the current theme.' });
     const actions = this.contentEl.createDiv({ cls: 'obsidian-ui-atlas-actions' });
     const status = this.contentEl.createEl('p');
+    const layoutStatus = this.contentEl.createEl('p');
+    const layoutSection = this.contentEl.createEl('details', { cls: 'obsidian-ui-atlas-layout-spike' });
+    layoutSection.createEl('summary', { text: 'Layout comparison · Button + Search' });
+    layoutSection.createEl('p', { text: 'Real registry specimens in 240px and 480px hosts, with a short-label Button probe. Hosts and labels are measurement context, not variants.' });
+    this.layoutDetailsEl = layoutSection;
+    this.layoutResultsEl = layoutSection.createDiv({ cls: 'obsidian-ui-atlas-layout-results' });
+    this.layoutFixturesEl = layoutSection.createDiv();
+    this.layoutFixtures = renderLayoutFixtures(this.layoutFixturesEl, this.app);
+    this.specimensEl = this.contentEl.createDiv();
+    this.renderSpecimens();
+
     new ButtonComponent(actions)
       .setButtonText('Export snapshot')
       .setCta()
@@ -50,14 +66,46 @@ export class AtlasView extends ItemView {
           this.exporting = false;
         }
       });
-    this.specimensEl = this.contentEl.createDiv();
-    this.renderSpecimens();
+    const showLayout = async (save: boolean): Promise<void> => {
+      if (this.exporting) return;
+      this.exporting = true;
+      layoutStatus.setText(save ? 'Exporting layout measurements…' : 'Measuring layout…');
+      try {
+        if (!this.layoutDetailsEl || !this.layoutFixturesEl) throw new Error('Layout fixture container is unavailable');
+        this.layoutDetailsEl.open = true;
+        this.layoutFixtures = renderLayoutFixtures(this.layoutFixturesEl, this.app);
+        if (save) {
+          const { folder, observations } = await exportLayoutSpike(this.app, this.layoutFixtures);
+          this.renderLayoutResults(observations);
+          layoutStatus.setText(`Saved layout.json to ${folder}`);
+        } else {
+          const observations = await measureLayoutFixtures(this.layoutFixtures);
+          this.renderLayoutResults(observations);
+          layoutStatus.setText('Layout comparison measured in the current Obsidian view.');
+        }
+        this.layoutDetailsEl.scrollIntoView({ block: 'start' });
+      } catch (error) {
+        layoutStatus.setText(`Layout comparison failed: ${error instanceof Error ? error.message : String(error)}`);
+      } finally {
+        this.exporting = false;
+      }
+    };
+    new ButtonComponent(actions)
+      .setButtonText('View layout comparison')
+      .onClick(() => { void showLayout(false); });
+    new ButtonComponent(actions)
+      .setButtonText('Export layout spike (Button + Search)')
+      .onClick(() => { void showLayout(true); });
   }
 
   async onClose(): Promise<void> {
     this.closeSurfaces();
     this.specimens = [];
     this.specimensEl = null;
+    this.layoutDetailsEl = null;
+    this.layoutResultsEl = null;
+    this.layoutFixtures = [];
+    this.layoutFixturesEl = null;
     this.contentEl.empty();
     this.contentEl.removeClass('obsidian-ui-atlas-content');
   }
@@ -93,6 +141,49 @@ export class AtlasView extends ItemView {
             });
         }
         this.specimens.push({ definition, variant, ...rendered });
+      }
+    }
+  }
+
+  private renderLayoutResults(observations: LayoutObservation[]): void {
+    const host = this.layoutResultsEl;
+    if (!host) throw new Error('Layout comparison container is unavailable');
+    host.empty();
+    host.createEl('p', { text: 'Measured boxes in CSS pixels. Width labels describe observations, not proven Figma sizing rules.' });
+    const table = host.createEl('table');
+    const header = table.createEl('thead').createEl('tr');
+    for (const label of ['Specimen', 'Root at 240px', 'Root at 480px', 'Children']) {
+      header.createEl('th', { text: label });
+    }
+    const body = table.createEl('tbody');
+    const size = (width: number | undefined, height: number | undefined): string =>
+      width === undefined || height === undefined ? 'hidden' : `${width.toFixed(2)} × ${height.toFixed(2)}`;
+    const bySpecimen = new Map<string, LayoutObservation[]>();
+    for (const observation of observations) {
+      const key = `${observation.id}/${observation.variant} · ${observation.contentContext.id}`;
+      const pair = bySpecimen.get(key) ?? [];
+      pair.push(observation);
+      bySpecimen.set(key, pair);
+    }
+    for (const [key, pair] of bySpecimen) {
+      const narrow = pair.find((item) => item.host.id === 'narrow');
+      const wide = pair.find((item) => item.host.id === 'wide');
+      if (!narrow || !wide) throw new Error(`Missing host observation for ${key}`);
+      const row = body.createEl('tr');
+      row.createEl('td', { text: key });
+      row.createEl('td', { text: size(narrow.root.rect?.width, narrow.root.rect?.height) });
+      row.createEl('td', { text: size(wide.root.rect?.width, wide.root.rect?.height) });
+      if (narrow.id === 'obsidian.button') {
+        const textNode = narrow.root.children.find((child) => child.kind === 'text');
+        row.createEl('td', { text: `Text: ${size(textNode?.rect?.width, textNode?.rect?.height)} in both hosts` });
+      } else {
+        const narrowInput = narrow.root.children[0];
+        const wideInput = wide.root.children[0];
+        const clear = narrow.root.children[1];
+        const clearSize = clear?.rect ? `${clear.rect.width.toFixed(2)}px` : 'hidden';
+        row.createEl('td', {
+          text: `Input: ${narrowInput?.rect?.width ?? '?'} → ${wideInput?.rect?.width ?? '?'}px; clear: ${clearSize}`,
+        });
       }
     }
   }

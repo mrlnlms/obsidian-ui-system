@@ -15,3 +15,4 @@ dev-vault/.obsidian/plugins/*
 
 # Local catalog exports from the development vault.
 dev-vault/ui-catalog-exports/
+dev-vault/layout-spike-exports/
