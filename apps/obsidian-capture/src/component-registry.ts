@@ -1,6 +1,10 @@
 import {
   ButtonComponent,
+  ColorComponent,
   DropdownComponent,
+  ExtraButtonComponent,
+  MomentFormatComponent,
+  ProgressBarComponent,
   SearchComponent,
   SliderComponent,
   TextAreaComponent,
@@ -54,6 +58,28 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       return {
         root: button.buttonEl,
         getState: () => button.buttonEl.disabled ? 'disabled' : 'enabled',
+      };
+    },
+  },
+  {
+    id: 'obsidian.extra-button',
+    name: 'ExtraButtonComponent',
+    category: 'Actions',
+    source: 'public-api',
+    implementation: 'obsidian.ExtraButtonComponent',
+    variants: [
+      { id: 'normal', name: 'Normal', state: 'enabled' },
+      { id: 'disabled', name: 'Disabled', state: 'disabled' },
+    ],
+    render(mount, variant) {
+      mount.addClass('obsidian-ui-atlas-inline-host');
+      const button = new ExtraButtonComponent(mount)
+        .setIcon('settings')
+        .setTooltip('Atlas settings');
+      if (variant.id === 'disabled') button.setDisabled(true);
+      return {
+        root: button.extraSettingsEl,
+        getState: () => button.extraSettingsEl.classList.contains('is-disabled') ? 'disabled' : 'enabled',
       };
     },
   },
@@ -148,6 +174,54 @@ export const componentRegistry: readonly ComponentDefinition[] = [
     },
   },
   {
+    id: 'obsidian.color',
+    name: 'ColorComponent',
+    category: 'Inputs',
+    source: 'public-api',
+    implementation: 'obsidian.ColorComponent',
+    variants: [
+      { id: 'violet', name: 'Violet', state: 'violet' },
+      { id: 'red', name: 'Red', state: 'red' },
+      { id: 'disabled', name: 'Disabled violet', state: 'disabled' },
+    ],
+    render(mount, variant) {
+      const color = new ColorComponent(mount)
+        .setValue(variant.id === 'red' ? '#e5484d' : '#6750a4');
+      if (variant.id === 'disabled') color.setDisabled(true);
+      const root = mount.firstElementChild;
+      if (!root) throw new Error('ColorComponent did not render a root element');
+      return {
+        root,
+        getState: () => mount.querySelector('input')?.disabled ? 'disabled'
+          : color.getValue().toLowerCase() === '#e5484d' ? 'red'
+            : color.getValue().toLowerCase() === '#6750a4' ? 'violet' : 'unknown',
+      };
+    },
+  },
+  {
+    id: 'obsidian.moment-format',
+    name: 'MomentFormatComponent',
+    category: 'Inputs',
+    source: 'public-api',
+    implementation: 'obsidian.MomentFormatComponent',
+    variants: [
+      { id: 'empty', name: 'Empty', state: 'empty' },
+      { id: 'filled', name: 'Filled format', state: 'filled' },
+      { id: 'disabled', name: 'Disabled format', state: 'disabled' },
+    ],
+    render(mount, variant) {
+      const format = new MomentFormatComponent(mount)
+        .setDefaultFormat('YYYY-MM-DD')
+        .setValue(variant.id === 'empty' ? '' : 'YYYY-MM-DD');
+      if (variant.id === 'disabled') format.setDisabled(true);
+      return {
+        root: format.inputEl,
+        getState: () => format.inputEl.disabled ? 'disabled'
+          : format.getValue() ? 'filled' : 'empty',
+      };
+    },
+  },
+  {
     id: 'obsidian.slider',
     name: 'SliderComponent',
     category: 'Inputs',
@@ -170,6 +244,30 @@ export const componentRegistry: readonly ComponentDefinition[] = [
           : slider.getValue() === 0 ? 'minimum'
             : slider.getValue() === 50 ? 'middle'
               : slider.getValue() === 100 ? 'maximum' : 'unknown',
+      };
+    },
+  },
+  {
+    id: 'obsidian.progress-bar',
+    name: 'ProgressBarComponent',
+    category: 'Feedback',
+    source: 'public-api',
+    implementation: 'obsidian.ProgressBarComponent',
+    variants: [
+      { id: 'empty', name: '0%', state: 'empty' },
+      { id: 'half', name: '50%', state: 'half' },
+      { id: 'complete', name: '100%', state: 'complete' },
+    ],
+    render(mount, variant) {
+      const value = variant.id === 'empty' ? 0 : variant.id === 'half' ? 50 : 100;
+      const progress = new ProgressBarComponent(mount).setValue(value);
+      const root = mount.firstElementChild;
+      if (!root) throw new Error('ProgressBarComponent did not render a root element');
+      return {
+        root,
+        getState: () => progress.getValue() === 0 ? 'empty'
+          : progress.getValue() === 50 ? 'half'
+            : progress.getValue() === 100 ? 'complete' : 'unknown',
       };
     },
   },

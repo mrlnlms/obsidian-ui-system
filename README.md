@@ -1,6 +1,6 @@
 # Obsidian UI System
 
-A monorepo for a structured representation of the Obsidian UI, a future Figma design system built from it, and a future coding-agent skill that uses the same representation. The **Obsidian UI Atlas** plugin currently renders seven public API components in a workspace tab and exports an initial snapshot.
+A monorepo for a structured representation of the Obsidian UI, a future Figma design system built from it, and a future coding-agent skill that uses the same representation. The **Obsidian UI Atlas** plugin currently renders eleven public API components in a workspace tab and exports an initial snapshot.
 
 ## Requirements and installation
 
@@ -31,7 +31,7 @@ For this checkout, that is `/Users/mosx/Desktop/obsidian-ui-system/dev-vault`. T
 
 Run `npm run dev` at the repository root to rebuild `main.js` when `apps/obsidian-capture/src/` changes. For a one-time production build, run `npm run build`; `npm run check` runs TypeScript checks only. The development vault also has [Hot-Reload](https://github.com/pjeby/hot-reload) installed. Once you enable it in Obsidian, the tracked `.hotreload` marker in the Capture plugin makes Hot-Reload reload that plugin after each rebuild. The Atlas tab closes during plugin reload because the view is detached on unload; run the command again to reopen it. Changes to `manifest.json` may still require an Obsidian restart.
 
-In the development vault, open **Settings → Community plugins**, allow community plugins if prompted, then enable **Obsidian UI Atlas** and **Hot Reload**. Run **Open Obsidian UI Atlas** from the command palette. It opens or reveals one scrollable workspace tab. The tab renders real `ButtonComponent`, `SearchComponent`, `ToggleComponent`, `TextComponent`, `TextAreaComponent`, `DropdownComponent`, and `SliderComponent` instances from Obsidian's public API, grouped by category and labeled by variant. Press **Export snapshot** to recreate the declared variants and capture them. Running the command again reveals the existing tab.
+In the development vault, open **Settings → Community plugins**, allow community plugins if prompted, then enable **Obsidian UI Atlas** and **Hot Reload**. Run **Open Obsidian UI Atlas** from the command palette. It opens or reveals one scrollable workspace tab. The tab renders real public API instances of `ButtonComponent`, `SearchComponent`, `ToggleComponent`, `TextComponent`, `TextAreaComponent`, `DropdownComponent`, `SliderComponent`, `ColorComponent`, `ExtraButtonComponent`, `MomentFormatComponent`, and `ProgressBarComponent`, grouped by category and labeled by variant. Press **Export snapshot** to recreate the declared variants and capture them. Running the command again reveals the existing tab.
 
 Each export creates a timestamped folder at `dev-vault/ui-catalog-exports/<UTC timestamp>/` with `manifest.json`, `tokens.json`, and `components.json`. The manifest distinguishes the runtime Obsidian API version from the installed `obsidian` SDK package version and the snapshot schema version. These local outputs are ignored by Git. The [schema package](packages/ui-schema/README.md) describes the contract; [capture notes](docs/capture-milestone.md) explain what the export measures and its current limits. See the [registry guide](docs/component-registry.md) to add a component or variant.
 
@@ -44,6 +44,8 @@ npm run diff:snapshots -- <before-export-folder> <after-export-folder> [output-f
 ```
 
 The command writes `diff.json` and `diff.md`. Without an output argument, it uses an ignored folder under `snapshot-diffs/`. It compares specimens by `id + variant`, tokens by custom property name, and manifest fields separately. See the [comparison guide](docs/snapshot-diff.md) for an example using two real exports and an explanation of the categories.
+
+The [determinism check](docs/snapshot-determinism.md) records consecutive exports from the same Obsidian environment before batch 2 and classifies the observed manifest timestamp difference.
 
 Hot-Reload is a local development dependency, installed at `dev-vault/.obsidian/plugins/hot-reload/` and ignored by Git. To reinstall the pinned version after cloning, run from the repository root:
 
