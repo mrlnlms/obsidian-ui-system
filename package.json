@@ -7,9 +7,16 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace @obsidian-ui-system/capture",
+    "build": "npm run build --workspace @obsidian-ui-system/capture && npm run build:diff",
+    "build:diff": "tsc --project scripts/tsconfig.json",
     "dev": "npm run dev --workspace @obsidian-ui-system/capture",
-    "check": "npm run check --workspace @obsidian-ui-system/capture"
+    "check": "npm run check --workspace @obsidian-ui-system/capture && tsc --noEmit --project scripts/tsconfig.json",
+    "test:diff": "npm run build:diff && node --test .build/snapshot-diff/snapshot-diff.test.js",
+    "diff:snapshots": "npm run build:diff && node .build/snapshot-diff/diff-snapshots.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.17",
+    "typescript": "^5.8.3"
   },
   "engines": {
     "node": ">=22"

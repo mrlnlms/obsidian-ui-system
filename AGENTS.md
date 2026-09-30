@@ -12,6 +12,7 @@ This monorepo captures and describes the current Obsidian UI so that a future Fi
 - `skills/obsidian-ui/` is reserved for the future coding-agent skill. Do not implement it yet.
 - `dev-vault/` is only an Obsidian execution and test vault, not a source archive. Its plugin entry is a relative symlink to `apps/obsidian-capture/`; do not create a second code copy there. Timestamped `ui-catalog-exports/` outputs stay local and ignored by Git.
 - `docs/` holds maintained project documentation.
+- `scripts/` contains the standalone snapshot comparison CLI. It reads Atlas exports and writes local `snapshot-diffs/` reports; it does not run in the Obsidian plugin.
 
 ## Architecture rules
 
@@ -20,5 +21,6 @@ This monorepo captures and describes the current Obsidian UI so that a future Fi
 - Keep the schema generic for Obsidian plugin interface development. Do not couple it to Qualia or any other individual plugin.
 - Preserve the distinction between observed Obsidian UI, inferred abstractions, and generated outputs when designing future capture data.
 - Keep the Atlas limited to public API Button, Search, Toggle, Text, TextArea, Dropdown, and Slider components in this milestone. Define specimens once in `component-registry.ts`; the Atlas renderer and capture both consume those definitions. Do not add Figma integration or the agent skill yet.
+- Compare exports by `(id, variant)` and token name in `scripts/snapshot-diff.ts`; keep the comparison format separate from the snapshot schema until there is evidence to merge them.
 - Treat Obsidian-generated vault settings as local state. Keep only the relative plugin symlink under `dev-vault/.obsidian/` in Git.
 - Keep the `.hotreload` marker in the Capture source. Hot-Reload itself is an ignored local development dependency inside `dev-vault/.obsidian/plugins/hot-reload/`.
