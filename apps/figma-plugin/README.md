@@ -8,14 +8,22 @@ This local Figma Design development plugin runs a bounded ButtonComponent spike.
 2. Open a **Figma Design** file in the **Figma Desktop** app on macOS or Windows. Local plugin development requires the desktop app.
 3. In the Figma menu, choose **Plugins → Development → Import new plugin from manifest…**. In some versions, right-click the canvas and choose **Plugins → Development → Import plugin from manifest**.
 4. Select this exact file: `/Users/mosx/Desktop/obsidian-ui-system/apps/figma-plugin/manifest.json` (or `<repository>/apps/figma-plugin/manifest.json` in another checkout). Select the manifest, not `dist/code.js`.
-5. Run **Obsidian UI System** under **Plugins → Development** (or from the Actions menu). Choose `components.json` from an Atlas export and `layout.json` from a Layout Lab export made in the same Obsidian environment. Click **Check typography**. The plugin lists the Regular fonts available in this Figma Desktop session and shows the observed CSS stack and variables. Choose the Figma font that you want to use, then click **Generate Button**. The selected Component Set should appear on the canvas.
+5. Run **Obsidian UI System** under **Plugins → Development** (or from the Actions menu). Choose `components.json` from an Atlas export and `layout.json` from a Layout Lab export made in the same Obsidian environment. Click **Generate Button**. The plugin checks the required font automatically before creating any node. The selected Component Set should appear on the canvas.
 
 For this checkout, the latest locally checked pair is:
 
-- `dev-vault/ui-catalog-exports/2026-09-30T22-31-49-752Z/components.json`
-- `dev-vault/layout-spike-exports/2026-09-30T22-27-18-213Z/layout.json`
+- `dev-vault/ui-catalog-exports/2026-09-30T23-41-12-506Z/components.json`
+- `dev-vault/layout-spike-exports/2026-09-30T23-42-18-726Z/layout.json`
 
 These exports are ignored local evidence and may not exist in another checkout. `tokens.json` is not required: the Atlas already exports computed Button colors, and it does not record which token produced each color. See [the Button spike notes](../../docs/figma-button-spike.md) for the mapping and limits.
+
+## Required font on macOS
+
+For the current macOS Button stack, the plugin requires **SF Pro / Regular**. The Button is 13 px; when Figma exposes the SF Pro `opsz` variation axis, the plugin sets it to 13 to use the text optical design. The plugin does not install fonts or substitute Google Sans Flex, Inter, or Roboto. If the exact family and style are absent from `figma.listAvailableFontsAsync()`, generation stops with `Required font not available: SF Pro / Regular. Install the required font and restart Figma.`
+
+In Figma Desktop, accept the SF Pro font license when prompted by an Apple UI kit or a text layer using SF Pro. [Figma's Apple UI kit instructions](https://help.figma.com/hc/en-us/articles/24037833895831-Get-started-with-Apple-s-UI-kit) say this makes SF Pro available in Figma. If it is still missing, download SF Pro from [Apple Fonts](https://developer.apple.com/fonts/), install it locally according to Apple's terms, then restart Figma Desktop. Do not add font files to this repository. The desktop app includes local font support; the separate Figma font installer is for browser use.
+
+The checked pair above uses schema `0.4.0` and includes the Button's `fontStyle=normal`. Older `0.3.0` exports cannot satisfy automatic typography validation. Obsidian's `??` entries are a no-override sentinel, not a font family; the current Capture build omits them from usable typography CSS variable values while `tokens.json` retains the literal raw CSS values. Re-export from Obsidian to see that normalization in the artifacts; the plugin also filters sentinels when importing the checked pair.
 
 The manifest has no invented `id`. Figma assigns plugin IDs; its manifest documentation describes `id` as the ID used to publish updates. If Desktop requires an ID during import, use **Plugins → Development → New Plugin…** with the **Run once** template to obtain a Figma-issued ID, add that value as `"id"` in this manifest, then import this manifest. Keep `apps/figma-plugin/` as the source; the generated template is only for obtaining the ID. Publishing is outside this setup.
 
@@ -29,11 +37,12 @@ npm run build --workspace @obsidian-ui-system/figma-plugin
 npm run dev --workspace @obsidian-ui-system/figma-plugin
 ```
 
-`dev` watches `src/*.ts` and recompiles `dist/code.js` when they change. After a rebuild, run the development plugin again in Figma Desktop. Each click on **Generate Button** adds another Component Set. Re-run `check` when changing TypeScript; watch mode only builds. If you change the manifest or `src/ui.html`, re-import or restart the plugin if the app does not pick up the change. Font choice is explicit for every run. A prior Component Set is not changed by rebuilding or generating a new one.
+`dev` watches `src/*.ts` and recompiles `dist/code.js` when they change. After a rebuild, run the development plugin again in Figma Desktop. Each click on **Generate Button** adds another Component Set. Re-run `check` when changing TypeScript; watch mode only builds. If you change the manifest or `src/ui.html`, re-import or restart the plugin if the app does not pick up the change. A prior Component Set is not changed by rebuilding or generating a new one.
 
 ## Files
 
-- `src/code.ts`: Figma Component Set creation and font selection.
+- `src/code.ts`: Figma Component Set creation and font loading.
+- `src/font-resolution.ts`: deterministic CSS stack to required Figma font mapping.
 - `src/button-data.ts`: validates and maps Button evidence from Atlas and Layout Lab.
 - `src/ui.html`: local file picker and status messages.
 - `manifest.json`: Figma Design plugin registration, pointing to `dist/code.js` and `src/ui.html`.

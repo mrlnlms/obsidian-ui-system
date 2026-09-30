@@ -8,4 +8,6 @@ Version 0.3.0 adds required `obsidianSdkVersion` to the manifest. `obsidianVersi
 
 Version 0.4.0 adds computed `fontStyle` and `letterSpacing`. Text-bearing elements also record a bounded set of computed typography CSS variables and the direct inline `font-family` declaration when one exists. Otherwise the declaration source is `unresolved`. The computed family is a CSS stack; it does not identify the font that rendered each glyph in Electron.
 
+Obsidian's `'??'` font is a no-override sentinel with `unicode-range: U+0`. The typography context filters exact sentinel entries from usable font-family variables and omits variables that contain only sentinels. `styles.fontFamily` and the separate `tokens.json` retain their literal computed values for provenance. Consumers must not interpret `??` as a font dependency.
+
 This is an observational snapshot contract, not a complete semantic model of Obsidian UI. It may change after more components and themes are sampled.

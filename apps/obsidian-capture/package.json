@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc --noEmit && node esbuild.config.mjs production",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test:typography": "esbuild tests/typography-capture.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/typography-capture.test.cjs && node --test ../../.build/typography-capture.test.cjs"
   },
   "dependencies": {
     "@obsidian-ui-system/ui-schema": "0.4.0"

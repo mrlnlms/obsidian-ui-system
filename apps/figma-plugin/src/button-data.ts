@@ -15,6 +15,7 @@ export interface ButtonData {
   fontFamily: string;
   fontSize: number;
   fontWeight: number;
+  platform: string;
   fontStyle: string | null;
   lineHeight: string;
   letterSpacing: string | null;
@@ -38,6 +39,8 @@ export function readButtonImport(components: unknown, layout: unknown): ButtonDa
   }
   const inferences: unknown[] = lab.inferences;
   const observations: unknown[] = lab.observations;
+  const environment = record(lab.environment, 'layout.json inválido: environment ausente');
+  const platform = str(environment.platform, 'layout.json inválido: platform ausente');
 
   return STATES.map(({ variant, state }) => {
     const specimen = unique(components, variant, 'specimen');
@@ -156,6 +159,7 @@ export function readButtonImport(components: unknown, layout: unknown): ButtonDa
       fontFamily: str(styles.fontFamily, `Button ${variant}: fontFamily`),
       fontSize: px(styles.fontSize, `Button ${variant}: fontSize`),
       fontWeight: Number(str(styles.fontWeight, `Button ${variant}: fontWeight`)),
+      platform,
       fontStyle: typeof styles.fontStyle === 'string' ? styles.fontStyle : null,
       lineHeight: str(styles.lineHeight, `Button ${variant}: lineHeight`),
       letterSpacing: typeof styles.letterSpacing === 'string' ? styles.letterSpacing : null,

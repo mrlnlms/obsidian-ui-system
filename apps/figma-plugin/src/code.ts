@@ -1,41 +1,22 @@
 import { readButtonImport } from './button-data';
+import { requiredFont } from './font-resolution';
 
-figma.showUI(__html__, { width: 430, height: 560 });
+figma.showUI(__html__, { width: 380, height: 330 });
 
 figma.ui.onmessage = async (message: unknown) => {
-  if (!isImportMessage(message)) return;
-
-  if (message.type === 'inspect-button') {
-    try {
-      const data = readButtonImport(message.components, message.layout);
-      validateSharedTypography(data);
-      const available = await figma.listAvailableFontsAsync();
-      const regular = available.map((item) => item.fontName)
-        .filter((font) => font.style === 'Regular')
-        .sort((a, b) => a.family.localeCompare(b.family));
-      const requested = data[0];
-      figma.ui.postMessage({ type: 'font-report', ok: true,
-        requested: {
-          stack: requested.fontFamily, size: requested.fontSize, weight: requested.fontWeight,
-          style: requested.fontStyle, lineHeight: requested.lineHeight,
-          letterSpacing: requested.letterSpacing, typography: requested.typography,
-        },
-        fonts: regular,
-      });
-    } catch (error) {
-      figma.ui.postMessage({ type: 'font-report', ok: false,
-        text: error instanceof Error ? error.message : String(error) });
-    }
-    return;
-  }
+  if (!isGenerateMessage(message)) return;
 
   let set: ComponentSetNode | undefined;
   const components: ComponentNode[] = [];
   try {
     const data = readButtonImport(message.components, message.layout);
     validateSharedTypography(data);
-    const font = await resolveFont(message.font, data[0].fontWeight, data[0].fontStyle);
+    const available = await figma.listAvailableFontsAsync();
+    const font = requiredFont({ cssStack: data[0].fontFamily, platform: data[0].platform,
+      size: data[0].fontSize, weight: data[0].fontWeight, style: data[0].fontStyle },
+    available.map((item) => item.fontName));
     await figma.loadFontAsync(font);
+    figma.ui.postMessage({ type: 'typography', text: `Typography: ${font.family} / ${font.style} ✓` });
 
     const textNodes: TextNode[] = [];
     for (const button of data) {
@@ -83,7 +64,7 @@ figma.ui.onmessage = async (message: unknown) => {
       requestedDeclaration: data[0].typography.fontFamilyDeclaration,
       usedFigmaFont: font };
     set.setPluginData('obsidian-ui-typography', JSON.stringify(fontRecord));
-    set.description = `Typography requested (CSS): ${data[0].fontFamily}\nFigma font selected: ${font.family} / ${font.style}`;
+    set.description = `Typography requested (CSS): ${data[0].fontFamily}\nFigma font used: ${font.family} / ${font.style}`;
     if (set.children.length !== 3 || set.componentPropertyDefinitions.State?.type !== 'VARIANT') {
       throw new Error('O Figma não criou as três variants com a propriedade State.');
     }
@@ -112,7 +93,7 @@ figma.ui.onmessage = async (message: unknown) => {
     set.y = center.y - set.height / 2;
     figma.currentPage.selection = [set];
     figma.viewport.scrollAndZoomIntoView([set]);
-    figma.ui.postMessage({ type: 'result', ok: true, text: `Obsidian / Button criado com 3 variants. Solicitada: ${data[0].fontFamily}\nUsada no Figma: ${font.family} / ${font.style}. Crie uma instance e altere Label para OK.` });
+    figma.ui.postMessage({ type: 'result', ok: true, text: `Obsidian / Button criado com 3 variants. Crie uma instance e altere Label para OK.` });
   } catch (error) {
     if (set && !set.removed) set.remove();
     else for (const component of components) if (!component.removed) component.remove();
@@ -121,9 +102,8 @@ figma.ui.onmessage = async (message: unknown) => {
   }
 };
 
-function isImportMessage(value: unknown): value is { type: 'inspect-button' | 'generate-button'; components: unknown; layout: unknown; font?: unknown } {
-  return typeof value === 'object' && value !== null && 'type' in value &&
-    (value.type === 'inspect-button' || value.type === 'generate-button') &&
+function isGenerateMessage(value: unknown): value is { type: 'generate-button'; components: unknown; layout: unknown } {
+  return typeof value === 'object' && value !== null && 'type' in value && value.type === 'generate-button' &&
     'components' in value && 'layout' in value;
 }
 
@@ -134,18 +114,4 @@ function validateSharedTypography(data: ReturnType<typeof readButtonImport>): vo
       button.letterSpacing !== data[0].letterSpacing)) {
     throw new Error('Button: texto ou tipografia diverge entre variants; o spike exige valores compartilhados.');
   }
-}
-
-async function resolveFont(choice: unknown, cssWeight: number, cssStyle: string | null): Promise<FontName> {
-  if (cssWeight !== 400) throw new Error(`Peso de fonte ${cssWeight} ainda não suportado neste spike.`);
-  if (cssStyle && cssStyle !== 'normal') throw new Error(`Estilo de fonte ${cssStyle} ainda não suportado neste spike.`);
-  if (!choice || typeof choice !== 'object' || !('family' in choice) || !('style' in choice) ||
-      typeof choice.family !== 'string' || typeof choice.style !== 'string' || !choice.family) {
-    throw new Error('Fonte unresolved: selecione explicitamente uma fonte disponível no Figma.');
-  }
-  const available = await figma.listAvailableFontsAsync();
-  const match = available.find((item) => item.fontName.family === choice.family &&
-    item.fontName.style === choice.style && item.fontName.style === 'Regular');
-  if (!match) throw new Error(`Fonte Figma indisponível: ${choice.family} / ${choice.style}. Atualize a lista e escolha outra.`);
-  return match.fontName;
 }
