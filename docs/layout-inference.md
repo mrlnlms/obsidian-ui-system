@@ -41,7 +41,7 @@ Para avançar sem adivinhar, precisamos de:
 3. Identidade/visibilidade estável dos filhos e geometria de pseudo-elementos, ícones e superfícies nativas. CSSOM computado sozinho não prova se uma largura constante veio de `width` explícito, tamanho intrínseco ou regra do sistema operacional.
 4. Análise de flexibilidade e wrapping dos filhos de Setting em mais larguras; a estrutura composta precisa de decisões semânticas antes de virar camadas editáveis.
 
-**Intervenção manual ainda será necessária** para mapear a intenção de controles nativos (Dropdown), ícones/pseudo-elementos (Search), composição da faixa do Slider e estrutura/responsividade interna de Setting. Button continua apto como piloto restrito de modelo Figma-ready; Search é parcial. Nenhum plugin do Figma foi criado.
+**Intervenção manual ainda será necessária** para mapear a intenção de controles nativos (Dropdown), ícones/pseudo-elementos (Search), composição da faixa do Slider e estrutura/responsividade interna de Setting. Button continua apto como piloto restrito de modelo Figma-ready; Search é parcial. Esta análise precedeu o [spike Figma de Button](figma-button-spike.md).
 
 ## Limite de manutenção
 

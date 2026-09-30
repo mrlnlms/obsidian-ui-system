@@ -83,7 +83,7 @@ If a real directory occupies that path, inspect its contents before removing it;
 ## Project layout
 
 - `apps/obsidian-capture/`: current plugin source and build configuration.
-- `apps/figma-plugin/`: minimal Figma Design development plugin; see its [local installation guide](apps/figma-plugin/README.md). It does not import Atlas snapshots yet.
+- `apps/figma-plugin/`: Figma Design development plugin with a Button-only Atlas/Layout Lab spike; see its [local installation guide](apps/figma-plugin/README.md) and [mapping notes](docs/figma-button-spike.md).
 - `packages/ui-schema/`: initial shared TypeScript snapshot contract.
 - `skills/obsidian-ui/`: future agent skill placeholder.
 - `dev-vault/`: isolated Obsidian test vault.
