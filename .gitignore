@@ -6,6 +6,7 @@ snapshot-diffs/
 apps/obsidian-capture/main.js
 apps/obsidian-capture/*.map
 apps/obsidian-capture/data.json
+apps/figma-plugin/dist/
 
 # Keep only the development plugin link in the vault configuration.
 dev-vault/.obsidian/*

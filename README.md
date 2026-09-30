@@ -15,7 +15,7 @@ npm ci
 npm run build
 ```
 
-The build writes `apps/obsidian-capture/main.js` and compiles the snapshot comparison CLI under `.build/snapshot-diff/`. Both outputs are ignored by Git, so build after cloning and before opening the plugin in Obsidian.
+The build writes `apps/obsidian-capture/main.js`, `apps/figma-plugin/dist/code.js`, and the snapshot comparison CLI under `.build/snapshot-diff/`. These outputs are ignored by Git, so build after cloning and before opening either plugin.
 
 ## Open the development vault
 
@@ -83,7 +83,7 @@ If a real directory occupies that path, inspect its contents before removing it;
 ## Project layout
 
 - `apps/obsidian-capture/`: current plugin source and build configuration.
-- `apps/figma-plugin/`: future Figma importer placeholder.
+- `apps/figma-plugin/`: minimal Figma Design development plugin; see its [local installation guide](apps/figma-plugin/README.md). It does not import Atlas snapshots yet.
 - `packages/ui-schema/`: initial shared TypeScript snapshot contract.
 - `skills/obsidian-ui/`: future agent skill placeholder.
 - `dev-vault/`: isolated Obsidian test vault.

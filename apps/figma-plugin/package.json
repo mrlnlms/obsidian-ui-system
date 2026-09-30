@@ -1,0 +1,15 @@
+{
+  "name": "@obsidian-ui-system/figma-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "npm run check && esbuild src/code.ts --bundle --platform=browser --target=es2017 --outfile=dist/code.js",
+    "check": "tsc --noEmit",
+    "dev": "esbuild src/code.ts --bundle --platform=browser --target=es2017 --outfile=dist/code.js --watch"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.140.0",
+    "esbuild": "^0.25.5",
+    "typescript": "^5.8.3"
+  }
+}
