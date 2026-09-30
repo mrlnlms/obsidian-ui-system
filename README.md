@@ -49,6 +49,8 @@ The [determinism check](docs/snapshot-determinism.md) records consecutive export
 
 The [Light/Dark capture](docs/light-dark-capture.md) documents how to export the same Atlas under each base color scheme and the observed semantic diff for the default theme. Mode belongs to the manifest; specimen identity remains `id + variant`.
 
+The [public API phase closure](docs/public-api-phase-complete.md) records the 26-family / 59-specimen milestone and its backlog. The [Figma readiness assessment](docs/figma-readiness.md) checks six representative specimens against the information needed for editable, responsive reconstruction. It is an analysis of the current snapshot, not a Figma importer.
+
 The [Settings batch notes](docs/settings-batch.md) document the four Settings APIs, their runtime quirks, and the comparison with the preceding Dark snapshot.
 
 The [direct overlay notes](docs/overlays-batch.md) document batch 4, including opening and cleanup, capture roots, and the real export comparison.
