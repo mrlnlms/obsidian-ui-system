@@ -1,0 +1,9 @@
+# Component registry
+
+`apps/obsidian-capture/src/component-registry.ts` defines the specimens used by both the Atlas view and snapshot capture. Each definition has a stable `id`, `name`, `category`, `source`, `implementation`, an array of variants, and a `render` factory. The factory instantiates a real Obsidian component and returns its DOM root plus a function that reads its current state.
+
+To add a component, add one definition to `componentRegistry`. Use an API-backed factory when `source` is `public-api`. Give each variant a stable `id`, a visible `name`, and an expected `state`. The view automatically groups it by category and renders every variant; export captures those same rendered roots. Do not add a second capture-specific implementation.
+
+To add a variant, add one item to that component's `variants` array and handle its `id` in the factory with public API methods. For example, `ButtonComponent` uses `setDisabled(true)` for `disabled` and `setCta()` for `cta`. Its `normal` and `cta` variants both have state `enabled`. `SearchComponent` uses `setValue()` for `empty` and `filled`; `ToggleComponent` uses `setValue()` for `off` and `on`.
+
+Export rebuilds specimens immediately before capture, so manual interaction with the examples does not silently change a named variant. Capture checks that each resulting state matches the variant definition. The exported `(id, variant)` pair identifies a specimen; `id` remains the stable component type ID.

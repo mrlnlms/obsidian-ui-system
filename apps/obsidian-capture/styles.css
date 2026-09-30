@@ -4,6 +4,19 @@
   padding: var(--size-4-4);
 }
 
+.obsidian-ui-atlas-category {
+  margin-block: var(--size-4-8);
+}
+
+.obsidian-ui-atlas-component {
+  margin-block: var(--size-4-6);
+}
+
 .obsidian-ui-atlas-specimen {
-  margin-bottom: var(--size-4-6);
+  margin-block: var(--size-4-4);
+}
+
+.obsidian-ui-atlas-variant-name {
+  margin-bottom: var(--size-4-2);
+  color: var(--text-muted);
 }

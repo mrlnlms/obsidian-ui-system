@@ -1,19 +1,20 @@
 import type { App } from 'obsidian';
-import type { CatalogEntry } from './catalog';
+import { componentRegistry, type RenderedSpecimen } from './component-registry';
 import { captureComponents, captureManifest, captureTokens } from './snapshot';
 
 const EXPORT_ROOT = 'ui-catalog-exports';
 
-export async function exportCatalog(app: App, entries: CatalogEntry[]): Promise<string> {
-  if (entries.length !== 3) throw new Error(`Expected three catalog components, found ${entries.length}`);
-  if (entries.some(({ root }) => !root.isConnected)) throw new Error('Open the catalog before exporting');
+export async function exportCatalog(app: App, specimens: RenderedSpecimen[]): Promise<string> {
+  const expected = componentRegistry.reduce((total, definition) => total + definition.variants.length, 0);
+  if (specimens.length !== expected) throw new Error(`Expected ${expected} catalog specimens, found ${specimens.length}`);
+  if (specimens.some(({ root }) => !root.isConnected)) throw new Error('Open the catalog before exporting');
 
-  const doc = entries[0]!.root.ownerDocument;
+  const doc = specimens[0]!.root.ownerDocument;
   const capturedAt = new Date().toISOString();
   // Capture all three outputs before any file operation so they describe one UI state.
   const manifest = captureManifest(doc, capturedAt);
   const tokens = captureTokens(doc);
-  const components = captureComponents(entries);
+  const components = captureComponents(specimens);
 
   const adapter = app.vault.adapter;
   if (!(await adapter.exists(EXPORT_ROOT))) await adapter.mkdir(EXPORT_ROOT);

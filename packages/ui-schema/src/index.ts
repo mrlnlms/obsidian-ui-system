@@ -23,6 +23,7 @@ export interface DomSnapshot {
   tag: string;
   classes: string[];
   attributes?: Record<string, string>;
+  properties?: { value?: string; checked?: boolean; disabled?: boolean };
   text?: string;
   sizePx: { width: number; height: number };
   styles: SelectedStyles;
@@ -32,14 +33,16 @@ export interface DomSnapshot {
 export interface ComponentSnapshot {
   id: string;
   name: string;
+  category: string;
   origin: ComponentOrigin;
   implementation: string;
+  variant: string;
   states?: { current: string; known: string[] };
   dom: DomSnapshot;
 }
 
 export interface SnapshotManifest {
-  schemaVersion: '0.1.0';
+  schemaVersion: '0.2.0';
   obsidianVersion: string;
   capturedAt: string;
   platform: string;

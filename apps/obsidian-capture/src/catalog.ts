@@ -1,21 +1,13 @@
-import { ButtonComponent, ItemView, SearchComponent, ToggleComponent, WorkspaceLeaf } from 'obsidian';
-import type { ComponentOrigin } from '@obsidian-ui-system/ui-schema';
+import { ButtonComponent, ItemView, WorkspaceLeaf } from 'obsidian';
+import { componentRegistry, type RenderedSpecimen } from './component-registry';
 import { exportCatalog } from './export';
-
-export interface CatalogEntry {
-  id: string;
-  name: string;
-  origin: ComponentOrigin;
-  implementation: string;
-  root: Element;
-  getState: () => { current: string; known: string[] };
-}
 
 export const ATLAS_VIEW_TYPE = 'obsidian-ui-atlas-view';
 
 export class AtlasView extends ItemView {
-  private entries: CatalogEntry[] = [];
+  private specimens: RenderedSpecimen[] = [];
   private exporting = false;
+  private specimensEl: HTMLDivElement | null = null;
 
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
@@ -38,52 +30,8 @@ export class AtlasView extends ItemView {
     this.contentEl.addClass('obsidian-ui-atlas-content');
     this.contentEl.createEl('h2', { text: 'Obsidian UI Atlas' });
     this.contentEl.createEl('p', { text: 'Public API components rendered in the current theme.' });
-
-    const buttonMount = this.addSection('ButtonComponent');
-    const button = new ButtonComponent(buttonMount).setButtonText('Example button');
-
-    const searchMount = this.addSection('SearchComponent');
-    const search = new SearchComponent(searchMount).setPlaceholder('Search example');
-    const searchRoot = search.inputEl.parentElement;
-
-    const toggleMount = this.addSection('ToggleComponent');
-    const toggle = new ToggleComponent(toggleMount).setValue(false);
-
-    this.entries = [
-      {
-        id: 'obsidian.button',
-        name: 'ButtonComponent',
-        origin: 'public-api',
-        implementation: 'obsidian.ButtonComponent',
-        root: button.buttonEl,
-        getState: () => ({
-          current: button.buttonEl.disabled ? 'disabled' : 'enabled',
-          known: ['enabled', 'disabled'],
-        }),
-      },
-      {
-        id: 'obsidian.search',
-        name: 'SearchComponent',
-        origin: 'public-api',
-        implementation: 'obsidian.SearchComponent',
-        root: searchRoot && searchMount.contains(searchRoot) ? searchRoot : search.inputEl,
-        getState: () => ({
-          current: search.getValue() ? 'filled' : 'empty',
-          known: ['empty', 'filled'],
-        }),
-      },
-      {
-        id: 'obsidian.toggle',
-        name: 'ToggleComponent',
-        origin: 'public-api',
-        implementation: 'obsidian.ToggleComponent',
-        root: toggle.toggleEl,
-        getState: () => ({
-          current: toggle.getValue() ? 'on' : 'off',
-          known: ['off', 'on'],
-        }),
-      },
-    ];
+    this.specimensEl = this.contentEl.createDiv();
+    this.renderSpecimens();
 
     const actions = this.contentEl.createDiv();
     const status = this.contentEl.createEl('p');
@@ -95,7 +43,9 @@ export class AtlasView extends ItemView {
         this.exporting = true;
         status.setText('Exporting…');
         try {
-          const folder = await exportCatalog(this.app, this.entries);
+          // Recreate deterministic specimens if someone interacted with the examples.
+          this.renderSpecimens();
+          const folder = await exportCatalog(this.app, this.specimens);
           status.setText(`Saved manifest.json, tokens.json and components.json to ${folder}`);
         } catch (error) {
           status.setText(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -106,14 +56,34 @@ export class AtlasView extends ItemView {
   }
 
   async onClose(): Promise<void> {
-    this.entries = [];
+    this.specimens = [];
+    this.specimensEl = null;
     this.contentEl.empty();
     this.contentEl.removeClass('obsidian-ui-atlas-content');
   }
 
-  private addSection(name: string): HTMLDivElement {
-    const section = this.contentEl.createDiv({ cls: 'obsidian-ui-atlas-specimen' });
-    section.createEl('h3', { text: name });
-    return section.createDiv();
+  private renderSpecimens(): void {
+    const host = this.specimensEl;
+    if (!host) throw new Error('Atlas specimen container is unavailable');
+    host.empty();
+    this.specimens = [];
+
+    const categories = new Map<string, HTMLDivElement>();
+    for (const definition of componentRegistry) {
+      let category = categories.get(definition.category);
+      if (!category) {
+        category = host.createDiv({ cls: 'obsidian-ui-atlas-category' });
+        category.createEl('h3', { text: definition.category });
+        categories.set(definition.category, category);
+      }
+      const component = category.createDiv({ cls: 'obsidian-ui-atlas-component' });
+      component.createEl('h4', { text: definition.name });
+      for (const variant of definition.variants) {
+        const specimen = component.createDiv({ cls: 'obsidian-ui-atlas-specimen' });
+        specimen.createEl('div', { cls: 'obsidian-ui-atlas-variant-name', text: variant.name });
+        const rendered = definition.render(specimen.createDiv(), variant);
+        this.specimens.push({ definition, variant, ...rendered });
+      }
+    }
   }
 }

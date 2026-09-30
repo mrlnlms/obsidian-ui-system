@@ -6,7 +6,7 @@ import type {
   SnapshotManifest,
   TokensSnapshot,
 } from '@obsidian-ui-system/ui-schema';
-import type { CatalogEntry } from './catalog';
+import type { RenderedSpecimen } from './component-registry';
 
 function selectedStyles(style: CSSStyleDeclaration): SelectedStyles {
   const value = (name: string): string => style.getPropertyValue(name).trim();
@@ -45,11 +45,17 @@ export function captureElement(element: Element): DomSnapshot {
     .map((node) => node.textContent?.trim() ?? '')
     .filter(Boolean)
     .join(' ');
+  const properties = element instanceof HTMLInputElement
+    ? { value: element.value, checked: element.checked, disabled: element.disabled }
+    : element instanceof HTMLButtonElement
+      ? { disabled: element.disabled }
+      : undefined;
 
   return {
     tag: element.tagName.toLowerCase(),
     classes: Array.from(element.classList),
     ...(Object.keys(attributes).length ? { attributes } : {}),
+    ...(properties ? { properties } : {}),
     ...(text ? { text } : {}),
     sizePx: { width: rect.width, height: rect.height },
     styles: selectedStyles(view.getComputedStyle(element)),
@@ -57,15 +63,26 @@ export function captureElement(element: Element): DomSnapshot {
   };
 }
 
-export function captureComponents(entries: CatalogEntry[]): ComponentSnapshot[] {
-  return entries.map(({ id, name, origin, implementation, root, getState }) => ({
-    id,
-    name,
-    origin,
-    implementation,
-    states: getState(),
-    dom: captureElement(root),
-  }));
+export function captureComponents(specimens: RenderedSpecimen[]): ComponentSnapshot[] {
+  return specimens.map(({ definition, variant, root, getState }) => {
+    const current = getState();
+    if (current !== variant.state) {
+      throw new Error(`${definition.id}/${variant.id}: expected ${variant.state}, found ${current}`);
+    }
+    return {
+      id: definition.id,
+      name: definition.name,
+      category: definition.category,
+      origin: definition.source,
+      implementation: definition.implementation,
+      variant: variant.id,
+      states: {
+        current,
+        known: [...new Set(definition.variants.map((item) => item.state))],
+      },
+      dom: captureElement(root),
+    };
+  });
 }
 
 export function captureTokens(doc: Document): TokensSnapshot {
@@ -119,7 +136,7 @@ export function captureManifest(doc: Document, capturedAt: string): SnapshotMani
     : Platform.isLinux ? 'linux' : 'unknown';
 
   return {
-    schemaVersion: '0.1.0',
+    schemaVersion: '0.2.0',
     obsidianVersion: apiVersion,
     capturedAt,
     platform,
