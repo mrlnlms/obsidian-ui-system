@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { inferLayout } from './layout-inference';
-import type { LayoutObservation } from './layout-spike';
+import { resolveLayoutProbes, type LayoutProbeSuite } from './layout-probes';
+import type { LayoutObservation } from './layout-capture';
+import type { ComponentDefinition } from './component-registry';
 
 function observation(
   id: string, variant: string, content: string, hostWidth: number,
@@ -96,4 +98,42 @@ test('missing width variation does not create a sizing claim', () => {
   const [result] = inferLayout([observation('example', 'normal', 'baseline', 240, 100, 30)]);
   assert.equal(result?.horizontal.mode, 'unknown');
   assert.equal(result.vertical.mode, 'unknown');
+});
+
+test('Setting root fills hosts while height stays unresolved', () => {
+  const rows = [
+    observation('obsidian.setting', 'standard', 'baseline', 160, 160, 116.56),
+    observation('obsidian.setting', 'standard', 'baseline', 240, 240, 116.56),
+    observation('obsidian.setting', 'standard', 'baseline', 480, 480, 68.48),
+  ];
+  const [result] = inferLayout(rows);
+  assert.equal(result?.horizontal.mode, 'fill');
+  assert.equal(result.horizontal.confidence, 'high');
+  assert.equal(result.vertical.mode, 'unknown');
+});
+
+test('declarative specimen selection resolves variants, hosts and content', () => {
+  const definition: ComponentDefinition = {
+    id: 'example', name: 'Example', category: 'Test', source: 'public-api',
+    implementation: 'example', supportsLayoutContentProbe: true,
+    variants: [
+      { id: 'normal', name: 'Normal', state: 'enabled' },
+      { id: 'selected', name: 'Selected', state: 'selected' },
+    ],
+    render: () => { throw new Error('The resolver must not render specimens'); },
+  };
+  const suite: LayoutProbeSuite = {
+    defaultHosts: [{ id: 'default', widthPx: 240 }],
+    defaultContents: [{ id: 'default-content', text: 'Atlas' }],
+    specimens: [{
+      id: 'example', variants: ['selected'],
+      hosts: [{ id: 'small', widthPx: 160 }, { id: 'large', widthPx: 480 }],
+      contents: [{ id: 'short', text: 'OK' }],
+    }],
+  };
+  const cases = resolveLayoutProbes([definition], suite);
+  assert.deepEqual(cases.map((item) => [item.variant.id, item.content.id, item.host.widthPx]), [
+    ['selected', 'baseline', 160], ['selected', 'baseline', 480],
+    ['selected', 'short', 160], ['selected', 'short', 480],
+  ]);
 });

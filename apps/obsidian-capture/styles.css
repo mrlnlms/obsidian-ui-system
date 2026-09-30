@@ -44,41 +44,42 @@
   display: flex;
 }
 
-.obsidian-ui-atlas-layout-spike {
-  margin-block: var(--size-4-8);
+.obsidian-ui-layout-lab-content {
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--size-4-4);
 }
 
-.obsidian-ui-atlas-layout-spike > summary {
-  cursor: pointer;
-  font-weight: var(--font-semibold);
+.obsidian-ui-layout-lab-actions {
+  margin-block: var(--size-4-4);
 }
 
-.obsidian-ui-atlas-layout-results {
+.obsidian-ui-layout-lab-results {
   overflow-x: auto;
 }
 
-.obsidian-ui-atlas-layout-fixtures {
+.obsidian-ui-layout-lab-fixtures {
   max-height: 800px;
   overflow-y: auto;
 }
 
-.obsidian-ui-atlas-layout-results table {
+.obsidian-ui-layout-lab-results table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.obsidian-ui-atlas-layout-results th,
-.obsidian-ui-atlas-layout-results td {
+.obsidian-ui-layout-lab-results th,
+.obsidian-ui-layout-lab-results td {
   padding: var(--size-4-2);
   border-bottom: 1px solid var(--background-modifier-border);
   text-align: left;
 }
 
-.obsidian-ui-atlas-layout-group {
+.obsidian-ui-layout-lab-group {
   margin-block: var(--size-4-6);
 }
 
-.obsidian-ui-atlas-layout-card {
+.obsidian-ui-layout-lab-card {
   overflow-x: auto;
   padding: var(--size-4-3);
   margin-block: var(--size-4-2);
@@ -86,6 +87,6 @@
   border-radius: var(--radius-s);
 }
 
-.obsidian-ui-atlas-layout-host {
+.obsidian-ui-layout-lab-host {
   box-sizing: border-box;
 }

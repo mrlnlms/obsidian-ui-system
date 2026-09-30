@@ -2,7 +2,7 @@
 
 Esta fase generaliza o [spike Button/Search](layout-spike.md). O [suite de probes](../apps/obsidian-capture/src/layout-probes.ts) escolhe cinco famílias do registry, hosts de **160, 240 e 480 CSS px** e amostras opcionais de texto curto/longo. Cada variant existente é renderizada pela mesma factory usada pelo catálogo e pelo snapshot público. Button usa `setButtonText`, Search usa `setPlaceholder` no estado vazio ou `setValue` no preenchido, e Setting usa `setName`; Dropdown e Slider recebem somente os três hosts. O campo `supportsLayoutContentProbe` declara a capacidade, sem codificar uma regra de inferência por componente. Host e conteúdo são contextos de medição; **não são variants**.
 
-No Atlas, **View layout comparison** mostra uma tabela de medidas e classificações, seguida dos specimens em uma área rolável. **Export layout probes** grava `layout.json` em `dev-vault/layout-spike-exports/<timestamp>/` (local e ignorado pelo Git). O arquivo contém `probeSuite`, ambiente, viewport, observações DOM/CSS, inferências com evidência/confiança/probes e `intermediateModel` por `(id, variant)`. O [exemplo versionado do modelo](layout-spike-model.experimental.json) foi gerado da exportação real. Tudo permanece fora do `ui-schema`; `manifest.json`, `tokens.json` e `components.json` continuam iguais.
+No [Layout Probe Lab](layout-lab.md), **Measure layout probes** mostra medidas e classificações; **Export layout probes** grava `layout.json` em `dev-vault/layout-spike-exports/<timestamp>/` (local e ignorado pelo Git). O arquivo contém `probeSuite`, ambiente, viewport, observações DOM/CSS, inferências com evidência/confiança/probes e `intermediateModel` por `(id, variant)`. O [exemplo versionado do modelo](layout-spike-model.experimental.json) foi gerado da exportação real. Tudo permanece fora do `ui-schema`; `manifest.json`, `tokens.json` e `components.json` continuam iguais.
 
 ## Regras atuais
 
@@ -45,4 +45,4 @@ Para avançar sem adivinhar, precisamos de:
 
 ## Limite de manutenção
 
-Os specimens e variants canônicos do registry público permanecem intactos. Fixtures exclusivas de probes podem ser refatoradas quando a evidência continuar coberta por testes ou documentação. A próxima iteração deve oferecer os probes por um **comando próprio do Obsidian**, separado do comando principal que abre o Atlas; essa separação ainda não foi implementada nesta rodada.
+Os specimens e variants canônicos do registry público permanecem intactos. Fixtures exclusivas de probes podem ser refatoradas quando a evidência continuar coberta por testes ou documentação. O comando **Open Obsidian UI Layout Lab** abre os probes numa aba própria; o comando do Atlas contém apenas o catálogo canônico.

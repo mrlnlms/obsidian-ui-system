@@ -1,4 +1,4 @@
-import type { ElementNodeSnapshot, LayoutObservation, TextNodeSnapshot } from './layout-spike';
+import type { ElementNodeSnapshot, LayoutObservation, TextNodeSnapshot } from './layout-capture';
 
 export type SizingMode = 'hug' | 'fill' | 'fixed' | 'unknown';
 export type Confidence = 'high' | 'medium' | 'low' | 'none';

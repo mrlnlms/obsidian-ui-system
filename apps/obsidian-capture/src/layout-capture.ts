@@ -1,7 +1,7 @@
 import type { App } from 'obsidian';
 import { componentRegistry, type ComponentDefinition, type ComponentVariant } from './component-registry';
 import { captureManifest } from './snapshot';
-import { layoutProbeSuite } from './layout-probes';
+import { layoutProbeSuite, resolveLayoutProbes } from './layout-probes';
 import { inferLayout, type LayoutInference } from './layout-inference';
 
 const EXPORT_ROOT = 'layout-spike-exports';
@@ -169,49 +169,41 @@ function captureLayoutNode(element: Element, parent: RectSnapshot | null, view: 
 export function renderLayoutFixtures(mount: HTMLElement, app: App): LayoutFixture[] {
   mount.empty();
   const fixtures: LayoutFixture[] = [];
-  for (const id of layoutProbeSuite.componentIds) {
-    const definition = componentRegistry.find((item) => item.id === id);
-    if (!definition) throw new Error(`Registry component ${id} is unavailable`);
-    const group = mount.createDiv({ cls: 'obsidian-ui-atlas-layout-group' });
-    group.createEl('h4', { text: definition.name });
-    for (const variant of definition.variants) {
-      const contexts = [
-        { id: 'baseline' },
-        ...(definition.supportsLayoutContentProbe
-          ? layoutProbeSuite.contentProbes.map((probe) => ({ id: probe.id, text: probe.text }))
-          : []),
-      ];
-      for (const contentContext of contexts) {
-        for (const context of layoutProbeSuite.hostWidths) {
-          const card = group.createDiv({ cls: 'obsidian-ui-atlas-layout-card' });
-          card.createEl('div', {
-            cls: 'obsidian-ui-atlas-variant-name',
-            text: `${variant.name} · ${contentContext.id} · ${context.id} (${context.widthPx}px host)`,
-          });
-          const host = card.createDiv({ cls: 'obsidian-ui-atlas-layout-host' });
-          host.style.width = `${context.widthPx}px`;
-          const rendered = definition.render(host, variant, app);
-          if (rendered.activate || rendered.getCaptureRoot || rendered.deactivate) {
-            throw new Error(`${id}/${variant.id} unexpectedly requires an overlay lifecycle`);
-          }
-          if ('text' in contentContext) {
-            if (!rendered.setContentForLayoutProbe) throw new Error(`${id} declares content probes without a setter`);
-            rendered.setContentForLayoutProbe(contentContext.text);
-          }
-          if (!host.contains(rendered.root)) throw new Error(`${id}/${variant.id} rendered outside its host`);
-          fixtures.push({
-            definition,
-            variant,
-            contentContext: { id: contentContext.id, ...('text' in contentContext ? { text: contentContext.text } : {}) },
-            hostId: context.id,
-            requestedWidthPx: context.widthPx,
-            host,
-            root: rendered.root,
-            getState: rendered.getState,
-          });
-        }
-      }
+  const groups = new Map<string, HTMLDivElement>();
+  for (const probe of resolveLayoutProbes(componentRegistry)) {
+    const { definition, variant, content, host: context } = probe;
+    let group = groups.get(definition.id);
+    if (!group) {
+      group = mount.createDiv({ cls: 'obsidian-ui-layout-lab-group' });
+      group.createEl('h4', { text: definition.name });
+      groups.set(definition.id, group);
     }
+    const card = group.createDiv({ cls: 'obsidian-ui-layout-lab-card' });
+    card.createEl('div', {
+      cls: 'obsidian-ui-atlas-variant-name',
+      text: `${variant.name} · ${content.id} · ${context.id} (${context.widthPx}px host)`,
+    });
+    const host = card.createDiv({ cls: 'obsidian-ui-layout-lab-host' });
+    host.style.width = `${context.widthPx}px`;
+    const rendered = definition.render(host, variant, app);
+    if (rendered.activate || rendered.getCaptureRoot || rendered.deactivate) {
+      throw new Error(`${definition.id}/${variant.id} unexpectedly requires an overlay lifecycle`);
+    }
+    if (content.text !== undefined) {
+      if (!rendered.setContentForLayoutProbe) throw new Error(`${definition.id} declares content probes without a setter`);
+      rendered.setContentForLayoutProbe(content.text);
+    }
+    if (!host.contains(rendered.root)) throw new Error(`${definition.id}/${variant.id} rendered outside its host`);
+    fixtures.push({
+      definition,
+      variant,
+      contentContext: content,
+      hostId: context.id,
+      requestedWidthPx: context.widthPx,
+      host,
+      root: rendered.root,
+      getState: rendered.getState,
+    });
   }
   return fixtures;
 }
@@ -220,19 +212,9 @@ export async function measureLayoutFixtures(fixtures: LayoutFixture[]): Promise<
   if (!fixtures.length) throw new Error('No layout fixtures were rendered');
   const keys = new Set(fixtures.map((item) => `${item.definition.id}/${item.variant.id}/${item.contentContext.id}/${item.hostId}`));
   if (keys.size !== fixtures.length) throw new Error('Duplicate layout probe keys');
-  for (const id of layoutProbeSuite.componentIds) {
-    const definition = componentRegistry.find((item) => item.id === id);
-    if (!definition) throw new Error(`Registry component ${id} is unavailable`);
-    const contexts = ['baseline', ...(definition.supportsLayoutContentProbe
-      ? layoutProbeSuite.contentProbes.map((item) => item.id) : [])];
-    for (const variant of definition.variants) {
-      for (const context of contexts) {
-        for (const host of layoutProbeSuite.hostWidths) {
-          const key = `${id}/${variant.id}/${context}/${host.id}`;
-          if (!keys.has(key)) throw new Error(`Missing layout probe ${key}`);
-        }
-      }
-    }
+  for (const { definition, variant, content, host } of resolveLayoutProbes(componentRegistry)) {
+    const key = `${definition.id}/${variant.id}/${content.id}/${host.id}`;
+    if (!keys.has(key)) throw new Error(`Missing layout probe ${key}`);
   }
   const doc = fixtures[0]?.host.ownerDocument;
   const view = doc?.defaultView;
@@ -268,7 +250,7 @@ export async function measureLayoutFixtures(fixtures: LayoutFixture[]): Promise<
   });
 }
 
-export async function exportLayoutSpike(app: App, fixtures: LayoutFixture[]): Promise<{ folder: string; observations: LayoutObservation[]; inferences: LayoutInference[] }> {
+export async function exportLayoutProbes(app: App, fixtures: LayoutFixture[]): Promise<{ folder: string; observations: LayoutObservation[]; inferences: LayoutInference[] }> {
   const observations = await measureLayoutFixtures(fixtures);
   const inferences = inferLayout(observations);
   const doc = fixtures[0]!.host.ownerDocument;
