@@ -1,19 +1,10 @@
 import type { App } from 'obsidian';
 import { componentRegistry, type ComponentDefinition, type ComponentVariant } from './component-registry';
 import { captureManifest } from './snapshot';
+import { layoutProbeSuite } from './layout-probes';
+import { inferLayout, type LayoutInference } from './layout-inference';
 
 const EXPORT_ROOT = 'layout-spike-exports';
-const HOSTS = [
-  { id: 'narrow', widthPx: 240 },
-  { id: 'wide', widthPx: 480 },
-] as const;
-const CONSTRAINED_HOST = { id: 'constrained', widthPx: 160 } as const;
-const COMPONENT_IDS = ['obsidian.button', 'obsidian.search'] as const;
-const BUTTON_CONTENT_CONTEXTS = [
-  { id: 'baseline', label: 'Example button', hosts: HOSTS },
-  { id: 'short-label', label: 'OK', hosts: HOSTS },
-  { id: 'long-label', label: 'A longer button label for layout testing', hosts: [CONSTRAINED_HOST, HOSTS[1]] },
-] as const;
 
 /** Explicit experimental CSSOM selection; this does not change ui-schema. */
 const LAYOUT_PROPERTIES = [
@@ -34,28 +25,28 @@ const LAYOUT_PROPERTIES = [
 type LayoutProperty = typeof LAYOUT_PROPERTIES[number];
 type LayoutStyles = Record<LayoutProperty, string>;
 
-interface RectSnapshot {
+export interface RectSnapshot {
   x: number;
   y: number;
   width: number;
   height: number;
 }
 
-interface BoxMetrics {
+export interface BoxMetrics {
   clientWidth: number;
   clientHeight: number;
   scrollWidth: number;
   scrollHeight: number;
 }
 
-interface TextNodeSnapshot {
+export interface TextNodeSnapshot {
   kind: 'text';
   text: string;
   rect: RectSnapshot | null;
   relativeToParent: RectSnapshot | null;
 }
 
-interface ElementNodeSnapshot {
+export interface ElementNodeSnapshot {
   kind: 'element';
   tag: string;
   classes: string[];
@@ -72,7 +63,7 @@ interface ElementNodeSnapshot {
 export interface LayoutFixture {
   definition: ComponentDefinition;
   variant: ComponentVariant;
-  contentContext: { id: string; label?: string };
+  contentContext: { id: string; text?: string };
   hostId: string;
   requestedWidthPx: number;
   host: HTMLElement;
@@ -83,7 +74,7 @@ export interface LayoutFixture {
 export interface LayoutObservation {
   id: string;
   variant: string;
-  contentContext: { id: string; label?: string };
+  contentContext: { id: string; text?: string };
   state: string;
   host: {
     id: string;
@@ -178,16 +169,20 @@ function captureLayoutNode(element: Element, parent: RectSnapshot | null, view: 
 export function renderLayoutFixtures(mount: HTMLElement, app: App): LayoutFixture[] {
   mount.empty();
   const fixtures: LayoutFixture[] = [];
-  for (const id of COMPONENT_IDS) {
+  for (const id of layoutProbeSuite.componentIds) {
     const definition = componentRegistry.find((item) => item.id === id);
     if (!definition) throw new Error(`Registry component ${id} is unavailable`);
     const group = mount.createDiv({ cls: 'obsidian-ui-atlas-layout-group' });
     group.createEl('h4', { text: definition.name });
     for (const variant of definition.variants) {
-      const contentContexts: readonly { id: string; label?: string; hosts: readonly { id: string; widthPx: number }[] }[]
-        = id === 'obsidian.button' ? BUTTON_CONTENT_CONTEXTS : [{ id: 'baseline', hosts: HOSTS }];
-      for (const contentContext of contentContexts) {
-        for (const context of contentContext.hosts) {
+      const contexts = [
+        { id: 'baseline' },
+        ...(definition.supportsLayoutContentProbe
+          ? layoutProbeSuite.contentProbes.map((probe) => ({ id: probe.id, text: probe.text }))
+          : []),
+      ];
+      for (const contentContext of contexts) {
+        for (const context of layoutProbeSuite.hostWidths) {
           const card = group.createDiv({ cls: 'obsidian-ui-atlas-layout-card' });
           card.createEl('div', {
             cls: 'obsidian-ui-atlas-variant-name',
@@ -199,15 +194,15 @@ export function renderLayoutFixtures(mount: HTMLElement, app: App): LayoutFixtur
           if (rendered.activate || rendered.getCaptureRoot || rendered.deactivate) {
             throw new Error(`${id}/${variant.id} unexpectedly requires an overlay lifecycle`);
           }
-          if (contentContext.label) {
-            if (!rendered.setLabelForLayoutProbe) throw new Error(`${id} cannot change its label through the registry`);
-            rendered.setLabelForLayoutProbe(contentContext.label);
+          if ('text' in contentContext) {
+            if (!rendered.setContentForLayoutProbe) throw new Error(`${id} declares content probes without a setter`);
+            rendered.setContentForLayoutProbe(contentContext.text);
           }
           if (!host.contains(rendered.root)) throw new Error(`${id}/${variant.id} rendered outside its host`);
           fixtures.push({
             definition,
             variant,
-            contentContext: { id: contentContext.id, ...(contentContext.label ? { label: contentContext.label } : {}) },
+            contentContext: { id: contentContext.id, ...('text' in contentContext ? { text: contentContext.text } : {}) },
             hostId: context.id,
             requestedWidthPx: context.widthPx,
             host,
@@ -222,14 +217,23 @@ export function renderLayoutFixtures(mount: HTMLElement, app: App): LayoutFixtur
 }
 
 export async function measureLayoutFixtures(fixtures: LayoutFixture[]): Promise<LayoutObservation[]> {
-  const expected = COMPONENT_IDS.reduce((count, id) => {
+  if (!fixtures.length) throw new Error('No layout fixtures were rendered');
+  const keys = new Set(fixtures.map((item) => `${item.definition.id}/${item.variant.id}/${item.contentContext.id}/${item.hostId}`));
+  if (keys.size !== fixtures.length) throw new Error('Duplicate layout probe keys');
+  for (const id of layoutProbeSuite.componentIds) {
     const definition = componentRegistry.find((item) => item.id === id);
-    const contexts = id === 'obsidian.button' ? BUTTON_CONTENT_CONTEXTS
-      : [{ id: 'baseline', hosts: HOSTS }];
-    return count + (definition?.variants.length ?? 0)
-      * contexts.reduce((total, context) => total + context.hosts.length, 0);
-  }, 0);
-  if (fixtures.length !== expected) throw new Error(`Expected ${expected} layout observations, found ${fixtures.length}`);
+    if (!definition) throw new Error(`Registry component ${id} is unavailable`);
+    const contexts = ['baseline', ...(definition.supportsLayoutContentProbe
+      ? layoutProbeSuite.contentProbes.map((item) => item.id) : [])];
+    for (const variant of definition.variants) {
+      for (const context of contexts) {
+        for (const host of layoutProbeSuite.hostWidths) {
+          const key = `${id}/${variant.id}/${context}/${host.id}`;
+          if (!keys.has(key)) throw new Error(`Missing layout probe ${key}`);
+        }
+      }
+    }
+  }
   const doc = fixtures[0]?.host.ownerDocument;
   const view = doc?.defaultView;
   if (!doc || !view) throw new Error('Layout fixtures need a connected document');
@@ -264,17 +268,20 @@ export async function measureLayoutFixtures(fixtures: LayoutFixture[]): Promise<
   });
 }
 
-export async function exportLayoutSpike(app: App, fixtures: LayoutFixture[]): Promise<{ folder: string; observations: LayoutObservation[] }> {
+export async function exportLayoutSpike(app: App, fixtures: LayoutFixture[]): Promise<{ folder: string; observations: LayoutObservation[]; inferences: LayoutInference[] }> {
   const observations = await measureLayoutFixtures(fixtures);
+  const inferences = inferLayout(observations);
   const doc = fixtures[0]!.host.ownerDocument;
   const view = doc.defaultView;
   if (!view) throw new Error('Layout fixtures need a connected window');
   const capturedAt = new Date().toISOString();
   const result = {
-    experimentalFormat: 'atlas-layout-spike-1',
+    experimentalFormat: 'atlas-layout-probes-1',
+    probeSuite: layoutProbeSuite,
     environment: captureManifest(doc, capturedAt),
     viewport: { widthPx: view.innerWidth, heightPx: view.innerHeight, devicePixelRatio: view.devicePixelRatio },
     observations,
+    inferences,
   };
   const adapter = app.vault.adapter;
   if (!(await adapter.exists(EXPORT_ROOT))) await adapter.mkdir(EXPORT_ROOT);
@@ -283,5 +290,5 @@ export async function exportLayoutSpike(app: App, fixtures: LayoutFixture[]): Pr
   for (let suffix = 2; await adapter.exists(folder); suffix++) folder = `${EXPORT_ROOT}/${baseName}-${suffix}`;
   await adapter.mkdir(folder);
   await adapter.write(`${folder}/layout.json`, JSON.stringify(result, null, 2) + '\n');
-  return { folder, observations };
+  return { folder, observations, inferences };
 }

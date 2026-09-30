@@ -55,8 +55,8 @@ export interface ComponentVariant {
 interface RenderedComponent {
   root: Element;
   getState: () => string;
-  /** Optional public-API text mutation used only by the controlled layout experiment. */
-  setLabelForLayoutProbe?: (text: string) => void;
+  /** Optional public-API content mutation used only by experimental layout probes. */
+  setContentForLayoutProbe?: (text: string) => void;
   /** Open a surface outside the Atlas before capture. */
   activate?: () => void;
   /** Return the opened surface, rather than the Atlas trigger host. */
@@ -71,6 +71,8 @@ export interface ComponentDefinition {
   source: ComponentOrigin;
   implementation: string;
   variants: readonly ComponentVariant[];
+  /** Declares support for the shared experimental content probes. */
+  supportsLayoutContentProbe?: boolean;
   /** Surfaces opened by a specimen, outside its captured DOM root. */
   triggeredSurfaces?: readonly { id: string; trigger: string }[];
   render: (mount: HTMLElement, variant: ComponentVariant, app: App) => RenderedComponent;
@@ -309,6 +311,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
     category: 'Actions',
     source: 'public-api',
     implementation: 'obsidian.ButtonComponent',
+    supportsLayoutContentProbe: true,
     variants: [
       { id: 'normal', name: 'Normal', state: 'enabled' },
       { id: 'disabled', name: 'Disabled', state: 'disabled' },
@@ -321,7 +324,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       return {
         root: button.buttonEl,
         getState: () => button.buttonEl.disabled ? 'disabled' : 'enabled',
-        setLabelForLayoutProbe: (text) => { button.setButtonText(text); },
+        setContentForLayoutProbe: (text) => { button.setButtonText(text); },
       };
     },
   },
@@ -353,6 +356,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
     category: 'Inputs',
     source: 'public-api',
     implementation: 'obsidian.SearchComponent',
+    supportsLayoutContentProbe: true,
     variants: [
       { id: 'empty', name: 'Empty', state: 'empty' },
       { id: 'filled', name: 'Filled', state: 'filled' },
@@ -365,6 +369,10 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       return {
         root: wrapper && mount.contains(wrapper) ? wrapper : search.inputEl,
         getState: () => search.getValue() ? 'filled' : 'empty',
+        setContentForLayoutProbe: (text) => {
+          if (variant.id === 'empty') search.setPlaceholder(text);
+          else search.setValue(text);
+        },
       };
     },
   },
@@ -541,6 +549,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
     category: 'Settings',
     source: 'public-api',
     implementation: 'obsidian.Setting',
+    supportsLayoutContentProbe: true,
     variants: [
       { id: 'standard', name: 'Standard row', state: 'standard' },
       { id: 'heading', name: 'Heading row', state: 'heading' },
@@ -559,6 +568,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       }
       return {
         root: setting.settingEl,
+        setContentForLayoutProbe: (text) => { setting.setName(text); },
         getState: () => setting.errorEl?.textContent ? 'error'
           : variant.id === 'heading' ? 'heading'
             : variant.id === 'disabled' ? 'disabled' : 'standard',

@@ -57,6 +57,11 @@
   overflow-x: auto;
 }
 
+.obsidian-ui-atlas-layout-fixtures {
+  max-height: 800px;
+  overflow-y: auto;
+}
+
 .obsidian-ui-atlas-layout-results table {
   width: 100%;
   border-collapse: collapse;

@@ -2,6 +2,8 @@ import { ButtonComponent, ItemView, WorkspaceLeaf } from 'obsidian';
 import { componentRegistry, type RenderedSpecimen } from './component-registry';
 import { exportCatalog } from './export';
 import { exportLayoutSpike, measureLayoutFixtures, renderLayoutFixtures, type LayoutFixture, type LayoutObservation } from './layout-spike';
+import { inferLayout, type LayoutInference } from './layout-inference';
+import { layoutProbeSuite } from './layout-probes';
 
 export const ATLAS_VIEW_TYPE = 'obsidian-ui-atlas-view';
 
@@ -39,11 +41,11 @@ export class AtlasView extends ItemView {
     const status = this.contentEl.createEl('p');
     const layoutStatus = this.contentEl.createEl('p');
     const layoutSection = this.contentEl.createEl('details', { cls: 'obsidian-ui-atlas-layout-spike' });
-    layoutSection.createEl('summary', { text: 'Layout comparison · Button + Search' });
-    layoutSection.createEl('p', { text: 'Real registry specimens at 240px/480px, plus a long Button label at 160px/480px. Hosts and labels are measurement context, not variants.' });
+    layoutSection.createEl('summary', { text: 'Experimental layout probes' });
+    layoutSection.createEl('p', { text: 'Registry specimens in 160px, 240px and 480px hosts. Components with a public content setter also use short and long text. These are measurement contexts, not variants.' });
     this.layoutDetailsEl = layoutSection;
     this.layoutResultsEl = layoutSection.createDiv({ cls: 'obsidian-ui-atlas-layout-results' });
-    this.layoutFixturesEl = layoutSection.createDiv();
+    this.layoutFixturesEl = layoutSection.createDiv({ cls: 'obsidian-ui-atlas-layout-fixtures' });
     this.layoutFixtures = renderLayoutFixtures(this.layoutFixturesEl, this.app);
     this.specimensEl = this.contentEl.createDiv();
     this.renderSpecimens();
@@ -75,12 +77,12 @@ export class AtlasView extends ItemView {
         this.layoutDetailsEl.open = true;
         this.layoutFixtures = renderLayoutFixtures(this.layoutFixturesEl, this.app);
         if (save) {
-          const { folder, observations } = await exportLayoutSpike(this.app, this.layoutFixtures);
-          this.renderLayoutResults(observations);
+          const { folder, observations, inferences } = await exportLayoutSpike(this.app, this.layoutFixtures);
+          this.renderLayoutResults(observations, inferences);
           layoutStatus.setText(`Saved layout.json to ${folder}`);
         } else {
           const observations = await measureLayoutFixtures(this.layoutFixtures);
-          this.renderLayoutResults(observations);
+          this.renderLayoutResults(observations, inferLayout(observations));
           layoutStatus.setText('Layout comparison measured in the current Obsidian view.');
         }
         this.layoutDetailsEl.scrollIntoView({ block: 'start' });
@@ -94,7 +96,7 @@ export class AtlasView extends ItemView {
       .setButtonText('View layout comparison')
       .onClick(() => { void showLayout(false); });
     new ButtonComponent(actions)
-      .setButtonText('Export layout spike (Button + Search)')
+      .setButtonText('Export layout probes')
       .onClick(() => { void showLayout(true); });
   }
 
@@ -145,52 +147,30 @@ export class AtlasView extends ItemView {
     }
   }
 
-  private renderLayoutResults(observations: LayoutObservation[]): void {
+  private renderLayoutResults(observations: LayoutObservation[], inferences: LayoutInference[]): void {
     const host = this.layoutResultsEl;
     if (!host) throw new Error('Layout comparison container is unavailable');
     host.empty();
-    host.createEl('p', { text: 'Measured boxes in CSS pixels. Width labels describe observations, not proven Figma sizing rules.' });
+    host.createEl('p', { text: `${observations.length} measurements; ${inferences.length} specimens. Sizing labels are experimental inferences with recorded evidence.` });
     const table = host.createEl('table');
     const header = table.createEl('thead').createEl('tr');
-    for (const label of ['Specimen', 'Root at 160px', 'Root at 240px', 'Root at 480px', 'Children / overflow']) {
+    for (const label of ['Specimen', ...layoutProbeSuite.hostWidths.map((item) => `${item.widthPx}px baseline`), 'Width', 'Height', 'Evidence / limits']) {
       header.createEl('th', { text: label });
     }
     const body = table.createEl('tbody');
     const size = (width: number | undefined, height: number | undefined): string =>
       width === undefined || height === undefined ? 'hidden' : `${width.toFixed(2)} × ${height.toFixed(2)}`;
-    const bySpecimen = new Map<string, LayoutObservation[]>();
-    for (const observation of observations) {
-      const key = `${observation.id}/${observation.variant} · ${observation.contentContext.id}`;
-      const pair = bySpecimen.get(key) ?? [];
-      pair.push(observation);
-      bySpecimen.set(key, pair);
-    }
-    for (const [key, pair] of bySpecimen) {
-      const constrained = pair.find((item) => item.host.id === 'constrained');
-      const narrow = pair.find((item) => item.host.id === 'narrow');
-      const wide = pair.find((item) => item.host.id === 'wide');
-      if (!wide || (!narrow && !constrained)) throw new Error(`Missing host observation for ${key}`);
+    for (const inference of inferences) {
+      const pair = observations.filter((item) => item.id === inference.id && item.variant === inference.variant && item.contentContext.id === 'baseline');
       const row = body.createEl('tr');
-      row.createEl('td', { text: key });
-      row.createEl('td', { text: constrained ? size(constrained.root.rect?.width, constrained.root.rect?.height) : '—' });
-      row.createEl('td', { text: narrow ? size(narrow.root.rect?.width, narrow.root.rect?.height) : '—' });
-      row.createEl('td', { text: size(wide.root.rect?.width, wide.root.rect?.height) });
-      if (wide.id === 'obsidian.button') {
-        const textNode = wide.root.children.find((child) => child.kind === 'text');
-        const hostOverflow = constrained
-          ? `; 160px host scroll/client: ${constrained.host.boxMetrics.scrollWidth}/${constrained.host.boxMetrics.clientWidth}`
-          : '';
-        row.createEl('td', { text: `Text: ${size(textNode?.rect?.width, textNode?.rect?.height)}${hostOverflow}` });
-      } else {
-        if (!narrow) throw new Error(`Missing narrow Search observation for ${key}`);
-        const narrowInput = narrow.root.children[0];
-        const wideInput = wide.root.children[0];
-        const clear = narrow.root.children[1];
-        const clearSize = clear?.rect ? `${clear.rect.width.toFixed(2)}px` : 'hidden';
-        row.createEl('td', {
-          text: `Input: ${narrowInput?.rect?.width ?? '?'} → ${wideInput?.rect?.width ?? '?'}px; clear: ${clearSize}`,
-        });
+      row.createEl('td', { text: `${inference.id}/${inference.variant}` });
+      for (const width of layoutProbeSuite.hostWidths) {
+        const observation = pair.find((item) => item.host.id === width.id);
+        row.createEl('td', { text: size(observation?.root.rect?.width, observation?.root.rect?.height) });
       }
+      row.createEl('td', { text: `${inference.horizontal.mode} (${inference.horizontal.confidence})` });
+      row.createEl('td', { text: `${inference.vertical.mode} (${inference.vertical.confidence})` });
+      row.createEl('td', { text: [...inference.horizontal.evidence, ...inference.contextDependencies, ...inference.unknowns].join(' ') });
     }
   }
 

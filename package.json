@@ -12,6 +12,7 @@
     "dev": "npm run dev --workspace @obsidian-ui-system/capture",
     "check": "npm run check --workspace @obsidian-ui-system/capture && tsc --noEmit --project scripts/tsconfig.json",
     "test:diff": "npm run build:diff && node --test .build/snapshot-diff/snapshot-diff.test.js",
+    "test:layout": "esbuild apps/obsidian-capture/src/layout-inference.test.ts --bundle --platform=node --format=cjs --outfile=.build/layout-inference.test.cjs && node --test .build/layout-inference.test.cjs",
     "diff:snapshots": "npm run build:diff && node .build/snapshot-diff/diff-snapshots.js"
   },
   "devDependencies": {
