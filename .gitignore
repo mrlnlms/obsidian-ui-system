@@ -1,0 +1,12 @@
+.DS_Store
+node_modules/
+**/node_modules/
+apps/obsidian-capture/main.js
+apps/obsidian-capture/*.map
+apps/obsidian-capture/data.json
+
+# Keep only the development plugin link in the vault configuration.
+dev-vault/.obsidian/*
+!dev-vault/.obsidian/plugins/
+dev-vault/.obsidian/plugins/*
+!dev-vault/.obsidian/plugins/obsidian-ui-capture

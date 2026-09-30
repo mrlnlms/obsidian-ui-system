@@ -1,0 +1,20 @@
+{
+  "name": "obsidian-ui-system",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @obsidian-ui-system/capture",
+    "dev": "npm run dev --workspace @obsidian-ui-system/capture",
+    "check": "npm run check --workspace @obsidian-ui-system/capture"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "overrides": {
+    "moment": "^2.31.0"
+  }
+}
