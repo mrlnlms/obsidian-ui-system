@@ -55,6 +55,7 @@ export class AtlasView extends ItemView {
   }
 
   async onClose(): Promise<void> {
+    this.closeSurfaces();
     this.specimens = [];
     this.specimensEl = null;
     this.contentEl.empty();
@@ -64,6 +65,7 @@ export class AtlasView extends ItemView {
   private renderSpecimens(): void {
     const host = this.specimensEl;
     if (!host) throw new Error('Atlas specimen container is unavailable');
+    this.closeSurfaces();
     host.empty();
     this.specimens = [];
 
@@ -82,8 +84,20 @@ export class AtlasView extends ItemView {
         const specimen = component.createDiv({ cls: 'obsidian-ui-atlas-specimen' });
         specimen.createEl('div', { cls: 'obsidian-ui-atlas-variant-name', text: variant.name });
         const rendered = definition.render(specimen.createDiv(), variant, this.app);
+        if (rendered.activate) {
+          new ButtonComponent(specimen)
+            .setButtonText('Open specimen')
+            .onClick(() => {
+              this.closeSurfaces();
+              rendered.activate?.();
+            });
+        }
         this.specimens.push({ definition, variant, ...rendered });
       }
     }
+  }
+
+  private closeSurfaces(): void {
+    for (const specimen of this.specimens) specimen.deactivate?.();
   }
 }

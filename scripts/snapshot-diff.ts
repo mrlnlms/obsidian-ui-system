@@ -127,6 +127,15 @@ function compareFields(
   }
 }
 
+function compareMeasurements(changes: FieldChange[], path: string, before: DomNode['sizePx'], after: DomNode['sizePx']): void {
+  // DOM geometry can differ by tiny floating-point amounts between identical renders.
+  for (const key of ['width', 'height'] as const) {
+    if (Math.abs(before[key] - after[key]) >= 0.001) {
+      recordChange(changes, 'measurements', `${path}.${key}`, true, true, before[key], after[key]);
+    }
+  }
+}
+
 function anatomy(node: DomNode): { tag: string; children: ReturnType<typeof anatomy>[] } {
   return { tag: node.tag, children: node.children.map(anatomy) };
 }
@@ -134,14 +143,16 @@ function anatomy(node: DomNode): { tag: string; children: ReturnType<typeof anat
 function compareNode(changes: FieldChange[], before: DomNode, after: DomNode, path: string): void {
   if (before.tag !== after.tag) return;
 
-  // CSS class order and known-state order do not change their meaning.
+  // node-insert-event is an Obsidian lifecycle marker, not component styling.
+  const relevantClasses = (classes: string[]): string[] =>
+    [...new Set(classes.filter((name) => name !== 'node-insert-event'))].sort();
   recordChange(changes, 'classes', `${path}.classes`, true, true,
-    [...new Set(before.classes)].sort(), [...new Set(after.classes)].sort());
+    relevantClasses(before.classes), relevantClasses(after.classes));
   compareFields(changes, 'values', `${path}.attributes`, before.attributes ?? {}, after.attributes ?? {});
   compareFields(changes, 'values', `${path}.properties`, before.properties ?? {}, after.properties ?? {});
   recordChange(changes, 'values', `${path}.text`, has(before, 'text'), has(after, 'text'), before.text, after.text);
   compareFields(changes, 'computed-styles', `${path}.styles`, before.styles, after.styles);
-  compareFields(changes, 'measurements', `${path}.sizePx`, before.sizePx, after.sizePx);
+  compareMeasurements(changes, `${path}.sizePx`, before.sizePx, after.sizePx);
 
   for (let index = 0; index < Math.min(before.children.length, after.children.length); index++) {
     compareNode(changes, before.children[index]!, after.children[index]!, `${path}.children[${index}]`);

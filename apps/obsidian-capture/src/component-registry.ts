@@ -2,9 +2,13 @@ import {
   type App,
   ButtonComponent,
   ColorComponent,
+  ConfirmationModal,
   DropdownComponent,
   ExtraButtonComponent,
   MomentFormatComponent,
+  Menu,
+  Modal,
+  Notice,
   ProgressBarComponent,
   SearchComponent,
   SecretComponent,
@@ -26,6 +30,11 @@ export interface ComponentVariant {
 interface RenderedComponent {
   root: Element;
   getState: () => string;
+  /** Open a surface outside the Atlas before capture. */
+  activate?: () => void;
+  /** Return the opened surface, rather than the Atlas trigger host. */
+  getCaptureRoot?: () => Element;
+  deactivate?: () => void;
 }
 
 export interface ComponentDefinition {
@@ -46,6 +55,117 @@ export interface RenderedSpecimen extends RenderedComponent {
 }
 
 export const componentRegistry: readonly ComponentDefinition[] = [
+  {
+    id: 'obsidian.modal',
+    name: 'Modal',
+    category: 'Overlays',
+    source: 'public-api',
+    implementation: 'obsidian.Modal',
+    variants: [
+      { id: 'basic', name: 'Basic dialog', state: 'open' },
+      { id: 'with-content', name: 'Dialog with content', state: 'open' },
+    ],
+    render(mount, variant, app) {
+      const modal = new Modal(app).setTitle('Atlas modal');
+      modal.setContent(variant.id === 'with-content' ? 'Example dialog content.' : '');
+      return {
+        root: mount,
+        activate: () => modal.open(),
+        getCaptureRoot: () => modal.modalEl,
+        getState: () => modal.containerEl.isConnected ? 'open' : 'closed',
+        deactivate: () => modal.close(),
+      };
+    },
+  },
+  {
+    id: 'obsidian.confirmation-modal',
+    name: 'ConfirmationModal',
+    category: 'Overlays',
+    source: 'public-api',
+    implementation: 'obsidian.ConfirmationModal',
+    variants: [
+      { id: 'standard', name: 'Confirmation', state: 'open' },
+      { id: 'with-checkbox', name: 'Confirmation with checkbox', state: 'open' },
+    ],
+    render(mount, variant, app) {
+      const modal = new ConfirmationModal(app).setTitle('Confirm example action');
+      modal.setContent('This is a demonstration. No action is performed.');
+      if (variant.id === 'with-checkbox') modal.addCheckbox('Remember example choice', () => {});
+      modal.addButton((button) => button.setButtonText('Confirm').setCta());
+      modal.addCancelButton('Cancel');
+      return {
+        root: mount,
+        activate: () => modal.open(),
+        getCaptureRoot: () => modal.modalEl,
+        getState: () => modal.containerEl.isConnected ? 'open' : 'closed',
+        deactivate: () => modal.close(),
+      };
+    },
+  },
+  {
+    id: 'obsidian.menu',
+    name: 'Menu',
+    category: 'Overlays',
+    source: 'public-api',
+    implementation: 'obsidian.Menu',
+    variants: [
+      { id: 'standard', name: 'Standard menu', state: 'open' },
+      { id: 'checked', name: 'Checked item', state: 'open' },
+    ],
+    render(mount, variant) {
+      const menu = new Menu().setUseNativeMenu(false);
+      menu.addItem((item) => item.setTitle('Atlas menu action').setIcon('check').setChecked(variant.id === 'checked'));
+      menu.addSeparator();
+      menu.addItem((item) => item.setTitle('Another example action'));
+      const findMenu = (): Element => {
+        const element = Array.from(mount.ownerDocument.querySelectorAll('.menu'))
+          .find((candidate) => candidate.textContent?.includes('Atlas menu action'));
+        if (!element) throw new Error('Obsidian Menu DOM was not found after opening');
+        return element;
+      };
+      return {
+        root: mount,
+        activate: () => {
+          const rect = mount.getBoundingClientRect();
+          menu.showAtPosition({ x: rect.left, y: rect.bottom }, mount.ownerDocument);
+        },
+        getCaptureRoot: findMenu,
+        getState: () => findMenu().isConnected ? 'open' : 'closed',
+        deactivate: () => menu.hide(),
+      };
+    },
+  },
+  {
+    id: 'obsidian.notice',
+    name: 'Notice',
+    category: 'Overlays',
+    source: 'public-api',
+    implementation: 'obsidian.Notice',
+    variants: [
+      { id: 'message', name: 'Message', state: 'visible' },
+      { id: 'updated', name: 'Updated message', state: 'visible' },
+    ],
+    render(mount, variant) {
+      let notice: Notice | null = null;
+      return {
+        root: mount,
+        activate: () => {
+          notice?.hide();
+          notice = new Notice('Atlas notice', 0);
+          if (variant.id === 'updated') notice.setMessage('Atlas notice updated');
+        },
+        getCaptureRoot: () => {
+          if (!notice) throw new Error('Notice has not been opened');
+          return notice.containerEl;
+        },
+        getState: () => notice?.containerEl.isConnected ? 'visible' : 'hidden',
+        deactivate: () => {
+          notice?.hide();
+          notice = null;
+        },
+      };
+    },
+  },
   {
     id: 'obsidian.button',
     name: 'ButtonComponent',

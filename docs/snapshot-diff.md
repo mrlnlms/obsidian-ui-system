@@ -23,7 +23,7 @@ Without it, reports go to `snapshot-diffs/<before-folder>__<after-folder>/`. The
 - DOM paths use child indices such as `dom.children[0]`. If children are inserted or reordered, the full anatomy change is reported and details are compared only at positions whose tags still match. The tool does not infer that moved DOM nodes are the same node.
 - CSS custom properties are keyed by name and classified as `added`, `removed`, `changed`, or `unchanged`. The comparison uses resolved names and values, not the `scopes` annotation. `diff.md` summarizes unchanged tokens; `diff.json` lists every token entry.
 - Manifest fields are compared by name, including runtime `obsidianVersion`, build-time `obsidianSdkVersion`, and `schemaVersion`. A field absent from an older export is `added`, distinct from a field with JSON `null`. Capture timestamps are compared too, so they normally differ.
-- Values and measured sizes are compared exactly. Viewport, theme or platform changes may produce style and measurement differences without a component API change. Markdown shortens values over 160 characters for reading; JSON retains complete values.
+- Values and computed styles are compared exactly. Measured sizes within 0.001 px are treated as unchanged because repeated browser layout can vary by less than one thousandth of a pixel; larger changes remain visible. The transient Obsidian `node-insert-event` DOM insertion marker is ignored when comparing class sets. Both values remain in the raw snapshots. Viewport, theme or platform changes may produce style and measurement differences without a component API change. Markdown shortens values over 160 characters for reading; JSON retains complete values.
 
 ## Validation with real exports
 

@@ -7,14 +7,16 @@ const EXPORT_ROOT = 'ui-catalog-exports';
 export async function exportCatalog(app: App, specimens: RenderedSpecimen[]): Promise<string> {
   const expected = componentRegistry.reduce((total, definition) => total + definition.variants.length, 0);
   if (specimens.length !== expected) throw new Error(`Expected ${expected} catalog specimens, found ${specimens.length}`);
-  if (specimens.some(({ root }) => !root.isConnected)) throw new Error('Open the catalog before exporting');
+  if (specimens.some(({ root, activate }) => !activate && !root.isConnected)) {
+    throw new Error('Open the catalog before exporting');
+  }
 
   const doc = specimens[0]!.root.ownerDocument;
   const capturedAt = new Date().toISOString();
   // Capture all three outputs before any file operation so they describe one UI state.
   const manifest = captureManifest(doc, capturedAt);
   const tokens = captureTokens(doc);
-  const components = captureComponents(specimens);
+  const components = await captureComponents(specimens);
 
   const adapter = app.vault.adapter;
   if (!(await adapter.exists(EXPORT_ROOT))) await adapter.mkdir(EXPORT_ROOT);

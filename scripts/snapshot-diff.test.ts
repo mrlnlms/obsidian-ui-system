@@ -80,6 +80,21 @@ test('ignores CSS class and known-state ordering', () => {
   assert.equal(report.tokens.counts.unchanged, 1);
 });
 
+test('ignores Obsidian insertion marker and sub-millipixel geometry noise', () => {
+  const beforeSpecimen = specimen('obsidian.dropdown', 'default');
+  beforeSpecimen.dom.classes = ['dropdown', 'node-insert-event'];
+  beforeSpecimen.dom.sizePx.height = 13.30938720703125;
+  const afterSpecimen = structuredClone(beforeSpecimen);
+  afterSpecimen.dom.classes = ['dropdown'];
+  afterSpecimen.dom.sizePx.height = 13.3094482421875;
+  const before = exportData('before', [beforeSpecimen], {});
+  const after = exportData('after', [afterSpecimen], {});
+  assert.equal(compareExports(before, after).components.counts.unchanged, 1);
+
+  afterSpecimen.dom.sizePx.height = 13.32;
+  assert.equal(compareExports(before, after).components.counts.changed, 1);
+});
+
 test('rejects duplicate stable specimen identities', () => {
   const duplicate = specimen('obsidian.text', 'normal');
   const before = exportData('before', [duplicate, structuredClone(duplicate)], {});

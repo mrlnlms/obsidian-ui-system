@@ -41,10 +41,10 @@ Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.1
 
 | API (linha) | Categoria | Direta? | UI visual? | Atlas? | Observações | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| `Modal` (L4477) | Dialog | Sim, com `App` | Sim | Sim | `open()` cria overlay fora da aba; captura futura precisa localizar e fechar o modal. | candidate |
-| `ConfirmationModal` (L1963) | Confirmação | Sim, com `App` | Sim | Sim | Introduzido em 1.13.0; `addButton`, `addCancelButton`, `addCheckbox`. | candidate |
-| `Menu` (L4245) | Menu contextual | Sim | Sim | Sim | `setUseNativeMenu(false)` permite DOM no desktop; menu nativo não oferece árvore DOM equivalente. | candidate |
-| `Notice` (L4613) | Notificação | Sim | Sim | Sim | `duration: 0` mantém a notificação visível até dispensá-la. | candidate |
+| `Modal` (L4477) | Dialog | Sim, com `App` | Sim | Sim | `open()` cria overlay fora da aba; capturado com abertura e fechamento explícitos. | captured |
+| `ConfirmationModal` (L1963) | Confirmação | Sim, com `App` | Sim | Sim | Introduzido em 1.13.0; `addButton`, `addCancelButton`, `addCheckbox`. | captured |
+| `Menu` (L4245) | Menu contextual | Sim | Sim | Sim | `setUseNativeMenu(false)` permite DOM no desktop; menu nativo não oferece árvore DOM equivalente. | captured |
+| `Notice` (L4613) | Notificação | Sim | Sim | Sim | `duration: 0` mantém a notificação visível até dispensá-la. | captured |
 | `HoverPopover` (L3476) | Popover | Sim, com `HoverParent`/alvo | Sim | Sim, condicionado | Depende de contexto e posicionamento; validar fixture estável antes da captura. | candidate |
 | `PopoverSuggest<T>` (L5201) | Sugestões em popover | Não, abstrata | Sim, via subclasse | Sim, condicionado | Exige `renderSuggestion` e `selectSuggestion`; pode abrir como popup. | candidate |
 | `AbstractInputSuggest<T>` (L294) | Sugestões de input | Não, abstrata | Sim, via subclasse | Sim, condicionado | Usa input ou `contentEditable`; precisa lista de sugestões fixa. | candidate |
@@ -77,15 +77,15 @@ Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.1
 
 ## Contagem e lotes sugeridos
 
-Há **15 APIs/famílias capturadas** e **12 candidatas adicionais** nas tabelas: 11 overlays/interações e 1 helper visual (`setIcon`). Essa é uma contagem de APIs/famílias, não de variantes nem de ícones individuais. Itens obtidos somente dentro de outro componente, como `MenuItem` e `ConfirmationButton`, entram na captura do pai e não aumentam a contagem. Candidatos condicionados precisam de uma prova de runtime antes de entrarem no registry. APIs `not-applicable` continuam documentadas para evitar confundir uma API pública com um componente do catálogo.
+Há **19 APIs/famílias capturadas** e **8 candidatas adicionais** nas tabelas: 7 overlays/interações e 1 helper visual (`setIcon`). Essa é uma contagem de APIs/famílias, não de variantes nem de ícones individuais. Itens obtidos somente dentro de outro componente, como `MenuItem` e `ConfirmationButton`, entram na captura do pai e não aumentam a contagem. Candidatos condicionados precisam de uma prova de runtime antes de entrarem no registry. APIs `not-applicable` continuam documentadas para evitar confundir uma API pública com um componente do catálogo.
 
 Lotes pequenos possíveis, em ordem de menor dependência de contexto:
 
 1. **Inputs básicos (implementado):** `TextComponent`, `TextAreaComponent`, `DropdownComponent`, `SliderComponent`.
 2. **Controles complementares (implementado):** `ColorComponent`, `ExtraButtonComponent`, `MomentFormatComponent`, `ProgressBarComponent`.
 3. **Settings (implementado):** `Setting`, `SettingGroup`, `DisplayValueComponent`, `SecretComponent`; somente dados fictícios, sem persistir segredo. Veja [observações do lote](settings-batch.md) e [superfícies disparadas](triggered-surfaces.md), incluindo o diálogo aberto por `SecretComponent`.
-4. **Overlays diretos:** `Modal`, `ConfirmationModal`, `Menu`, `Notice`; definir ciclo de abertura, captura e fechamento sem deixar UI residual.
+4. **Overlays diretos (implementado):** `Modal`, `ConfirmationModal`, `Menu`, `Notice`; abertura, captura e fechamento explícitos. Veja [observações do lote](overlays-batch.md).
 5. **Sugestões:** `PopoverSuggest`, `AbstractInputSuggest`, `SuggestModal`, `FuzzySuggestModal`; testar subclasses mínimas e dados fixos antes de definir variantes.
 6. **Elementos contextuais:** `HoverPopover`, `setTooltip`, `displayTooltip`, `setIcon`; validar alvo/posicionamento e evitar hover artificial frágil.
 
-O lote 1 foi validado em runtime com 13 novos specimens. O lote 2 acrescentou 11 specimens, chegando a 31. O lote 3 acrescentou 10, chegando a **41 specimens** de 15 famílias. Um teste de [determinismo](snapshot-determinism.md) precedeu o lote 2. O `minAppVersion` agora é `1.13.1`, exigido pelo contrato de `DisplayValueComponent`/`Setting.addDisplayValue`.
+O lote 1 foi validado em runtime com 13 novos specimens. O lote 2 acrescentou 11 specimens, chegando a 31. O lote 3 acrescentou 10, chegando a 41. O lote 4 acrescenta 8, para **49 specimens** de 19 famílias. Um teste de [determinismo](snapshot-determinism.md) precedeu o lote 2. O `minAppVersion` agora é `1.13.1`, exigido pelo contrato de `DisplayValueComponent`/`Setting.addDisplayValue`.

@@ -71,26 +71,40 @@ export function captureElement(element: Element): DomSnapshot {
   };
 }
 
-export function captureComponents(specimens: RenderedSpecimen[]): ComponentSnapshot[] {
-  return specimens.map(({ definition, variant, root, getState }) => {
-    const current = getState();
-    if (current !== variant.state) {
-      throw new Error(`${definition.id}/${variant.id}: expected ${variant.state}, found ${current}`);
+export async function captureComponents(specimens: RenderedSpecimen[]): Promise<ComponentSnapshot[]> {
+  const snapshots: ComponentSnapshot[] = [];
+  for (const { definition, variant, root, getState, activate, getCaptureRoot, deactivate } of specimens) {
+    try {
+      activate?.();
+      if (activate) {
+        const view = root.ownerDocument.defaultView;
+        if (!view) throw new Error('Cannot capture an overlay without a window');
+        await new Promise<void>((resolve) => view.requestAnimationFrame(() => resolve()));
+      }
+      const captureRoot = getCaptureRoot?.() ?? root;
+      if (!captureRoot.isConnected) throw new Error(`${definition.id}/${variant.id}: capture root is detached`);
+      const current = getState();
+      if (current !== variant.state) {
+        throw new Error(`${definition.id}/${variant.id}: expected ${variant.state}, found ${current}`);
+      }
+      snapshots.push({
+        id: definition.id,
+        name: definition.name,
+        category: definition.category,
+        origin: definition.source,
+        implementation: definition.implementation,
+        variant: variant.id,
+        states: {
+          current,
+          known: [...new Set(definition.variants.map((item) => item.state))],
+        },
+        dom: captureElement(captureRoot),
+      });
+    } finally {
+      deactivate?.();
     }
-    return {
-      id: definition.id,
-      name: definition.name,
-      category: definition.category,
-      origin: definition.source,
-      implementation: definition.implementation,
-      variant: variant.id,
-      states: {
-        current,
-        known: [...new Set(definition.variants.map((item) => item.state))],
-      },
-      dom: captureElement(root),
-    };
-  });
+  }
+  return snapshots;
 }
 
 export function captureTokens(doc: Document): TokensSnapshot {
