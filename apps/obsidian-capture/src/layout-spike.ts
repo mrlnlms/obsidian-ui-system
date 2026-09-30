@@ -7,10 +7,12 @@ const HOSTS = [
   { id: 'narrow', widthPx: 240 },
   { id: 'wide', widthPx: 480 },
 ] as const;
+const CONSTRAINED_HOST = { id: 'constrained', widthPx: 160 } as const;
 const COMPONENT_IDS = ['obsidian.button', 'obsidian.search'] as const;
 const BUTTON_CONTENT_CONTEXTS = [
-  { id: 'baseline', label: 'Example button' },
-  { id: 'short-label', label: 'OK' },
+  { id: 'baseline', label: 'Example button', hosts: HOSTS },
+  { id: 'short-label', label: 'OK', hosts: HOSTS },
+  { id: 'long-label', label: 'A longer button label for layout testing', hosts: [CONSTRAINED_HOST, HOSTS[1]] },
 ] as const;
 
 /** Explicit experimental CSSOM selection; this does not change ui-schema. */
@@ -23,7 +25,7 @@ const LAYOUT_PROPERTIES = [
   'width', 'height', 'min-width', 'max-width', 'min-height', 'max-height',
   'overflow', 'overflow-x', 'overflow-y',
   'position', 'top', 'right', 'bottom', 'left',
-  'white-space', 'text-overflow', 'text-align',
+  'white-space', 'overflow-wrap', 'word-break', 'text-overflow', 'text-align',
   'font-family', 'font-size', 'font-weight', 'line-height',
   'color', 'background-color', 'opacity',
   'background-image', 'mask-image', '-webkit-mask-image',
@@ -37,6 +39,13 @@ interface RectSnapshot {
   y: number;
   width: number;
   height: number;
+}
+
+interface BoxMetrics {
+  clientWidth: number;
+  clientHeight: number;
+  scrollWidth: number;
+  scrollHeight: number;
 }
 
 interface TextNodeSnapshot {
@@ -54,6 +63,7 @@ interface ElementNodeSnapshot {
   properties?: { value?: string; disabled?: boolean };
   rect: RectSnapshot | null;
   relativeToParent: RectSnapshot | null;
+  boxMetrics: BoxMetrics;
   styles: LayoutStyles;
   pseudo?: Record<string, { content: string; styles: LayoutStyles }>;
   children: Array<ElementNodeSnapshot | TextNodeSnapshot>;
@@ -79,6 +89,7 @@ export interface LayoutObservation {
     id: string;
     requestedWidthPx: number;
     rect: RectSnapshot;
+    boxMetrics: BoxMetrics;
     styles: LayoutStyles;
   };
   root: ElementNodeSnapshot;
@@ -86,6 +97,15 @@ export interface LayoutObservation {
 
 function rectOf(rect: DOMRect): RectSnapshot {
   return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+}
+
+function boxMetricsOf(element: Element): BoxMetrics {
+  return {
+    clientWidth: element.clientWidth,
+    clientHeight: element.clientHeight,
+    scrollWidth: element.scrollWidth,
+    scrollHeight: element.scrollHeight,
+  };
 }
 
 function relativeTo(rect: RectSnapshot, parent: RectSnapshot): RectSnapshot {
@@ -147,6 +167,7 @@ function captureLayoutNode(element: Element, parent: RectSnapshot | null, view: 
     ...(properties ? { properties } : {}),
     rect,
     relativeToParent: rect && parent ? relativeTo(rect, parent) : null,
+    boxMetrics: boxMetricsOf(element),
     styles: stylesOf(styles),
     ...(pseudo ? { pseudo } : {}),
     children,
@@ -163,10 +184,10 @@ export function renderLayoutFixtures(mount: HTMLElement, app: App): LayoutFixtur
     const group = mount.createDiv({ cls: 'obsidian-ui-atlas-layout-group' });
     group.createEl('h4', { text: definition.name });
     for (const variant of definition.variants) {
-      const contentContexts: readonly { id: string; label?: string }[] = id === 'obsidian.button'
-        ? BUTTON_CONTENT_CONTEXTS : [{ id: 'baseline' }];
+      const contentContexts: readonly { id: string; label?: string; hosts: readonly { id: string; widthPx: number }[] }[]
+        = id === 'obsidian.button' ? BUTTON_CONTENT_CONTEXTS : [{ id: 'baseline', hosts: HOSTS }];
       for (const contentContext of contentContexts) {
-        for (const context of HOSTS) {
+        for (const context of contentContext.hosts) {
           const card = group.createDiv({ cls: 'obsidian-ui-atlas-layout-card' });
           card.createEl('div', {
             cls: 'obsidian-ui-atlas-variant-name',
@@ -186,7 +207,7 @@ export function renderLayoutFixtures(mount: HTMLElement, app: App): LayoutFixtur
           fixtures.push({
             definition,
             variant,
-            contentContext,
+            contentContext: { id: contentContext.id, ...(contentContext.label ? { label: contentContext.label } : {}) },
             hostId: context.id,
             requestedWidthPx: context.widthPx,
             host,
@@ -203,8 +224,10 @@ export function renderLayoutFixtures(mount: HTMLElement, app: App): LayoutFixtur
 export async function measureLayoutFixtures(fixtures: LayoutFixture[]): Promise<LayoutObservation[]> {
   const expected = COMPONENT_IDS.reduce((count, id) => {
     const definition = componentRegistry.find((item) => item.id === id);
-    return count + (definition?.variants.length ?? 0) * HOSTS.length
-      * (id === 'obsidian.button' ? BUTTON_CONTENT_CONTEXTS.length : 1);
+    const contexts = id === 'obsidian.button' ? BUTTON_CONTENT_CONTEXTS
+      : [{ id: 'baseline', hosts: HOSTS }];
+    return count + (definition?.variants.length ?? 0)
+      * contexts.reduce((total, context) => total + context.hosts.length, 0);
   }, 0);
   if (fixtures.length !== expected) throw new Error(`Expected ${expected} layout observations, found ${fixtures.length}`);
   const doc = fixtures[0]?.host.ownerDocument;
@@ -233,6 +256,7 @@ export async function measureLayoutFixtures(fixtures: LayoutFixture[]): Promise<
         id: fixture.hostId,
         requestedWidthPx: fixture.requestedWidthPx,
         rect: hostRect,
+        boxMetrics: boxMetricsOf(fixture.host),
         styles: stylesOf(view.getComputedStyle(fixture.host)),
       },
       root: captureLayoutNode(fixture.root, hostRect, view),

@@ -40,7 +40,7 @@ export class AtlasView extends ItemView {
     const layoutStatus = this.contentEl.createEl('p');
     const layoutSection = this.contentEl.createEl('details', { cls: 'obsidian-ui-atlas-layout-spike' });
     layoutSection.createEl('summary', { text: 'Layout comparison · Button + Search' });
-    layoutSection.createEl('p', { text: 'Real registry specimens in 240px and 480px hosts, with a short-label Button probe. Hosts and labels are measurement context, not variants.' });
+    layoutSection.createEl('p', { text: 'Real registry specimens at 240px/480px, plus a long Button label at 160px/480px. Hosts and labels are measurement context, not variants.' });
     this.layoutDetailsEl = layoutSection;
     this.layoutResultsEl = layoutSection.createDiv({ cls: 'obsidian-ui-atlas-layout-results' });
     this.layoutFixturesEl = layoutSection.createDiv();
@@ -152,7 +152,7 @@ export class AtlasView extends ItemView {
     host.createEl('p', { text: 'Measured boxes in CSS pixels. Width labels describe observations, not proven Figma sizing rules.' });
     const table = host.createEl('table');
     const header = table.createEl('thead').createEl('tr');
-    for (const label of ['Specimen', 'Root at 240px', 'Root at 480px', 'Children']) {
+    for (const label of ['Specimen', 'Root at 160px', 'Root at 240px', 'Root at 480px', 'Children / overflow']) {
       header.createEl('th', { text: label });
     }
     const body = table.createEl('tbody');
@@ -166,17 +166,23 @@ export class AtlasView extends ItemView {
       bySpecimen.set(key, pair);
     }
     for (const [key, pair] of bySpecimen) {
+      const constrained = pair.find((item) => item.host.id === 'constrained');
       const narrow = pair.find((item) => item.host.id === 'narrow');
       const wide = pair.find((item) => item.host.id === 'wide');
-      if (!narrow || !wide) throw new Error(`Missing host observation for ${key}`);
+      if (!wide || (!narrow && !constrained)) throw new Error(`Missing host observation for ${key}`);
       const row = body.createEl('tr');
       row.createEl('td', { text: key });
-      row.createEl('td', { text: size(narrow.root.rect?.width, narrow.root.rect?.height) });
+      row.createEl('td', { text: constrained ? size(constrained.root.rect?.width, constrained.root.rect?.height) : '—' });
+      row.createEl('td', { text: narrow ? size(narrow.root.rect?.width, narrow.root.rect?.height) : '—' });
       row.createEl('td', { text: size(wide.root.rect?.width, wide.root.rect?.height) });
-      if (narrow.id === 'obsidian.button') {
-        const textNode = narrow.root.children.find((child) => child.kind === 'text');
-        row.createEl('td', { text: `Text: ${size(textNode?.rect?.width, textNode?.rect?.height)} in both hosts` });
+      if (wide.id === 'obsidian.button') {
+        const textNode = wide.root.children.find((child) => child.kind === 'text');
+        const hostOverflow = constrained
+          ? `; 160px host scroll/client: ${constrained.host.boxMetrics.scrollWidth}/${constrained.host.boxMetrics.clientWidth}`
+          : '';
+        row.createEl('td', { text: `Text: ${size(textNode?.rect?.width, textNode?.rect?.height)}${hostOverflow}` });
       } else {
+        if (!narrow) throw new Error(`Missing narrow Search observation for ${key}`);
         const narrowInput = narrow.root.children[0];
         const wideInput = wide.root.children[0];
         const clear = narrow.root.children[1];

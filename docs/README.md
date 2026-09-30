@@ -4,4 +4,4 @@ Current scope: monorepo boundaries, a 26-family Obsidian UI Atlas workspace view
 
 The [public UI inventory](public-ui-inventory.md) maps the locally installed Obsidian SDK's visual APIs and suggests small future capture batches.
 
-The [Button/Search layout spike](layout-spike.md) compares two controlled host widths using real Atlas registry specimens. Its [experimental intermediate model](layout-spike-model.experimental.json) records supported and unknown sizing decisions without changing the public snapshot schema.
+The [Button/Search layout spike](layout-spike.md) compares controlled host widths and three Button labels using real Atlas registry specimens, including a long label wider than its 160px host. Its [experimental intermediate model](layout-spike-model.experimental.json) records supported and unknown sizing decisions without changing the public snapshot schema.
