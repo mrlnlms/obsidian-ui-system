@@ -66,3 +66,60 @@ export interface TokensSnapshot {
   scopes: ['html', 'body'];
   values: Record<string, string>;
 }
+
+/** Technical CSS evidence from one Mapping capture; separate from snapshot schema 0.4.0. */
+export type TokenMode = 'light' | 'dark';
+export type EvidenceTruth = 'yes' | 'no' | 'unknown';
+export type TokenResolutionStatus = 'resolved' | 'no-applicable-declaration' | 'unresolved' | 'unknown';
+
+export interface TokenVarReference {
+  name: string;
+  /** Raw text after the first top-level comma, or null when no fallback exists. */
+  fallback: string | null;
+  role: 'whole-value' | 'embedded';
+}
+
+export interface TokenDeclarationEvidence {
+  rawValue: string;
+  selector: string | null;
+  source: {
+    kind: 'stylesheet' | 'adopted-stylesheet' | 'inline';
+    href?: string | null;
+    sheetIndex?: number;
+    rulePath?: number[];
+    element?: 'html' | 'body';
+  };
+  priority: string;
+  conditions: Array<{ kind: string; text: string; active: EvidenceTruth }>;
+  appliesTo: { html: EvidenceTruth; body: EvidenceTruth };
+  references: TokenVarReference[];
+}
+
+export interface TokenModeObservation {
+  status: TokenResolutionStatus;
+  computed: { html: string | null; body: string | null; selected: string | null };
+  declarations: TokenDeclarationEvidence[];
+  /** Only a simple, unambiguous applicable declaration can be attributed. */
+  attribution: { status: 'unique'; declarationIndex: number; target: 'html' | 'body' } | { status: 'unknown' };
+  /** Observed missing dependency names, never guessed replacement values. */
+  unresolvedReferences?: string[];
+}
+
+export interface TokenEvidenceCapture {
+  format: 'obsidian-ui-token-evidence';
+  version: 1;
+  mode: SnapshotManifest['mode'];
+  environment: SnapshotManifest;
+  coverage: {
+    complete: boolean;
+    unreadableSheets: Array<{ kind: 'stylesheet' | 'adopted-stylesheet'; sheetIndex: number; href?: string | null }>;
+  };
+  tokens: Record<string, TokenModeObservation>;
+}
+
+/** A read-only join for comparing two single-mode captures; it is not a package format. */
+export interface MergedTokenEvidence {
+  environments: { dark: SnapshotManifest; light: SnapshotManifest };
+  sourceEquality: 'unverified';
+  tokens: Record<string, { dark?: TokenModeObservation; light?: TokenModeObservation }>;
+}

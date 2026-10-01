@@ -23,7 +23,7 @@ In Obsidian, choose **Open folder as vault** and select exactly `<repository>/de
 
 Open **Settings → Community plugins**, allow community plugins if prompted, and enable **Obsidian UI Mapping**. When migrating an existing vault, the new plugin ID requires enabling Mapping once. Run **Open Obsidian UI Mapping** from the Command Palette. The command opens or reveals one scrollable workspace tab with the canonical registry specimens. Press **Export snapshot** for an individual Mapping export.
 
-Each export creates `dev-vault/.obsidian-ui-system/ui-catalog-exports/<UTC timestamp>/` with `manifest.json`, `tokens.json`, and `components.json`. The manifest records the runtime Obsidian API version, the installed SDK package version used at build time, and the snapshot schema version separately. Exports are local and ignored by Git. The [schema package](../packages/ui-schema/README.md), [snapshot guide](obsidian-ui-mapping/capture/snapshot.md), and [component registry guide](obsidian-ui-mapping/capture/component-registry.md) describe their contract and limits.
+Each export creates `dev-vault/.obsidian-ui-system/ui-catalog-exports/<UTC timestamp>/` with `manifest.json`, `tokens.json`, `token-evidence.json`, and `components.json`. The manifest records the runtime Obsidian API version, the installed SDK package version used at build time, and the snapshot schema version separately. The versioned token evidence file preserves CSSOM declarations, references, computed values, and uncertainty for the captured mode; `tokens.json` is its compatibility projection. Exports are local and ignored by Git. The [schema package](../packages/ui-schema/README.md), [snapshot guide](obsidian-ui-mapping/capture/snapshot.md), and [component registry guide](obsidian-ui-mapping/capture/component-registry.md) describe their contract and limits.
 
 `ui-catalog-exports/` remains the stable technical directory for individual specimen exports, including existing local captures. It names that export type, not the Mapping product.
 
@@ -92,6 +92,7 @@ npm run build
 npm run test:diff
 npm run test:layout
 npm run test:typography --workspace @obsidian-ui-system/mapping
+npm run test:tokens --workspace @obsidian-ui-system/mapping
 npm run test:package --workspace @obsidian-ui-system/mapping
 npm run test:exports --workspace @obsidian-ui-system/mapping
 npm run test:lifecycle --workspace @obsidian-ui-system/mapping

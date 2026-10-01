@@ -40,7 +40,9 @@ export async function exportFigmaPackage(app: App): Promise<string> {
       setStage('validate-package');
       const expected = componentRegistry.flatMap((definition) =>
         definition.variants.map((variant) => `${definition.id}/${variant.id}`));
-      return buildFigmaPackageZip({ ...canonical, layout }, expected);
+      return buildFigmaPackageZip({
+        manifest: canonical.manifest, components: canonical.components, tokens: canonical.tokens, layout,
+      }, expected);
     } finally {
       for (const specimen of specimens) specimen.deactivate?.();
       mount.remove();

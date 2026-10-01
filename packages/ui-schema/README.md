@@ -11,3 +11,11 @@ Version 0.4.0 adds computed `fontStyle` and `letterSpacing`. Text-bearing elemen
 Obsidian's `'??'` font is a no-override sentinel with `unicode-range: U+0`. The typography context filters exact sentinel entries from usable font-family variables and omits variables that contain only sentinels. `styles.fontFamily` and the separate `tokens.json` retain their literal computed values for provenance. Consumers must not interpret `??` as a font dependency.
 
 This is an observational snapshot contract, not a complete semantic model of Obsidian UI. It may change after more components and themes are sampled.
+
+## Technical token evidence
+
+Individual Mapping exports also write `token-evidence.json` using the independent format `obsidian-ui-token-evidence`, version 1. It is not a new version of snapshot schema 0.4.0 or a Figma Package v1 member. The CSS custom-property name is the identity; each capture records one mode and its own result. `tokens.values` is derived from the non-empty, body-first computed values in this evidence. Existing 0.4.0 snapshots and ZIPs cannot be upgraded with declarations or aliases that they never recorded.
+
+An observation separates `html` and `body` computed strings, retains all CSSOM-visible declaration candidates with selector, conditions, source, applicability, raw CSSOM value and parsed `var()` references, and marks attribution `unique` only when simple evidence permits it. The statuses are `resolved`, `no-applicable-declaration`, `unresolved`, and `unknown`. CSSOM coverage is explicit because an unreadable stylesheet can hide a declaration or an entire token name. References and their fallback text are syntax evidence; only a uniquely attributable whole-value `var(--name)` without fallback supports a direct alias interpretation. Identical computed strings alone never prove an alias.
+
+The pure Light/Dark merger joins two technical captures by name with optional mode observations and keeps source equality `unverified`. It does not create a multi-mode package or supply absent values. See the [snapshot guide](../../docs/obsidian-ui-mapping/capture/snapshot.md) for capture limits.

@@ -7,6 +7,7 @@
     "dev": "node esbuild.config.mjs",
     "build": "tsc --noEmit && node esbuild.config.mjs production",
     "check": "tsc --noEmit",
+    "test:tokens": "esbuild tests/token-references.test.ts tests/token-evidence.test.ts --bundle --platform=node --format=cjs --outdir=../../.build/token-tests && node --test ../../.build/token-tests/*.test.js",
     "test:typography": "esbuild tests/typography-capture.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/typography-capture.test.cjs && node --test ../../.build/typography-capture.test.cjs",
     "test:package": "esbuild tests/figma-package.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/figma-package.test.cjs && node --test ../../.build/figma-package.test.cjs",
     "test:exports": "esbuild tests/development-exports.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/development-exports.test.cjs && node --test ../../.build/development-exports.test.cjs",

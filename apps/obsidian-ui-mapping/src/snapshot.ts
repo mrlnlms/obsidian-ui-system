@@ -8,6 +8,7 @@ import type {
 } from '@obsidian-ui-system/ui-schema';
 import type { RenderedSpecimen } from './component-registry';
 import { captureTypographyContext } from './typography-capture';
+import { captureTokenEvidence, projectLegacyTokens } from './token-evidence';
 
 declare const __OBSIDIAN_SDK_VERSION__: string;
 
@@ -115,46 +116,7 @@ export async function captureComponents(specimens: RenderedSpecimen[]): Promise<
 }
 
 export function captureTokens(doc: Document): TokensSnapshot {
-  const view = doc.defaultView;
-  if (!view || !doc.body) throw new Error('Cannot capture tokens without a document body');
-
-  const names = new Set<string>();
-  const collectDeclarations = (style: CSSStyleDeclaration): void => {
-    for (let index = 0; index < style.length; index++) {
-      const name = style.item(index);
-      if (name.startsWith('--')) names.add(name);
-    }
-  };
-  const collectRules = (rules: CSSRuleList): void => {
-    for (const rule of Array.from(rules)) {
-      const declaration = (rule as CSSStyleRule).style;
-      if (declaration) collectDeclarations(declaration);
-      const children = (rule as CSSGroupingRule).cssRules;
-      if (children) collectRules(children);
-    }
-  };
-  for (const sheet of [...Array.from(doc.styleSheets), ...doc.adoptedStyleSheets]) {
-    try {
-      collectRules(sheet.cssRules);
-    } catch {
-      // Browser security blocks CSSOM access to some external sheets.
-    }
-  }
-  collectDeclarations(doc.documentElement.style);
-  collectDeclarations(doc.body.style);
-
-  const values: Record<string, string> = {};
-  for (const element of [doc.documentElement, doc.body]) {
-    const style = view.getComputedStyle(element);
-    for (const name of names) {
-      const value = style.getPropertyValue(name).trim();
-      if (value) values[name] = value;
-    }
-  }
-  return {
-    scopes: ['html', 'body'],
-    values: Object.fromEntries(Object.entries(values).sort(([a], [b]) => a.localeCompare(b))),
-  };
+  return projectLegacyTokens(captureTokenEvidence(doc, captureManifest(doc, new Date().toISOString())));
 }
 
 export function captureManifest(doc: Document, capturedAt: string): SnapshotManifest {
