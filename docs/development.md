@@ -91,7 +91,7 @@ npm run package:v2 -- \
   --inference-source dark
 ```
 
-The CLI validates the four `capture-context.json` files and their sibling artifacts, then writes an exclusively created `obsidian-ui-package-v2-<assembly timestamp>.zip` in the same ignored package directory. Mapping and Layout Lab timestamps may differ. `--inference-source` can be `dark` or `light` and defaults to `dark`; `--output PATH` optionally chooses another destination. Source folders and final ZIPs remain until manual removal. The Figma importer still accepts only Package v1; v2 is an evidence artifact for the next implementation stage.
+The CLI validates the four `capture-context.json` files and their sibling artifacts, then writes an exclusively created `obsidian-ui-package-v2-<assembly timestamp>.zip` in the same ignored package directory. Mapping and Layout Lab timestamps may differ. `--inference-source` can be `dark` or `light` and defaults to `dark`; `--output PATH` optionally chooses another destination. Source folders and final ZIPs remain until manual removal. The normal Figma importer still accepts only Package v1; a separate development plugin uses v2 for the three-token [Variables pilot](../apps/obsidian-ui-system-figma/README.md#package-v2-variables-pilot).
 
 To install, configure, and run the local Figma importer, follow the [Figma plugin guide](../apps/obsidian-ui-system-figma/README.md). On macOS, SF Pro / Regular must be available and render in Figma Desktop; the importer stops if that requirement fails. The Figma guide contains the font activation and plugin installation steps.
 
@@ -117,6 +117,7 @@ npm run test:font --workspace @obsidian-ui-system/figma-plugin
 npm run test:search --workspace @obsidian-ui-system/figma-plugin
 npm run test:ui-kit --workspace @obsidian-ui-system/figma-plugin
 npm run test:package --workspace @obsidian-ui-system/figma-plugin
+npm run test:variables --workspace @obsidian-ui-system/figma-plugin
 ```
 
 TypeScript checks and automated tests validate code paths. Mapping exports require Obsidian Desktop, and Figma component behavior still requires manual checks in Figma Desktop; see the [component reconstruction guide](obsidian-ui-system-figma/components/component-reconstruction.md).

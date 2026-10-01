@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font: 13px system-ui, sans-serif; margin: 18px; color: #222; }
+    h1 { font-size: 16px; }
+    p { line-height: 1.4; }
+    input { width: 100%; }
+    button { margin: 12px 0; padding: 8px 12px; }
+    pre { white-space: pre-wrap; word-break: break-word; background: #f4f4f4; padding: 10px; max-height: 240px; overflow: auto; }
+    #error { color: #b42318; }
+  </style>
+</head>
+<body>
+  <h1>Obsidian UI Variables Pilot</h1>
+  <p>Use um arquivo Figma descartável. Este piloto cria uma collection de teste com três Variables; não gera componentes.</p>
+  <label>Package v2 <input id="package" type="file" accept=".zip,application/zip"></label>
+  <button id="create" disabled>Criar e verificar 3 Variables</button>
+  <div id="error" role="alert"></div>
+  <h2>Prévia e prova CSS</h2><pre id="preview"></pre>
+  <h2>Readback Figma</h2><pre id="result"></pre>
+  <script>
+    const fileInput = document.getElementById('package');
+    const createButton = document.getElementById('create');
+    const preview = document.getElementById('preview');
+    const result = document.getElementById('result');
+    const error = document.getElementById('error');
+    let request = 0;
+
+    function rgb(value) {
+      const match = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)$/.exec(value);
+      return match ? [Number(match[1]), Number(match[2]), Number(match[3]), Number(match[4] ?? 1)] : null;
+    }
+
+    function evaluateColor(css) {
+      if (typeof css !== 'string' || !CSS.supports('color', css)) return { ok: false, reason: 'CSS.supports rejected expression' };
+      const probe = document.createElement('div');
+      probe.style.color = css;
+      document.body.appendChild(probe);
+      try {
+        const computed = getComputedStyle(probe).color;
+        const channels = rgb(computed);
+        return channels ? { ok: true, computed, channels } : { ok: false, computed, reason: 'Color did not normalize to RGB(A)' };
+      } finally { probe.remove(); }
+    }
+
+    fileInput.onchange = async () => {
+      const id = ++request;
+      createButton.disabled = true;
+      preview.textContent = '';
+      result.textContent = '';
+      error.textContent = '';
+      const file = fileInput.files[0];
+      if (!file || !file.name.toLowerCase().endsWith('.zip')) return;
+      try {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        if (id === request) parent.postMessage({ pluginMessage: { type: 'load-v2', bytes } }, '*');
+      } catch (reason) { if (id === request) error.textContent = String(reason); }
+    };
+
+    createButton.onclick = () => {
+      createButton.disabled = true;
+      error.textContent = '';
+      result.textContent = 'Criando e verificando…';
+      parent.postMessage({ pluginMessage: { type: 'create-pilot' } }, '*');
+    };
+
+    onmessage = (event) => {
+      const message = event.data.pluginMessage;
+      if (message?.type === 'v2-ready') {
+        const expression = message.expression;
+        const proof = {};
+        if (expression) for (const mode of ['dark', 'light']) {
+          const evaluated = evaluateColor(expression[mode]);
+          const expected = rgb(expression.expected[mode]);
+          proof[mode] = { sourceCss: expression[mode], ...evaluated,
+            expectedSpecimen: expression.expected[mode],
+            matchesButtonCta: !!evaluated.channels && !!expected &&
+              evaluated.channels.every((value, index) => Math.abs(value - expected[index]) < 1e-6) };
+        }
+        preview.textContent = JSON.stringify({ counts: message.counts, buildSha256: message.buildSha256,
+          candidates: message.candidates, interactiveAccent: proof }, null, 2);
+        createButton.disabled = false;
+      }
+      if (message?.type === 'pilot-done') {
+        result.textContent = JSON.stringify(message.report, null, 2);
+        createButton.disabled = false;
+      }
+      if (message?.type === 'pilot-error') {
+        error.textContent = message.text;
+        createButton.disabled = !preview.textContent;
+      }
+    };
+  </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 
 This local Figma Design development plugin imports the validated ButtonComponent and SearchComponent pilots. Its Custom UI reads one local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. The plugin validates and unpacks the ZIP locally, then creates native Component Sets. It does not read the local filesystem directly or access the network. Button and Search behavior was validated in Figma Desktop; automated importer tests also cover a real ZIP fixture.
 
-The [reconstruction reference](../../docs/obsidian-ui-system-figma/components/component-reconstruction.md) records the reusable rules demonstrated by these pilots.
+The [reconstruction reference](../../docs/obsidian-ui-system-figma/components/component-reconstruction.md) records the reusable rules demonstrated by these pilots. A separate development manifest tests three Package v2 Variables without changing this importer.
 
 ## Build and install
 
@@ -50,6 +50,12 @@ npm run dev --workspace @obsidian-ui-system/figma-plugin
 
 Run `npm run test:package --workspace @obsidian-ui-system/figma-plugin` to check the real ZIP fixture and incompatibility paths. The existing `test:font`, `test:search`, and `test:ui-kit` scripts cover the unchanged component behavior.
 
+### Package v2 Variables pilot
+
+The build also creates `dist/variables-pilot.js`. In a **disposable Figma Design file**, import `manifest.variables-pilot.json` as a separate development plugin and run **Obsidian UI Variables Pilot**. Select the controlled Package v2 ZIP from `dev-vault/obsidian-ui-exports/figma-packages/`, inspect the preview and the separate `--interactive-accent` CSS proof, then click **Criar e verificar 3 Variables**. The plugin creates a new collection named `Obsidian UI / Variables Pilot <timestamp>` with Dark/Light modes and three Variables. It reads back both mode values, verifies the `--modal-background` alias and mode switching, and displays the report in the UI. A successful collection remains in the disposable file; a failed attempt removes its new collection. Repeating a successful run creates another collection. No automatic cleanup is performed.
+
+The v2 reader and projection are independent of `src/package-data.ts`; the normal importer still rejects v2. `--interactive-accent` is evaluated in the pilot UI browser and compared with the captured Button CTA, but is not created as a Variable. `TIMING`, `EASING`, and `STRING` are outside this pilot. Run `npm run test:variables --workspace @obsidian-ui-system/figma-plugin` for the pure projection and v2 reader tests. If Desktop requires a Figma-issued plugin ID, follow the ID procedure above for this separate manifest.
+
 ## Files
 
 - `src/code.ts`: Figma Component Set creation and font loading.
@@ -59,6 +65,9 @@ Run `npm run test:package --workspace @obsidian-ui-system/figma-plugin` to check
 - `src/search-generation.ts`: creates the Search Component Set from positioned native nodes and the captured SVG masks.
 - `src/ui-kit-layout.ts`: calculates deterministic, non-overlapping section positions for each run.
 - `src/package-data.ts`: ZIP decoding and input preflight before generation.
+- `src/variable-projection.ts`: pure, selective Package v2 token decisions.
+- `src/variables-pilot-package.ts`: bounded v2 reader for the separate pilot.
+- `src/variables-pilot.ts`, `src/variables-pilot.html`, `manifest.variables-pilot.json`: isolated Variable creation/readback and UI CSS color proof.
 - `src/ui.html`: single ZIP picker, package summary and status messages.
 - `tests/fixtures/`: real Obsidian ZIP used by the importer tests.
 - `manifest.json`: Figma Design plugin registration, pointing to `dist/code.js` and `src/ui.html`.

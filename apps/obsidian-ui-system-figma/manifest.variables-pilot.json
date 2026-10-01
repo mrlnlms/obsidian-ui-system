@@ -1,0 +1,9 @@
+{
+  "name": "Obsidian UI Variables Pilot",
+  "api": "1.0.0",
+  "editorType": ["figma"],
+  "main": "dist/variables-pilot.js",
+  "ui": "src/variables-pilot.html",
+  "documentAccess": "dynamic-page",
+  "networkAccess": { "allowedDomains": ["none"] }
+}
