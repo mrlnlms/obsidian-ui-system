@@ -1,7 +1,7 @@
 import { readButtonImport } from './button-data';
-import { requiredFont } from './font-resolution';
+import { requiredFont, SF_PRO_SETUP_INSTRUCTIONS } from './font-resolution';
 
-figma.showUI(__html__, { width: 380, height: 330 });
+figma.showUI(__html__, { width: 380, height: 420 });
 
 figma.ui.onmessage = async (message: unknown) => {
   if (!isGenerateMessage(message)) return;
@@ -17,18 +17,22 @@ figma.ui.onmessage = async (message: unknown) => {
     const font = requiredFont({ cssStack: data[0].fontFamily, platform: data[0].platform,
       weight: data[0].fontWeight, style: data[0].fontStyle },
     available.map((item) => item.fontName));
-    await figma.loadFontAsync(font);
+    try {
+      await figma.loadFontAsync(font);
+    } catch {
+      throw fontFailure(font, `Required font could not be loaded: ${font.family} / ${font.style}.`);
+    }
     fontProbe = figma.createText();
     fontProbe.fontName = font;
     fontProbe.fontSize = data[0].fontSize;
     fontProbe.textAutoResize = 'WIDTH_AND_HEIGHT';
     fontProbe.characters = data[0].text;
     if (fontProbe.hasMissingFont) {
-      throw new Error(`Required font unusable: ${font.family} / ${font.style}. ` +
-        'Figma lists this font, but the TextNode reports it missing. Accept the SF Pro font license or install the font, then restart Figma.');
+      throw fontFailure(font, `Required font unusable: ${font.family} / ${font.style}. ` +
+        'Figma lists this font, but the TextNode reports it missing.');
     }
     if (fontProbe.width <= 0 || fontProbe.height <= 0) {
-      throw new Error(`Required font did not render: ${font.family} / ${font.style} ` +
+      throw fontFailure(font, `Required font did not render: ${font.family} / ${font.style} ` +
         `(width=${fontProbe.width}, height=${fontProbe.height}, chars=${fontProbe.characters.length}).`);
     }
     fontProbe.remove();
@@ -135,6 +139,10 @@ figma.ui.onmessage = async (message: unknown) => {
     figma.ui.postMessage({ type: 'result', ok: false, text: detail });
   }
 };
+
+function fontFailure(font: FontName, detail: string): Error {
+  return new Error(font.family === 'SF Pro' ? `${detail}\n\n${SF_PRO_SETUP_INSTRUCTIONS}` : detail);
+}
 
 function isGenerateMessage(value: unknown): value is { type: 'generate-button'; components: unknown; layout: unknown } {
   return typeof value === 'object' && value !== null && 'type' in value && value.type === 'generate-button' &&

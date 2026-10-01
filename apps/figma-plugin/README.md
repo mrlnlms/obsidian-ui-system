@@ -17,13 +17,20 @@ For this checkout, the latest locally checked pair is:
 
 These exports are ignored local evidence and may not exist in another checkout. `tokens.json` is not required: the Atlas already exports computed Button colors, and it does not record which token produced each color. See [the Button spike notes](../../docs/figma-button-spike.md) for the mapping and limits.
 
-## Required font on macOS
+## Typography prerequisite — macOS
 
-For the current macOS Button stack, the plugin requires **SF Pro / Regular**. It applies the exact `FontName` returned by `figma.listAvailableFontsAsync()`, including any default variable axes, without overriding them. Before generating components, it creates and removes a temporary TextNode to verify that the font actually renders. The plugin does not install fonts or substitute Google Sans Flex, Inter, or Roboto. If the exact family and style are absent, generation stops with `Required font not available: SF Pro / Regular. Install the required font and restart Figma.` If Figma lists the font but the TextNode still marks it missing, the message asks you to accept the SF Pro license or install it and restart Figma.
+The default Obsidian UI uses the macOS system UI font stack. The Figma importer resolves this stack to **SF Pro / Regular** for the current Button. SF Pro must be available and activated in Figma Desktop before generation. This is a one-time environment setup:
 
-In Figma Desktop, accept the SF Pro font license when prompted by an Apple UI kit or a text layer using SF Pro. [Figma's Apple UI kit instructions](https://help.figma.com/hc/en-us/articles/24037833895831-Get-started-with-Apple-s-UI-kit) say this makes SF Pro available in Figma. If it is still missing, download SF Pro from [Apple Fonts](https://developer.apple.com/fonts/), install it locally according to Apple's terms, then restart Figma Desktop. Do not add font files to this repository. The desktop app includes local font support; the separate Figma font installer is for browser use.
+1. Open Figma Desktop.
+2. Create or select a text layer.
+3. Choose **SF Pro**.
+4. If Figma displays Apple's font license or activation prompt, accept it.
+5. Confirm that the text renders normally.
+6. Run **Obsidian UI System** again.
 
-On the development Mac, the built-in `.SF NS`/`System Font` alias exists, but no locally installed family named `SF Pro` was found in `/Library/Fonts` or `~/Library/Fonts`. Figma listed `SF Pro / Regular` while a test TextNode still returned `hasMissingFont=true` (2026-09-30 Desktop check). If this happens, first apply SF Pro to a temporary text layer in Figma and accept the license prompt. If it remains missing, install SF Pro from Apple and restart Figma Desktop. The plugin will not generate empty Buttons as a fallback.
+If SF Pro is still unavailable, install it from [Apple Fonts](https://developer.apple.com/fonts/) under Apple's terms, restart Figma Desktop, and run the plugin again. Do not add font files to this repository. The license has already been accepted manually in the development Figma Desktop, and the user confirmed that SF Pro now renders correctly. The earlier `hasMissingFont=true` result was an unmet Figma environment prerequisite.
+
+The plugin checks `figma.listAvailableFontsAsync()`, loads the exact `FontName` returned by Figma with `loadFontAsync()`, and tests a temporary TextNode before creating any component. If the font is absent or fails to render, it stops and displays the human setup steps. It does not activate fonts, alter the imported JSON, or substitute another family.
 
 The checked pair above uses schema `0.4.0` and includes the Button's `fontStyle=normal`. Older `0.3.0` exports cannot satisfy automatic typography validation. Obsidian's `??` entries are a no-override sentinel, not a font family; the current Capture build omits them from usable typography CSS variable values while `tokens.json` retains the literal raw CSS values. Re-export from Obsidian to see that normalization in the artifacts; the plugin also filters sentinels when importing the checked pair.
 

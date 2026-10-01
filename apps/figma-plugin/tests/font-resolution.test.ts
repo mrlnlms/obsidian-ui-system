@@ -17,7 +17,7 @@ test('ignores Obsidian sentinel and preserves the exact Figma FontName', () => {
 
 test('fails before generation when required family or style is unavailable', () => {
   assert.throws(() => requiredFont(macButton, [{ family: 'Google Sans Flex', style: 'Regular' }]),
-    /Required font not available: SF Pro \/ Regular/);
+    /Required font not available: SF Pro \/ Regular\.[\s\S]*Open a text layer in Figma Desktop/);
   assert.throws(() => requiredFont(macButton, [{ family: 'SF Pro', style: 'Bold' }]),
     /Required font not available: SF Pro \/ Regular/);
 });

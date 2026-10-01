@@ -5,6 +5,13 @@ export interface FontRequest {
   style: string | null;
 }
 
+export const SF_PRO_SETUP_INSTRUCTIONS =
+  'SF Pro is required to reproduce the default Obsidian UI on macOS.\n\n' +
+  'This is a Figma Desktop setup step; the imported JSON files do not need to change.\n\n' +
+  "Open a text layer in Figma Desktop, select SF Pro and accept Apple's font license if prompted. " +
+  'Confirm the text renders, then run the plugin again.\n\n' +
+  'If SF Pro is still unavailable, install it from Apple and restart Figma Desktop.';
+
 /** The computed CSS stack is evidence; `??` is Obsidian's no-override sentinel. */
 export function fontFamilies(stack: string): string[] {
   const parts: string[] = [];
@@ -45,7 +52,8 @@ export function requiredFont(request: FontRequest, available: readonly FontName[
   }
   const match = available.find((font) => font.family === family && font.style === style);
   if (!match) {
-    throw new Error(`Required font not available: ${family} / ${style}. Install the required font and restart Figma.`);
+    const detail = `Required font not available: ${family} / ${style}.`;
+    throw new Error(family === 'SF Pro' ? `${detail}\n\n${SF_PRO_SETUP_INSTRUCTIONS}` : detail);
   }
   // Preserve the exact FontName reported by Figma, including any default variable axes.
   return match;
