@@ -1,6 +1,6 @@
 # Component registry
 
-`apps/obsidian-capture/src/component-registry.ts` defines the specimens used by both the Atlas view and snapshot capture. Each definition has a stable `id`, `name`, `category`, `source`, `implementation`, an array of variants, and a `render` factory. The factory instantiates a real Obsidian component and returns its DOM root plus a function that reads its current state.
+`apps/obsidian-ui-atlas/src/component-registry.ts` defines the specimens used by both the Atlas view and snapshot capture. Each definition has a stable `id`, `name`, `category`, `source`, `implementation`, an array of variants, and a `render` factory. The factory instantiates a real Obsidian component and returns its DOM root plus a function that reads its current state.
 
 To add a component, add one definition to `componentRegistry`. Use an API-backed factory when `source` is `public-api`. Give each variant a stable `id`, a visible `name`, and an expected `state`. The view automatically groups it by category and renders every variant; export captures those same rendered roots. Do not add a second capture-specific implementation.
 

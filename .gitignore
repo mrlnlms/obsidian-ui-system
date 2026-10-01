@@ -2,10 +2,10 @@
 node_modules/
 **/node_modules/
 .build/
-apps/obsidian-capture/main.js
-apps/obsidian-capture/*.map
-apps/obsidian-capture/data.json
-apps/figma-plugin/dist/
+apps/obsidian-ui-atlas/main.js
+apps/obsidian-ui-atlas/*.map
+apps/obsidian-ui-atlas/data.json
+apps/obsidian-ui-system-figma/dist/
 private/
 
 # Keep only the development plugin link in the vault configuration.

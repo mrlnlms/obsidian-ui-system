@@ -32,7 +32,7 @@ Os pacotes ficam locais e ignorados por Git. O teste `npm run test:package --wor
 
 `dev-vault/obsidian-ui-exports/figma-packages/` guarda os ZIPs finais de transferência. O usuário pode mantê-los ou apagá-los quando não forem mais necessários. `dev-vault/.obsidian-ui-system/` guarda os exports técnicos do Atlas (`ui-catalog-exports/`), do Lab (`layout-lab-exports/`), os relatórios de diff (`snapshot-diffs/`), staging do pacote (`package-staging/`) e diagnósticos de falha (`package-failures/`). O prefixo de ponto mantém a área técnica fora da navegação normal do vault. Ambas as áreas são ignoradas pelo Git.
 
-**Developer: Clean Obsidian UI Development Exports** é uma ferramenta opcional de manutenção na Command Palette. Ela mostra contagens e pede confirmação antes de apagar apenas exports individuais do Atlas/Lab e relatórios de diff. Não toca em Figma Packages, staging do Package Builder ou diagnósticos de falha. Não há retenção automática dos exports deliberados de desenvolvimento. O ZIP fixture versionado em `apps/figma-plugin/tests/fixtures/` continua no repositório para testes repetíveis.
+**Developer: Clean Obsidian UI Development Exports** é uma ferramenta opcional de manutenção na Command Palette. Ela mostra contagens e pede confirmação antes de apagar apenas exports individuais do Atlas/Lab e relatórios de diff. Não toca em Figma Packages, staging do Package Builder ou diagnósticos de falha. Não há retenção automática dos exports deliberados de desenvolvimento. O ZIP fixture versionado em `apps/obsidian-ui-system-figma/tests/fixtures/` continua no repositório para testes repetíveis.
 
 Para uma comparação reproduzível atual, gere dois novos exports individuais e use a CLI de diff.
 

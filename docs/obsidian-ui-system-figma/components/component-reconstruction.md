@@ -1,6 +1,6 @@
 # Reconstrução de componentes Obsidian no Figma
 
-Esta é a referência de trabalho para os próximos componentes. Consulte-a junto com as skills indicadas em [`AGENTS.md`](../../AGENTS.md). Atualize apenas regras que se mostrem reutilizáveis; mantenha medidas e resultados específicos de cada investigação nos documentos do respectivo componente.
+Esta é a referência de trabalho para os próximos componentes. Consulte-a junto com as skills indicadas em [`AGENTS.md`](../../../AGENTS.md). Atualize apenas regras que se mostrem reutilizáveis; mantenha medidas e resultados específicos de cada investigação nos documentos do respectivo componente.
 
 ## Evidência antes da estrutura Figma
 
@@ -44,7 +44,7 @@ Os SVGs Search vêm do CSSOM observado. O Button não tem ícones nesse specimen
 - Use `@figma/plugin-typings` instalado no projeto e as referências de `figma-use` e `figma-generate-library` antes de pesquisar fora. Use `figma-generative-plugins` ao alterar o plugin. Recorra à web apenas se houver lacuna real ou necessidade de verificar uma mudança recente da API.
 - Carregue o `FontName` exato antes de modificar `characters`; `listAvailableFontsAsync()` e `loadFontAsync()` não provam, sozinhos, que um TextNode renderiza. Verifique `hasMissingFont` e dimensões positivas. A stack macOS atual exige SF Pro ativada no Figma Desktop; se falhar, pare com instrução de setup humano.
 - Verifique que vincular uma Component Property não alterou texto, sizing ou clipping. Faça uma prova temporária da edição na instance quando a API permitir; remova os nodes de prova. Isso complementa, mas não substitui, a inspeção do painel e do canvas pelo usuário.
-- Mantenha a fonte do plugin em `apps/figma-plugin/`; o build gera `dist/code.js`. Um novo build não atualiza Component Sets já gerados no arquivo.
+- Mantenha a fonte do plugin em `apps/obsidian-ui-system-figma/`; o build gera `dist/code.js`. Um novo build não atualiza Component Sets já gerados no arquivo.
 
 ## Critério de fechamento de cada componente
 

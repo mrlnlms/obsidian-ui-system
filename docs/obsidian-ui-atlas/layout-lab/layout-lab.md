@@ -22,7 +22,7 @@ O código fica em `layout-lab.ts` (view), `layout-probes.ts` (suite declarativa)
 
 ## Adicionar um probe
 
-Edite somente a seleção em [`layout-probes.ts`](../../apps/obsidian-capture/src/layout-probes.ts), por exemplo:
+Edite somente a seleção em [`layout-probes.ts`](../../../apps/obsidian-ui-atlas/src/layout-probes.ts), por exemplo:
 
 ```ts
 specimens: [
