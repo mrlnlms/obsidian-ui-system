@@ -1,6 +1,6 @@
 # Obsidian UI System for Figma Design
 
-This local Figma Design development plugin imports the validated ButtonComponent and SearchComponent pilots. Its Custom UI reads two local JSON files with `FileReader`; the plugin code receives their parsed contents through `postMessage` and creates native Component Sets. It does not read the local filesystem directly or access the network. Button and Search were validated end to end in Figma Desktop.
+This local Figma Design development plugin imports the validated ButtonComponent and SearchComponent pilots. Its Custom UI reads one local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. The plugin validates and unpacks the ZIP locally, then creates native Component Sets. It does not read the local filesystem directly or access the network. Button and Search were validated end to end in Figma Desktop before this ZIP input change.
 
 For the next component, follow the [reusable reconstruction reference](../../docs/figma-component-reconstruction.md) and the Figma workflow in the repository's `AGENTS.md`.
 
@@ -10,14 +10,14 @@ For the next component, follow the [reusable reconstruction reference](../../doc
 2. Open a **Figma Design** file in the **Figma Desktop** app on macOS or Windows. Local plugin development requires the desktop app.
 3. In the Figma menu, choose **Plugins → Development → Import new plugin from manifest…**. In some versions, right-click the canvas and choose **Plugins → Development → Import plugin from manifest**.
 4. Select this exact file: `/Users/mosx/Desktop/obsidian-ui-system/apps/figma-plugin/manifest.json` (or `<repository>/apps/figma-plugin/manifest.json` in another checkout). Select the manifest, not `dist/code.js`.
-5. Run **Obsidian UI System** under **Plugins → Development** (or from the Actions menu). Choose `components.json` from an Atlas export and `layout.json` from a Layout Lab export made in the same Obsidian environment. Click **Generate UI Kit**. The plugin checks the required font and generates both Component Sets: `Obsidian / Button` in the `Actions` section and `Obsidian / Search` in the `Inputs` section.
+5. In Obsidian Desktop, run **Export Obsidian UI Figma Package** from the Command Palette. Atlas and Layout Lab may remain closed. The command writes one ZIP in `dev-vault/figma-packages/`.
+6. Run **Obsidian UI System** under **Plugins → Development** (or from the Actions menu). Choose that `.zip` in **Figma Package**. After the package summary appears, click **Generate UI Kit**. The plugin checks the required font and generates both Component Sets: `Obsidian / Button` in the `Actions` section and `Obsidian / Search` in the `Inputs` section.
 
-For this checkout, the latest locally checked pair is:
+For this checkout, the package used in automated validation is:
 
-- `dev-vault/ui-catalog-exports/2026-09-30T23-41-12-506Z/components.json`
-- `dev-vault/layout-spike-exports/2026-10-01T01-20-40-404Z/layout.json`
+- `dev-vault/figma-packages/obsidian-ui-package-2026-10-01T12-12-18-735Z.zip`
 
-These exports are ignored local evidence and may not exist in another checkout. Search requires a Lab export with `input::placeholder` CSSOM, present in the checked pair above; older Lab exports produce a clear error. `tokens.json` is not required: Atlas already exports computed colors, without recording which token produced each one. See [Button notes](../../docs/figma-button-spike.md) and [Search notes](../../docs/figma-search-spike.md) for mapping and limits.
+The local export is ignored by Git; a copy of the real ZIP is committed under `tests/fixtures/` for repeatable importer tests. The ZIP must contain `package-manifest.json`, `manifest.json`, `components.json`, `tokens.json` and `layout.json`. Before enabling generation, the importer checks package format/version, schema `0.4.0`, layout model `atlas-layout-probes-2`, matching Atlas/Layout Lab environment, JSON integrity, tokens, and the evidence required by Button and Search. Invalid or incompatible packages show an error and leave the canvas untouched. `tokens.json` is validated but not yet used to assign Figma Variables; the components still use the observed computed styles. See [Button notes](../../docs/figma-button-spike.md) and [Search notes](../../docs/figma-search-spike.md) for mapping and limits.
 
 Each run creates a new pair of sections to the right of the page's existing content. It does not update earlier Component Sets. Button keeps its `Label` property; Search keeps separate `Placeholder` and `Value` properties, with clear visibility driven by `State`. The Search set's 240 px initial width is only a demonstration host measured by the Lab, not an intrinsic width.
 
@@ -36,7 +36,7 @@ If SF Pro is still unavailable, install it from [Apple Fonts](https://developer.
 
 The plugin checks `figma.listAvailableFontsAsync()`, loads the exact `FontName` returned by Figma with `loadFontAsync()`, and tests a temporary TextNode before creating any component. If the font is absent or fails to render, it stops and displays the human setup steps. It does not activate fonts, alter the imported JSON, or substitute another family.
 
-The checked pair above uses schema `0.4.0` and includes the Button's `fontStyle=normal`. Older `0.3.0` exports cannot satisfy automatic typography validation. Obsidian's `??` entries are a no-override sentinel, not a font family; the current Capture build omits them from usable typography CSS variable values while `tokens.json` retains the literal raw CSS values. Re-export from Obsidian to see that normalization in the artifacts; the plugin also filters sentinels when importing the checked pair.
+The checked package uses schema `0.4.0` and includes the Button's `fontStyle=normal`. Older `0.3.0` exports cannot satisfy automatic typography validation. Obsidian's `??` entries are a no-override sentinel, not a font family; Capture omits them from usable typography CSS variable values while `tokens.json` retains the literal raw CSS values. The plugin also filters sentinels during import.
 
 The manifest has no invented `id`. Figma assigns plugin IDs; its manifest documentation describes `id` as the ID used to publish updates. If Desktop requires an ID during import, use **Plugins → Development → New Plugin…** with the **Run once** template to obtain a Figma-issued ID, add that value as `"id"` in this manifest, then import this manifest. Keep `apps/figma-plugin/` as the source; the generated template is only for obtaining the ID. Publishing is outside this setup.
 
@@ -52,6 +52,8 @@ npm run dev --workspace @obsidian-ui-system/figma-plugin
 
 `dev` watches `src/*.ts` and recompiles `dist/code.js` when they change. After a rebuild, run the development plugin again in Figma Desktop. Each click on **Generate UI Kit** adds a new Button/Search pair in new `Actions` and `Inputs` sections without overlapping earlier runs. Re-run `check` when changing TypeScript; watch mode only builds. If you change the manifest or `src/ui.html`, re-import or restart the plugin if the app does not pick up the change. A prior Component Set is not changed by rebuilding or generating a new one.
 
+Run `npm run test:package --workspace @obsidian-ui-system/figma-plugin` to check the real ZIP fixture and incompatibility paths. The existing `test:font`, `test:search`, and `test:ui-kit` scripts cover the unchanged component behavior.
+
 ## Files
 
 - `src/code.ts`: Figma Component Set creation and font loading.
@@ -60,7 +62,9 @@ npm run dev --workspace @obsidian-ui-system/figma-plugin
 - `src/search-data.ts`: validates Search evidence and builds an experimental Figma-ready model.
 - `src/search-generation.ts`: creates the Search Component Set from positioned native nodes and the captured SVG masks.
 - `src/ui-kit-layout.ts`: calculates deterministic, non-overlapping section positions for each run.
-- `src/ui.html`: local file picker and status messages.
+- `src/package-data.ts`: ZIP decoding and input preflight before generation.
+- `src/ui.html`: single ZIP picker, package summary and status messages.
+- `tests/fixtures/`: real Obsidian ZIP used by the importer tests.
 - `manifest.json`: Figma Design plugin registration, pointing to `dist/code.js` and `src/ui.html`.
 - `dist/code.js`: generated locally and ignored by Git.
 - `package.json` and `tsconfig.json`: TypeScript checking and esbuild commands.

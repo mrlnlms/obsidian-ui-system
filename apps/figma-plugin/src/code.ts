@@ -2,16 +2,48 @@ import { readButtonImport } from './button-data';
 import { requiredFont, SF_PRO_SETUP_INSTRUCTIONS } from './font-resolution';
 import { generateSearch } from './search-generation';
 import { planUiKitPlacement } from './ui-kit-layout';
+import { readFigmaPackage, type ImportedPackage } from './package-data';
 
 figma.showUI(__html__, { width: 380, height: 420 });
 
+let importedPackage: ImportedPackage | undefined;
+let currentRequest = 0;
+
 figma.ui.onmessage = async (message: unknown) => {
+  if (isClearPackageMessage(message)) {
+    if (message.requestId >= currentRequest) {
+      currentRequest = message.requestId;
+      importedPackage = undefined;
+    }
+    return;
+  }
+  if (isLoadPackageMessage(message)) {
+    if (message.requestId < currentRequest) return;
+    currentRequest = message.requestId;
+    importedPackage = undefined;
+    try {
+      const bytes = message.bytes instanceof Uint8Array ? message.bytes :
+        message.bytes instanceof ArrayBuffer ? new Uint8Array(message.bytes) : null;
+      if (!bytes) throw new Error('Figma Package inválido: dados do ZIP ausentes.');
+      importedPackage = readFigmaPackage(bytes);
+      figma.ui.postMessage({ type: 'package-ready', requestId: currentRequest,
+        summary: importedPackage.summary });
+    } catch (error) {
+      figma.ui.postMessage({ type: 'package-error', requestId: currentRequest,
+        text: error instanceof Error ? error.message : String(error) });
+    }
+    return;
+  }
   if (!isGenerateUiKitMessage(message)) return;
+  if (!importedPackage) {
+    figma.ui.postMessage({ type: 'result', ok: false, text: 'Selecione um Figma Package válido antes de gerar o UI Kit.' });
+    return;
+  }
   const sets: ComponentSetNode[] = [];
   const sections: SectionNode[] = [];
   try {
-    sets.push(await generateButton(message.components, message.layout));
-    sets.push(await generateSearch(message.components, message.layout));
+    sets.push(await generateButton(importedPackage.components, importedPackage.layout));
+    sets.push(await generateSearch(importedPackage.components, importedPackage.layout));
     organizeUiKit(sets[0]!, sets[1]!, sections);
     figma.currentPage.selection = sets;
     figma.viewport.scrollAndZoomIntoView(sections);
@@ -176,9 +208,20 @@ function fontFailure(font: FontName, detail: string): Error {
   return new Error(font.family === 'SF Pro' ? `${detail}\n\n${SF_PRO_SETUP_INSTRUCTIONS}` : detail);
 }
 
-function isGenerateUiKitMessage(value: unknown): value is { type: 'generate-ui-kit'; components: unknown; layout: unknown } {
-  return typeof value === 'object' && value !== null && 'type' in value && value.type === 'generate-ui-kit' &&
-    'components' in value && 'layout' in value;
+function isGenerateUiKitMessage(value: unknown): value is { type: 'generate-ui-kit' } {
+  return typeof value === 'object' && value !== null && 'type' in value && value.type === 'generate-ui-kit';
+}
+
+function isClearPackageMessage(value: unknown): value is { type: 'clear-package'; requestId: number } {
+  return typeof value === 'object' && value !== null && 'type' in value && value.type === 'clear-package' &&
+    'requestId' in value && typeof value.requestId === 'number' &&
+    Number.isSafeInteger(value.requestId) && value.requestId >= 0;
+}
+
+function isLoadPackageMessage(value: unknown): value is { type: 'load-package'; requestId: number; bytes: unknown } {
+  return typeof value === 'object' && value !== null && 'type' in value && value.type === 'load-package' &&
+    'requestId' in value && typeof value.requestId === 'number' &&
+    Number.isSafeInteger(value.requestId) && value.requestId >= 0 && 'bytes' in value;
 }
 
 function validateSharedTypography(data: ReturnType<typeof readButtonImport>): void {

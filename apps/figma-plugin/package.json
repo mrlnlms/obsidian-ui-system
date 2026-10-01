@@ -8,7 +8,11 @@
     "test:font": "esbuild tests/font-resolution.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/font-resolution.test.cjs && node --test ../../.build/font-resolution.test.cjs",
     "test:search": "esbuild tests/search-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/search-data.test.cjs && node --test ../../.build/search-data.test.cjs",
     "test:ui-kit": "esbuild tests/ui-kit-layout.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/ui-kit-layout.test.cjs && node --test ../../.build/ui-kit-layout.test.cjs",
+    "test:package": "esbuild tests/package-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/figma-package-data.test.cjs && node --test ../../.build/figma-package-data.test.cjs",
     "dev": "esbuild src/code.ts --bundle --platform=browser --target=es2017 --outfile=dist/code.js --watch"
+  },
+  "dependencies": {
+    "fflate": "^0.8.3"
   },
   "devDependencies": {
     "@figma/plugin-typings": "^1.140.0",

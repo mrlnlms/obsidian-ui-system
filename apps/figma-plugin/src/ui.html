@@ -19,63 +19,91 @@
 </head>
 <body>
   <h1>Obsidian UI System</h1>
-  <p>Importe os JSONs do Atlas e do Layout Lab do mesmo ambiente.</p>
-  <label>Atlas components.json <input id="components" type="file" accept=".json,application/json"></label>
-  <label>Layout Lab layout.json <input id="layout" type="file" accept=".json,application/json"></label>
-  <button id="generate" type="button">Generate UI Kit</button>
+  <p>Selecione o pacote exportado pelo comando do Obsidian.</p>
+  <label>Figma Package <input id="package" type="file" accept=".zip,application/zip"></label>
+  <div id="summary" role="status" aria-live="polite"></div>
+  <button id="generate" type="button" disabled>Generate UI Kit</button>
   <div id="typography" role="status" aria-live="polite"></div>
   <div id="status" role="status" aria-live="polite"></div>
   <script>
-    const componentsInput = document.getElementById('components');
-    const layoutInput = document.getElementById('layout');
+    const packageInput = document.getElementById('package');
     const generate = document.getElementById('generate');
+    const summary = document.getElementById('summary');
     const typography = document.getElementById('typography');
     const status = document.getElementById('status');
+    let requestId = 0;
+    let ready = false;
+    let generating = false;
 
     function show(text, kind = '') {
       status.textContent = text;
       status.className = kind;
     }
 
-    function readJson(file, label) {
+    function readZip(file) {
       return new Promise((resolve, reject) => {
-        if (!file) return reject(new Error(`${label}: selecione um arquivo JSON.`));
         const reader = new FileReader();
-        reader.onerror = () => reject(new Error(`${label}: não foi possível ler o arquivo.`));
-        reader.onload = () => {
-          try { resolve(JSON.parse(String(reader.result))); }
-          catch { reject(new Error(`${label}: JSON inválido.`)); }
-        };
-        reader.readAsText(file);
+        reader.onerror = () => reject(new Error('Não foi possível ler o ZIP selecionado.'));
+        reader.onload = () => resolve(new Uint8Array(reader.result));
+        reader.readAsArrayBuffer(file);
       });
     }
 
-    async function run() {
+    packageInput.onchange = async () => {
+      const id = ++requestId;
+      ready = false;
       generate.disabled = true;
+      summary.textContent = '';
       typography.textContent = '';
-      show('Lendo arquivos…');
-      try {
-        const [components, layout] = await Promise.all([
-          readJson(componentsInput.files[0], 'Atlas components.json'),
-          readJson(layoutInput.files[0], 'Layout Lab layout.json'),
-        ]);
-        show('Verificando evidência e tipografia; gerando UI Kit…');
-        parent.postMessage({ pluginMessage: { type: 'generate-ui-kit', components, layout } }, '*');
-      } catch (error) {
-        show(error.message || String(error), 'error');
-        generate.disabled = false;
+      parent.postMessage({ pluginMessage: { type: 'clear-package', requestId: id } }, '*');
+      const file = packageInput.files[0];
+      if (!file) { show('Selecione um Figma Package .zip.'); return; }
+      if (!file.name.toLowerCase().endsWith('.zip')) {
+        show('Selecione um arquivo .zip exportado pelo Obsidian.', 'error');
+        return;
       }
-    }
+      show('Lendo e validando Figma Package…');
+      try {
+        const bytes = await readZip(file);
+        if (id !== requestId) return;
+        parent.postMessage({ pluginMessage: { type: 'load-package', requestId: id, bytes } }, '*');
+      } catch (error) {
+        if (id === requestId) show(error.message || String(error), 'error');
+      }
+    };
 
-    generate.onclick = run;
+    generate.onclick = () => {
+      if (!ready || generating) return;
+      generating = true;
+      generate.disabled = true;
+      packageInput.disabled = true;
+      typography.textContent = '';
+      show('Verificando tipografia e gerando UI Kit…');
+      parent.postMessage({ pluginMessage: { type: 'generate-ui-kit' } }, '*');
+    };
 
     onmessage = (event) => {
       const message = event.data.pluginMessage;
+      if (message?.type === 'package-ready' && message.requestId === requestId) {
+        ready = true;
+        summary.textContent = `Obsidian ${message.summary.obsidianVersion}\n` +
+          `${message.summary.specimens} specimens · ${message.summary.tokens} tokens\nLayout model ready`;
+        summary.style.whiteSpace = 'pre-line';
+        generate.disabled = generating;
+        show('Pacote pronto.');
+      }
+      if (message?.type === 'package-error' && message.requestId === requestId) {
+        ready = false;
+        generate.disabled = true;
+        show(message.text, 'error');
+      }
       if (message?.type === 'typography') typography.textContent = message.text;
       if (message?.type === 'result') {
         if (!message.ok) typography.textContent = '';
         show(message.text, message.ok ? 'success' : 'error');
-        generate.disabled = false;
+        generating = false;
+        packageInput.disabled = false;
+        generate.disabled = !ready;
       }
     };
   </script>
