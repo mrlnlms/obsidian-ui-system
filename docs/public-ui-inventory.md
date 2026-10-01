@@ -15,7 +15,7 @@ Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.1
 | `TextAreaComponent` (L7019) | Texto multilinha | Sim | Sim | Sim | `inputEl` é `textarea`; empty, filled e disabled capturados. | captured |
 | `DropdownComponent` (L2299) | Seleção | Sim | Sim | Sim | Duas opções fixas; default, selected e disabled capturados. | captured |
 | `SliderComponent` (L6722) | Intervalo numérico | Sim | Sim | Sim | Limites 0–100, passo 1; minimum, middle, maximum e disabled capturados. | captured |
-| `ColorComponent` (L1647) | Cor | Sim | Sim | Sim | Valores hex fixos e disabled capturados; possível popover de escolha fica fora deste lote. | captured |
+| `ColorComponent` (L1647) | Cor | Sim | Sim | Sim | Valores hex fixos e disabled capturados; possível popover de escolha fica fora desta captura. | captured |
 | `ExtraButtonComponent` (L2841) | Botão de ícone | Sim | Sim | Sim | Ícone integrado `settings`, tooltip e disabled capturados. | captured |
 | `MomentFormatComponent` (L4568) | Formato de data/hora | Sim, herdado | Sim | Sim | Herda `TextComponent`; input de formato capturado sem `sampleEl` temporal. | captured |
 | `ProgressBarComponent` (L5291) | Progresso | Sim | Sim | Sim | Valores 0, 50 e 100 capturados; barra interna reflete a porcentagem. | captured |
@@ -75,17 +75,15 @@ Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.1
 | `Component`, `Scope`, `WorkspaceLeaf`, `App`, `Vault` (L1835/L5532/L8228/L406/L7321) | Ciclo de vida/infraestrutura | Varia | Não por si | Não | Fornecem contexto, eventos, teclado, workspace ou dados. | not-applicable |
 | `canvas.d.ts` / `publish.d.ts` | APIs auxiliares | N/A | Não como controle de plugin | Não | Canvas declara formato de dados; Publish expõe renderização/postprocessamento em outro contexto. | not-applicable |
 
-## Contagem e lotes sugeridos
+## Cobertura atual
 
 Há **26 APIs/famílias com specimen no registry** e **1 API limitada sem specimen** (`HoverPopover`). Essa é uma contagem de APIs/famílias, não de variantes nem de ícones individuais. O specimen de `setTooltip` captura apenas o registro no alvo, não o tooltip visível. Itens obtidos somente dentro de outro componente, como `MenuItem` e `ConfirmationButton`, entram na captura do pai e não aumentam a contagem. APIs `not-applicable` continuam documentadas para evitar confundir uma API pública com um componente do catálogo.
 
-Lotes pequenos possíveis, em ordem de menor dependência de contexto:
+- **Inputs:** `TextComponent`, `TextAreaComponent`, `DropdownComponent`, `SliderComponent`.
+- **Controles complementares:** `ColorComponent`, `ExtraButtonComponent`, `MomentFormatComponent`, `ProgressBarComponent`.
+- **Settings:** `Setting`, `SettingGroup`, `DisplayValueComponent`, `SecretComponent`; somente dados fictícios, sem persistir segredo. O diálogo aberto por `SecretComponent` é uma superfície disparada, não um specimen exportado.
+- **Overlays diretos:** `Modal`, `ConfirmationModal`, `Menu`, `Notice`; abertura, captura e fechamento explícitos.
+- **Sugestões:** `PopoverSuggest`, `AbstractInputSuggest`, `SuggestModal`, `FuzzySuggestModal`; subclasses mínimas e dados fixos. O `PopoverSuggest` isolado captura somente sua superfície vazia.
+- **Elementos contextuais:** `setTooltip`, `displayTooltip`, `setIcon` têm specimens; `HoverPopover` permanece limitado pela ausência de fechamento público.
 
-1. **Inputs básicos (implementado):** `TextComponent`, `TextAreaComponent`, `DropdownComponent`, `SliderComponent`.
-2. **Controles complementares (implementado):** `ColorComponent`, `ExtraButtonComponent`, `MomentFormatComponent`, `ProgressBarComponent`.
-3. **Settings (implementado):** `Setting`, `SettingGroup`, `DisplayValueComponent`, `SecretComponent`; somente dados fictícios, sem persistir segredo. Veja [observações do lote](settings-batch.md) e [superfícies disparadas](triggered-surfaces.md), incluindo o diálogo aberto por `SecretComponent`.
-4. **Overlays diretos (implementado):** `Modal`, `ConfirmationModal`, `Menu`, `Notice`; abertura, captura e fechamento explícitos. Veja [observações do lote](overlays-batch.md).
-5. **Sugestões (implementado):** `PopoverSuggest`, `AbstractInputSuggest`, `SuggestModal`, `FuzzySuggestModal`; subclasses mínimas e dados fixos. O `PopoverSuggest` isolado captura somente sua superfície vazia; veja [observações do lote](suggestions-batch.md).
-6. **Elementos contextuais (implementado dentro do contrato público):** `setTooltip`, `displayTooltip`, `setIcon` têm specimens; `HoverPopover` permanece limitado pela ausência de fechamento público. Veja [observações do lote](contextual-batch.md).
-
-O lote 1 foi validado em runtime com 13 novos specimens. O lote 2 acrescentou 11 specimens, chegando a 31. O lote 3 acrescentou 10, chegando a 41. O lote 4 acrescentou 8, chegando a 49. O lote 5 acrescentou 7, chegando a 56. O lote 6 acrescenta 3, para **59 specimens** de 26 famílias. Um teste de [determinismo](snapshot-determinism.md) precedeu o lote 2. O `minAppVersion` agora é `1.13.1`, exigido pelo contrato de `DisplayValueComponent`/`Setting.addDisplayValue`.
+O catálogo atual contém **59 specimens** de 26 famílias. O `minAppVersion` é `1.13.1`, exigido pelo contrato de `DisplayValueComponent`/`Setting.addDisplayValue`.

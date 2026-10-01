@@ -1,6 +1,6 @@
 # Obsidian UI System for Figma Design
 
-This local Figma Design development plugin imports the validated ButtonComponent and SearchComponent pilots. Its Custom UI reads one local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. The plugin validates and unpacks the ZIP locally, then creates native Component Sets. It does not read the local filesystem directly or access the network. Button and Search behavior was validated in Figma Desktop. The single-ZIP workflow was confirmed manually for the v0.1.0 checkpoint; automated importer tests also cover a real ZIP fixture.
+This local Figma Design development plugin imports the validated ButtonComponent and SearchComponent pilots. Its Custom UI reads one local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. The plugin validates and unpacks the ZIP locally, then creates native Component Sets. It does not read the local filesystem directly or access the network. Button and Search behavior was validated in Figma Desktop; automated importer tests also cover a real ZIP fixture.
 
 The [reconstruction reference](../../docs/figma-component-reconstruction.md) records the reusable rules demonstrated by these pilots.
 
@@ -9,15 +9,11 @@ The [reconstruction reference](../../docs/figma-component-reconstruction.md) rec
 1. From the repository root, run `npm ci` and then `npm run build --workspace @obsidian-ui-system/figma-plugin`. The build creates `apps/figma-plugin/dist/code.js`. You can also run `npm run build` to build the monorepo.
 2. Open a **Figma Design** file in the **Figma Desktop** app on macOS or Windows. Local plugin development requires the desktop app.
 3. In the Figma menu, choose **Plugins → Development → Import new plugin from manifest…**. In some versions, right-click the canvas and choose **Plugins → Development → Import plugin from manifest**.
-4. Select this exact file: `/Users/mosx/Desktop/obsidian-ui-system/apps/figma-plugin/manifest.json` (or `<repository>/apps/figma-plugin/manifest.json` in another checkout). Select the manifest, not `dist/code.js`.
+4. Select `<repository>/apps/figma-plugin/manifest.json`. Select the manifest, not `dist/code.js`.
 5. In Obsidian Desktop, run **Export Obsidian UI Figma Package** from the Command Palette. Atlas and Layout Lab may remain closed. The command writes one ZIP in `dev-vault/obsidian-ui-exports/figma-packages/`.
 6. Run **Obsidian UI System** under **Plugins → Development** (or from the Actions menu). Choose that `.zip` in **Figma Package**. After the package summary appears, click **Generate UI Kit**. The plugin checks the required font and generates both Component Sets: `Obsidian / Button` in the `Actions` section and `Obsidian / Search` in the `Inputs` section.
 
-For this checkout, the package used in automated validation is:
-
-- `dev-vault/obsidian-ui-exports/figma-packages/obsidian-ui-package-2026-10-01T12-12-18-735Z.zip`
-
-The local export is ignored by Git; a copy of the real ZIP is committed under `tests/fixtures/` for repeatable importer tests. The ZIP must contain `package-manifest.json`, `manifest.json`, `components.json`, `tokens.json` and `layout.json`. Before enabling generation, the importer checks package format/version, schema `0.4.0`, layout model `atlas-layout-probes-2`, matching Atlas/Layout Lab environment, JSON integrity, tokens, and the evidence required by Button and Search. Invalid or incompatible packages show an error and leave the canvas untouched. `tokens.json` is validated but not yet used to assign Figma Variables; the components still use the observed computed styles. See [Button notes](../../docs/figma-button-spike.md) and [Search notes](../../docs/figma-search-spike.md) for mapping and limits.
+The local export is ignored by Git; a copy of the real ZIP is committed under `tests/fixtures/` for repeatable importer tests. The ZIP must contain `package-manifest.json`, `manifest.json`, `components.json`, `tokens.json` and `layout.json`. Before enabling generation, the importer checks package format/version, schema `0.4.0`, layout model `atlas-layout-probes-2`, matching Atlas/Layout Lab environment, JSON integrity, tokens, and the evidence required by Button and Search. Invalid or incompatible packages show an error and leave the canvas untouched. `tokens.json` is validated but not yet used to assign Figma Variables; the components still use the observed computed styles. The [component reconstruction reference](../../docs/figma-component-reconstruction.md) describes mapping rules and validation limits.
 
 Each run creates a new pair of sections to the right of the page's existing content. It does not update earlier Component Sets. Button keeps its `Label` property; Search keeps separate `Placeholder` and `Value` properties, with clear visibility driven by `State`. The Search set's 240 px initial width is only a demonstration host measured by the Lab, not an intrinsic width.
 
@@ -32,7 +28,7 @@ The default Obsidian UI uses the macOS system UI font stack. The Figma importer 
 5. Confirm that the text renders normally.
 6. Run **Obsidian UI System** again.
 
-If SF Pro is still unavailable, install it from [Apple Fonts](https://developer.apple.com/fonts/) under Apple's terms, restart Figma Desktop, and run the plugin again. Do not add font files to this repository. The historical `hasMissingFont=true` diagnosis and its resolution are recorded in the [Button investigation](../../docs/figma-button-spike.md).
+If SF Pro is still unavailable, install it from [Apple Fonts](https://developer.apple.com/fonts/) under Apple's terms, restart Figma Desktop, and run the plugin again. Do not add font files to this repository.
 
 The plugin checks `figma.listAvailableFontsAsync()`, loads the exact `FontName` returned by Figma with `loadFontAsync()`, and tests a temporary TextNode before creating any component. If the font is absent or fails to render, it stops and displays the human setup steps. It does not activate fonts, alter the imported package, or substitute another family.
 

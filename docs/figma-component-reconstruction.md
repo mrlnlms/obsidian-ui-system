@@ -37,7 +37,7 @@ Para texto de uma linha, preserve o comportamento de overflow medido. Um viewpor
 | `Obsidian / Button` | Largura Hug e altura Fixed inferidas pelo Lab; Auto Layout horizontal, sem wrap, padding e estilos dos exports; `State=Normal/Disabled/CTA`; propriedade `Label`. | No Figma Desktop, uma instance passou de `Example button` para `OK` e a largura se ajustou automaticamente. |
 | `Obsidian / Search` | Raiz Fill horizontal e altura Fixed; interior com posicionamento relativo/absoluto, superfície e viewport textual que esticam, lupa à esquerda e clear à direita; SVGs das máscaras capturadas; clipping sem ellipsis; `State=Empty/Filled`; `Placeholder` e `Value` separados. | Layout, resize, altura, ícones, corte simples e edição de texto por estado foram validados manualmente. |
 
-Os SVGs Search vêm do CSSOM observado. O Button não tem ícones nesse specimen. Consulte [`figma-button-spike.md`](figma-button-spike.md) e [`figma-search-spike.md`](figma-search-spike.md) para provas e limites específicos, sem copiar suas medidas como regras gerais.
+Os SVGs Search vêm do CSSOM observado. O Button não tem ícones nesse specimen. Medidas de um componente específico não devem ser copiadas como regras gerais.
 
 ## Cuidados da Plugin API
 

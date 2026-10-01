@@ -1,6 +1,6 @@
 # Obsidian UI System
 
-A monorepo that captures the public Obsidian UI and imports the validated Button and Search pilots into Figma Design. The **Obsidian UI Atlas** plugin renders 26 public API families and exports canonical snapshots. The [v0.1.0 checkpoint](docs/v0.1-checkpoint.md) records the implemented scope and its limits.
+A monorepo that captures the public Obsidian UI and imports the validated Button and Search pilots into Figma Design. The **Obsidian UI Atlas** plugin renders 26 public API families and exports canonical snapshots.
 
 ## Current Figma workflow
 
@@ -35,7 +35,7 @@ In Obsidian, choose **Open folder as vault** and select exactly:
 <repository>/dev-vault
 ```
 
-For this checkout, that is `/Users/mosx/Desktop/obsidian-ui-system/dev-vault`. This vault is for development and tests only; Obsidian may generate local settings in `.obsidian/`, which are ignored.
+This vault is for development and tests only; Obsidian may generate local settings in `.obsidian/`, which are ignored.
 
 ## Develop the plugin
 
@@ -43,7 +43,7 @@ Run `npm run dev` at the repository root to rebuild `main.js` when `apps/obsidia
 
 In the development vault, open **Settings → Community plugins**, allow community plugins if prompted, then enable **Obsidian UI Atlas**. Enable **Hot Reload** there only if it is installed locally. Run **Open Obsidian UI Atlas** from the Command Palette. It opens or reveals one scrollable workspace tab containing canonical registry specimens. Press **Export snapshot** for an individual Atlas export. The plugin requires Obsidian 1.13.1 or newer for `DisplayValueComponent` support.
 
-Each export creates a timestamped folder at `dev-vault/.obsidian-ui-system/ui-catalog-exports/<UTC timestamp>/` with `manifest.json`, `tokens.json`, and `components.json`. The manifest distinguishes the runtime Obsidian API version from the installed `obsidian` SDK package version and the snapshot schema version. These local outputs are ignored by Git. The [schema package](packages/ui-schema/README.md) describes the contract; [capture notes](docs/capture-milestone.md) explain what the export measures and its current limits. See the [registry guide](docs/component-registry.md) to add a component or variant.
+Each export creates a timestamped folder at `dev-vault/.obsidian-ui-system/ui-catalog-exports/<UTC timestamp>/` with `manifest.json`, `tokens.json`, and `components.json`. The manifest distinguishes the runtime Obsidian API version from the installed `obsidian` SDK package version and the snapshot schema version. These local outputs are ignored by Git. The [schema package](packages/ui-schema/README.md) describes the contract; [snapshot guide](docs/atlas-snapshot.md) explains what the export measures and its current limits. See the [registry guide](docs/component-registry.md) to add a component or variant.
 
 ## Compare two exports
 
@@ -55,23 +55,13 @@ npm run diff:snapshots -- <before-export-folder> <after-export-folder> [output-f
 
 The command writes `diff.json` and `diff.md`. Without an output argument, it uses an ignored folder under `dev-vault/.obsidian-ui-system/snapshot-diffs/`. It compares specimens by `id + variant`, tokens by custom property name, and manifest fields separately. See the [comparison guide](docs/snapshot-diff.md) for an example using two real exports and an explanation of the categories.
 
-The [determinism check](docs/snapshot-determinism.md) records consecutive exports from the same Obsidian environment before batch 2 and classifies the observed manifest timestamp difference.
-
-The [Light/Dark capture](docs/light-dark-capture.md) documents how to export the same Atlas under each base color scheme and the observed semantic diff for the default theme. Mode belongs to the manifest; specimen identity remains `id + variant`.
-
-The [public API phase closure](docs/public-api-phase-complete.md) records the 26-family / 59-specimen capture milestone. The [Figma readiness assessment](docs/figma-readiness.md) is a historical analysis of schema 0.3.0, before the Button/Search importer.
+The manifest records Light or Dark mode; specimen identity remains `id + variant`. Compare exports from matching environments when assessing component changes. The [public UI inventory](docs/public-ui-inventory.md) lists the 26 captured families and the current public API boundary.
 
 The [Layout Probe Lab](docs/layout-lab.md) is a separate technical workspace view. Open it with **Open Obsidian UI Layout Lab**. It measures registry definitions for Button, Search, Dropdown, Slider and Setting in controlled hosts, displays experimental sizing classifications, and saves `layout.json` under ignored `dev-vault/.obsidian-ui-system/layout-lab-exports/<UTC timestamp>/`. The Lab has its own **Measure layout probes** and **Export layout probes** actions. Atlas **Export snapshot** does not run probes or write into the Lab export directory. The [inference analysis](docs/layout-inference.md) records current evidence and unknowns.
 
 The individual Atlas and Lab exports above remain available for development and diagnosis; the ZIP is the normal Figma transfer artifact.
 
 `dev-vault/obsidian-ui-exports/` contains final packages you may keep or delete. `dev-vault/.obsidian-ui-system/` contains hidden development captures, diff reports, package staging, and failure diagnostics. **Developer: Clean Obsidian UI Development Exports** is an optional maintenance command for individual Atlas/Lab exports and diff reports. It asks for confirmation and leaves both Figma Packages and failure diagnostics untouched. It is not part of package export; there is no automatic retention policy for deliberate development exports.
-
-The [Settings batch notes](docs/settings-batch.md) document the four Settings APIs, their runtime quirks, and the comparison with the preceding Dark snapshot.
-
-The [direct overlay notes](docs/overlays-batch.md) document batch 4, including opening and cleanup, capture roots, and the real export comparison.
-The [suggestion notes](docs/suggestions-batch.md) document batch 5, including the limited base popover, concrete suggestion lists, and their runtime capture boundaries.
-The [contextual API notes](docs/contextual-batch.md) document batch 6: registered and visible tooltips, an SVG icon, and the public-lifecycle limit of `HoverPopover`.
 
 Hot-Reload is a local development dependency, installed at `dev-vault/.obsidian/plugins/hot-reload/` and ignored by Git. To reinstall the pinned version after cloning, run from the repository root:
 
@@ -101,7 +91,8 @@ If a real directory occupies that path, inspect its contents before removing it;
 - `packages/ui-schema/`: initial shared TypeScript snapshot contract.
 - `skills/obsidian-ui/`: future agent skill placeholder.
 - `dev-vault/`: isolated Obsidian test vault.
-- `docs/`: project documentation.
+- `docs/`: maintained documentation for users and contributors; see the [index](docs/README.md).
+- `private/`: local, Git-ignored plans, research notes, and experimental models.
 - `scripts/`: standalone semantic snapshot comparison CLI and tests.
 
 ## Verification commands

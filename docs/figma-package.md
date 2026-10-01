@@ -28,17 +28,13 @@ O formato de transporte é `1`; o schema canônico atual é `0.4.0`, e o layout 
 
 Os pacotes ficam locais e ignorados por Git. O teste `npm run test:package --workspace @obsidian-ui-system/capture` verifica a estrutura ZIP e rejeições de inconsistência. A captura real depende do Obsidian Desktop e deve ser conferida após o build.
 
-Em 2026-10-01, uma execução real gerou `obsidian-ui-package-2026-10-01T12-12-18-735Z.zip`: ZIP íntegro (CRC válido), cinco JSONs legíveis, 59 specimens, 945 tokens, 102 observações e 16 inferências. `manifest.json` e `layout.environment` coincidiram; Button manteve inferência horizontal `hug/high` e Search `fill/high`.
-
-No fechamento da v0.1.0, uma nova execução no Obsidian Desktop gerou `obsidian-ui-package-2026-10-01T15-16-28-749Z.zip`. A inspeção confirmou o mesmo conjunto de cinco arquivos, metadados consistentes, 59 specimens, 945 tokens, 102 observações, 16 inferências, e nenhum `.partial`, arquivo em staging ou diagnóstico de falha. O parser do importer aceitou esse ZIP; o usuário confirmou a geração no Figma Desktop.
-
 ## Artefatos locais e limpeza
 
 `dev-vault/obsidian-ui-exports/figma-packages/` guarda os ZIPs finais de transferência. O usuário pode mantê-los ou apagá-los quando não forem mais necessários. `dev-vault/.obsidian-ui-system/` guarda os exports técnicos do Atlas (`ui-catalog-exports/`), do Lab (`layout-lab-exports/`), os relatórios de diff (`snapshot-diffs/`), staging do pacote (`package-staging/`) e diagnósticos de falha (`package-failures/`). O prefixo de ponto mantém a área técnica fora da navegação normal do vault. Ambas as áreas são ignoradas pelo Git.
 
 **Developer: Clean Obsidian UI Development Exports** é uma ferramenta opcional de manutenção na Command Palette. Ela mostra contagens e pede confirmação antes de apagar apenas exports individuais do Atlas/Lab e relatórios de diff. Não toca em Figma Packages, staging do Package Builder ou diagnósticos de falha. Não há retenção automática dos exports deliberados de desenvolvimento. O ZIP fixture versionado em `apps/figma-plugin/tests/fixtures/` continua no repositório para testes repetíveis.
 
-Os históricos anteriores à migração foram removidos dos locais visíveis após auditoria. As conclusões permanecem nos documentos de investigação; os caminhos timestampados desses documentos são referências históricas, não arquivos que ainda existam no vault. Para uma comparação reproduzível atual, gere dois novos exports individuais e use a CLI de diff.
+Para uma comparação reproduzível atual, gere dois novos exports individuais e use a CLI de diff.
 
 ## Limites atuais do importer
 

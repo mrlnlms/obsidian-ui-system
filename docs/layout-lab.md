@@ -1,8 +1,5 @@
 # Atlas canônico e Layout Probe Lab
 
-> Historical capture paths in this document refer to local evidence removed from the development vault during the 2026-10-01 export cleanup. The measured results remain recorded here; current exports use the hidden `.obsidian-ui-system/` area.
-
-
 O plugin oferece duas abas independentes no workspace do Obsidian:
 
 | Entrada na paleta de comandos | Conteúdo | Export local |
@@ -38,16 +35,6 @@ specimens: [
 
 Sem `variants`, todas as variants canônicas da definição são usadas; sem `hosts`, valem `defaultHosts`. Sem `contents`, valem `defaultContents` apenas quando a factory do registry declara `supportsLayoutContentProbe`. Para um probe de texto, declare `contents: [{ id: 'short', text: 'OK' }]` e forneça `setContentForLayoutProbe` usando uma API pública que preserve o estado da variant. O resolvedor rejeita IDs de variants ausentes, conteúdo sem setter e chaves de probe duplicadas. Não adicione variants artificiais ao registry só para medir layout.
 
-## Ponto de retomada
+## Limites
 
-A [análise de inferência](layout-inference.md) registra a exportação de referência de 102 observações e 16 specimens: Button `hug/high` na horizontal; Search `fill/high`; Dropdown horizontal `unknown`; Slider raiz `fill/high` com faixa interna ainda `unknown`; Setting raiz `fill/high` e altura `unknown`. `fixed` vertical descreve invariância nos contextos medidos, não uma garantia universal. As regras estão em [`layout-inference.ts`](../apps/obsidian-capture/src/layout-inference.ts) e não dependem de IDs específicos.
-
-Os principais `unknown` restantes envolvem menu nativo e sizing do Dropdown, faixa interna do Slider e wrapping/filhos de Setting. O Lab continua reunindo evidência para modelos experimentais sem promover campos para o schema público. Button e Search são os únicos pilotos autorizados e validados; componentes adicionais exigem um novo milestone.
-
-O [piloto Search](figma-search-spike.md) identificou anatomia, offsets e máscaras SVG nos exports reais. O Lab captura `input::placeholder` e `appearance`; a exportação `2026-10-01T01-20-40-404Z` forneceu os campos que faltavam e sustentou o [modelo Figma-ready experimental](figma-search-model.experimental.json). O Search gerado foi validado manualmente no Figma Desktop.
-
-## Validação da separação
-
-No runtime observado, o Lab exportou `dev-vault/layout-spike-exports/2026-09-30T22-27-18-213Z/layout.json`. Comparado ao último export do Atlas com probes (`2026-09-30T21-59-03-573Z`), preservou **102 chaves de observação** e as **16 inferências completas**, inclusive evidências, confiança, `unknowns` e modelo intermediário. Retirando coordenadas absolutas de posição e o nome da classe CSS do host experimental, as observações medidas também coincidem. As 12 diferenças brutas de classe vêm do host do Slider, que é a própria raiz capturada nessa fixture; não representam mudança da API visual do Obsidian.
-
-O Atlas exportou separadamente `dev-vault/ui-catalog-exports/2026-09-30T22-31-49-752Z/`: **59 specimens**, **945 tokens**, mesmo runtime/SDK/schema/mode do baseline `2026-09-30T20-58-40-647Z`. O diff semântico encontrou **0 adicionados, 0 removidos, 39 inalterados e 20 alterados**, com **0 mudanças de tokens**. Todas as alterações de specimens são larguras/medidas ou margem computada; a largura disponível da aba mudou entre capturas. Não houve diferença de anatomia, classes, estados nem valores. O relatório local em `snapshot-diffs/layout-lab-separation/` é ignorado pelo Git; estas conclusões ficam registradas aqui para retomada.
+O Lab registra evidência e classificações experimentais; `unknown` deve permanecer explícito quando os probes não distinguem regras de sizing. Consulte as [regras de inferência](layout-inference.md) para os critérios e limites atuais. Button e Search são os únicos pilotos Figma autorizados e validados; componentes adicionais exigem um novo milestone.
