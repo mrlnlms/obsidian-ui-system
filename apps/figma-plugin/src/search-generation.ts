@@ -121,11 +121,6 @@ export async function generateSearch(componentsJson: unknown, layoutJson: unknow
           textViewport.width !== component.width - model.input.padding.left - model.input.padding.right) {
         throw new Error(`Search ${model.state}: sizing inicial no Figma divergiu do modelo.`);
       }
-      const textProperty = component.addComponentProperty('Text', 'TEXT', model.text);
-      label.componentPropertyReferences = { characters: textProperty };
-      if (label.characters !== model.text || !textViewport.clipsContent) {
-        throw new Error(`Search ${model.state}: a propriedade Text alterou o texto ou o clipping.`);
-      }
     }
 
     set = figma.combineAsVariants(components, figma.currentPage);
@@ -140,17 +135,25 @@ export async function generateSearch(componentsJson: unknown, layoutJson: unknow
     if (set.children.length !== 2 || set.componentPropertyDefinitions.State?.type !== 'VARIANT') {
       throw new Error('Figma não criou as duas variants Search com State.');
     }
-    const textProperties = Object.entries(set.componentPropertyDefinitions)
-      .filter(([name, definition]) => name.startsWith('Text#') && definition.type === 'TEXT');
-    if (textProperties.length !== 1) {
-      throw new Error('Figma não consolidou Text como uma única propriedade das duas variants Search.');
+    const textProperty = set.addComponentProperty('Text', 'TEXT', first.text);
+    const textDefinitions = Object.entries(set.componentPropertyDefinitions)
+      .filter(([, definition]) => definition.type === 'TEXT');
+    if (!textProperty.startsWith('Text#') || textDefinitions.length !== 1 ||
+        textDefinitions[0]![0] !== textProperty ||
+        set.componentPropertyDefinitions[textProperty]?.defaultValue !== first.text) {
+      throw new Error(`Search: Figma não registrou a propriedade TEXT retornada (${textProperty}).`);
     }
-    const textProperty = textProperties[0]![0];
     for (let index = 0; index < components.length; index++) {
       const label = textNodes[index]!;
       const model = models[index]!;
-      if (label.characters !== model.text) {
-        throw new Error(`Search ${model.state}: Text alterou o valor padrão da variant.`);
+      label.componentPropertyReferences = { characters: textProperty };
+      // The set has one property ID; each variant retains its observed default text.
+      label.characters = model.text;
+      const viewport = label.parent;
+      if (label.componentPropertyReferences?.characters !== textProperty || label.characters !== model.text ||
+          viewport?.type !== 'FRAME' || !viewport.clipsContent ||
+          components[index]!.width !== model.widthForCanvas || components[index]!.height !== model.height) {
+        throw new Error(`Search ${model.state}: Text alterou binding, conteúdo, clipping ou sizing da variant.`);
       }
       verifyInstanceText(components[index]!, model.state, model.text, textProperty);
     }
@@ -172,13 +175,18 @@ function verifyInstanceText(component: ComponentNode, state: string, expected: s
   const instance = component.createInstance();
   try {
     const label = instance.findOne((node) => node.type === 'TEXT') as TextNode | null;
-    if (instance.componentProperties.State?.value !== state ||
-        instance.componentProperties[property]?.type !== 'TEXT' || label?.characters !== expected) {
-      throw new Error(`Search ${state}: a instance não expôs Text com seu valor padrão.`);
+    const viewport = instance.findOne((node) => node.type === 'FRAME' && node.name === 'Text viewport') as FrameNode | null;
+    const text = instance.componentProperties[property];
+    if (instance.componentProperties.State?.value !== state || text?.type !== 'TEXT' ||
+        text.value !== expected || label?.characters !== expected || !viewport?.clipsContent) {
+      throw new Error(`Search ${state}: Text da instance divergiu ` +
+        `(key=${property}, keys=${Object.keys(instance.componentProperties).join(', ')}, ` +
+        `value=${text?.value}, label=${label?.characters}, expected=${expected}).`);
     }
     instance.setProperties({ [property]: 'OK' });
     const updatedLabel = instance.findOne((node) => node.type === 'TEXT') as TextNode | null;
-    if (instance.componentProperties[property]?.value !== 'OK' || updatedLabel?.characters !== 'OK') {
+    if (instance.componentProperties[property]?.value !== 'OK' || updatedLabel?.characters !== 'OK' ||
+        !viewport.clipsContent || instance.width !== component.width || instance.height !== component.height) {
       throw new Error(`Search ${state}: editar Text na instance não atualizou o TextNode.`);
     }
   } finally {
