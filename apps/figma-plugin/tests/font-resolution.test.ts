@@ -7,12 +7,12 @@ const macButton = {
   platform: 'macos', weight: 400, style: 'normal',
 };
 
-test('ignores Obsidian sentinel and resolves macOS system text to the exact Figma named instance', () => {
+test('ignores Obsidian sentinel and preserves the exact Figma FontName', () => {
   assert.deepEqual(fontFamilies(macButton.cssStack).slice(0, 2), ['ui-sans-serif', '-apple-system']);
   assert.deepEqual(requiredFont(macButton, [
     { family: 'Google Sans Flex', style: 'Regular' },
     { family: 'SF Pro', style: 'Regular', variationSettings: { opsz: 14, wght: 400 } },
-  ]), { family: 'SF Pro', style: 'Regular' });
+  ]), { family: 'SF Pro', style: 'Regular', variationSettings: { opsz: 14, wght: 400 } });
 });
 
 test('fails before generation when required family or style is unavailable', () => {

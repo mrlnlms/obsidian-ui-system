@@ -47,8 +47,8 @@ export function requiredFont(request: FontRequest, available: readonly FontName[
   if (!match) {
     throw new Error(`Required font not available: ${family} / ${style}. Install the required font and restart Figma.`);
   }
-  // Use the named instance advertised by Figma without overriding variable axes.
-  return { family: match.family, style: match.style };
+  // Preserve the exact FontName reported by Figma, including any default variable axes.
+  return match;
 }
 
 function figmaStyle(weight: number, style: string): string {

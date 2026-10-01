@@ -7,6 +7,7 @@ figma.ui.onmessage = async (message: unknown) => {
   if (!isGenerateMessage(message)) return;
 
   let set: ComponentSetNode | undefined;
+  let fontProbe: TextNode | undefined;
   const components: ComponentNode[] = [];
   const textNodes: TextNode[] = [];
   try {
@@ -17,6 +18,21 @@ figma.ui.onmessage = async (message: unknown) => {
       weight: data[0].fontWeight, style: data[0].fontStyle },
     available.map((item) => item.fontName));
     await figma.loadFontAsync(font);
+    fontProbe = figma.createText();
+    fontProbe.fontName = font;
+    fontProbe.fontSize = data[0].fontSize;
+    fontProbe.textAutoResize = 'WIDTH_AND_HEIGHT';
+    fontProbe.characters = data[0].text;
+    if (fontProbe.hasMissingFont) {
+      throw new Error(`Required font unusable: ${font.family} / ${font.style}. ` +
+        'Figma lists this font, but the TextNode reports it missing. Accept the SF Pro font license or install the font, then restart Figma.');
+    }
+    if (fontProbe.width <= 0 || fontProbe.height <= 0) {
+      throw new Error(`Required font did not render: ${font.family} / ${font.style} ` +
+        `(width=${fontProbe.width}, height=${fontProbe.height}, chars=${fontProbe.characters.length}).`);
+    }
+    fontProbe.remove();
+    fontProbe = undefined;
     figma.ui.postMessage({ type: 'typography', text: `Typography: ${font.family} / ${font.style} ✓` });
 
     for (const button of data) {
@@ -111,6 +127,7 @@ figma.ui.onmessage = async (message: unknown) => {
     figma.viewport.scrollAndZoomIntoView([set]);
     figma.ui.postMessage({ type: 'result', ok: true, text: `Obsidian / Button criado com 3 variants. Crie uma instance e altere Label para OK.` });
   } catch (error) {
+    if (fontProbe && !fontProbe.removed) fontProbe.remove();
     if (set && !set.removed) set.remove();
     else for (const component of components) if (!component.removed) component.remove();
     for (const label of textNodes) if (!label.removed) label.remove();

@@ -71,7 +71,7 @@
       const message = event.data.pluginMessage;
       if (message?.type === 'typography') typography.textContent = message.text;
       if (message?.type === 'result') {
-        if (!message.ok && message.text.startsWith('Required font not available:'))
+        if (!message.ok && message.text.startsWith('Required font '))
           typography.textContent = message.text;
         show(message.text, message.ok ? 'success' : 'error');
         generate.disabled = false;
