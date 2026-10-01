@@ -1,123 +1,64 @@
 # Obsidian UI System
 
-A monorepo that captures the public Obsidian UI and imports the validated Button and Search pilots into Figma Design. The **Obsidian UI Atlas** plugin renders 26 public API families and exports canonical snapshots.
+Obsidian UI System connects the UI people can observe in Obsidian with the components they design in Figma and, eventually, the interfaces coding agents implement. This monorepo develops three product surfaces around a shared, evidence-based representation of Obsidian UI.
 
-The three product surfaces are:
+## Why
 
-- 🗺️ **[Obsidian UI Atlas](apps/obsidian-ui-atlas/)** → observe and capture the real Obsidian UI.
-- 🎨 **[Obsidian UI System Figma](apps/obsidian-ui-system-figma/)** → turn the Figma Package into an editable UI Kit.
-- 🤖 **[Obsidian UI Skill](apps/obsidian-ui-skill/README.md)** → eventually help coding agents turn structured designs into Obsidian implementations. This product is only a placeholder today.
+Recreating an Obsidian interface from memory or screenshots leaves behavior, sizing, typography, and component states open to guesswork. The project captures public Obsidian UI specimens and keeps observations, layout inferences, and generated results distinct. That evidence gives design and implementation a common starting point.
 
-Here, `apps/` means independently distributable products developed in this repository. Skills installed for an agent to help develop the repository use that agent's configuration, such as `.agents/skills/` or `.claude/skills/`; they are separate from the Obsidian UI Skill product.
+## Products
 
-## Current Figma workflow
+- 🗺️ **[Obsidian UI Atlas](apps/obsidian-ui-atlas/)** → observe and capture the real Obsidian UI in an Obsidian plugin.
+- 🎨 **[Obsidian UI System Figma](apps/obsidian-ui-system-figma/)** → turn an exported Figma Package into editable Figma components.
+- 🤖 **[Obsidian UI Skill](apps/obsidian-ui-skill/README.md)** → help coding agents interpret the system and, in a future milestone, turn structured designs into Obsidian implementations.
 
-In Obsidian Desktop, run **Export Obsidian UI Figma Package** from the Command Palette. The Atlas and Layout Lab tabs can remain closed. This creates one ZIP in `dev-vault/obsidian-ui-exports/figma-packages/` from a consistent Atlas capture and Layout Lab run.
+These are products developed in this repository. Skills installed to help an agent work on this repository belong to that agent's own configuration; they are separate from the Obsidian UI Skill product.
 
-The ZIP is ready when the command reports success. The export cleans its own staging files; no cleanup command is needed afterward. A failed run records a small diagnostic under `dev-vault/.obsidian-ui-system/package-failures/` and reports its path.
+## Current status
 
-In Figma Desktop, run the local **Obsidian UI System** plugin, **Choose ZIP** in **Figma Package**, then click **Generate UI Kit**. It creates the validated `Obsidian / Button` and `Obsidian / Search` Component Sets in `Actions` and `Inputs` sections. See the [Figma plugin installation guide](apps/obsidian-ui-system-figma/README.md) and [package format](docs/integration/figma-package/figma-package.md).
+The v0.1.0 scope demonstrates an end-to-end path from Obsidian capture to a Figma UI Kit:
 
-To install the local importer, open a Figma Design file in **Figma Desktop**, choose **Plugins → Development → Import plugin from manifest** (or the equivalent **Import new plugin from manifest…** action), and select `<repository>/apps/obsidian-ui-system-figma/manifest.json`. On macOS, **SF Pro / Regular** must be available and render in Figma Desktop: choose it on a text layer and accept Apple's license prompt if shown. If absent, install SF Pro from Apple's official font distribution and restart Figma. The importer stops without generating if the font requirement fails; it does not substitute another family. Then run the development plugin, choose the exported ZIP and click **Generate UI Kit**.
+- Atlas renders 59 specimens across 26 public API families and exports canonical snapshots. Its separate Layout Probe Lab measures experimental sizing behavior.
+- **Export Obsidian UI Figma Package** creates one validated ZIP from a consistent Atlas capture and Lab run.
+- The Figma plugin imports that ZIP and generates native, editable Button and Search Component Sets. Those two components are the validated pilots; the broader library remains future work.
+- Obsidian UI Skill has a product location and purpose, but no implemented skill yet.
 
-## Requirements and installation
+## How it works
 
-- macOS with [Obsidian](https://obsidian.md/) Desktop and Figma Desktop installed.
-- Node.js 22 or newer and npm 10 or newer.
-- Git.
+1. **Observe:** Atlas records public UI specimens, tokens, and environment information. Layout Lab adds separately labeled measurements and inferences.
+2. **Design:** A Figma Package carries the capture and layout evidence to the Figma plugin, which generates the currently validated components.
+3. **Implement:** The future Skill is intended to help agents use the shared representation and structured designs when building Obsidian interfaces.
 
-From the repository root:
+The [snapshot schema](packages/ui-schema/README.md) defines the current canonical capture contract. The [Figma Package guide](docs/integration/figma-package/figma-package.md) describes the transfer format and its limits.
+
+## Quick start
+
+With Node.js 22+, npm 10+, Obsidian Desktop, and Figma Desktop installed, run from the repository root:
 
 ```sh
 npm ci
 npm run build
 ```
 
-The build writes `apps/obsidian-ui-atlas/main.js`, `apps/obsidian-ui-system-figma/dist/code.js`, and the snapshot comparison CLI under `.build/snapshot-diff/`. These outputs are ignored by Git, so build after cloning and before opening either plugin.
+Open `<repository>/dev-vault` in Obsidian, enable **Obsidian UI Atlas**, and run **Export Obsidian UI Figma Package** from the Command Palette. In Figma Desktop, install the local plugin from `apps/obsidian-ui-system-figma/manifest.json`, select the exported ZIP in **Figma Package**, and click **Generate UI Kit**.
 
-## Open the development vault
+See [development setup](docs/development.md) for the vault and local workflow, and the [Figma plugin guide](apps/obsidian-ui-system-figma/README.md) for installation and font setup.
 
-In Obsidian, choose **Open folder as vault** and select exactly:
+## Repository structure
 
-```text
-<repository>/dev-vault
-```
+| Directory | Role |
+| --- | --- |
+| `apps/` | The three independently developed product surfaces: Atlas, Figma, and the future Skill. |
+| `packages/` | Shared contracts and code, currently the UI snapshot schema. |
+| `scripts/` | Tooling for this monorepo, including semantic snapshot comparison. |
+| `dev-vault/` | Local Obsidian development and test vault. |
+| `docs/` | Public technical documentation for development, products, and integration. |
+| `private/` | Local, Git-ignored plans and development evidence. |
 
-This vault is for development and tests only; Obsidian may generate local settings in `.obsidian/`, which are ignored.
+## Documentation
 
-## Develop the plugin
-
-Run `npm run dev` at the repository root to rebuild `main.js` when `apps/obsidian-ui-atlas/src/` changes. For a one-time production build, run `npm run build`; `npm run check` runs TypeScript checks only. The development vault also has [Hot-Reload](https://github.com/pjeby/hot-reload) installed. Once you enable it in Obsidian, the tracked `.hotreload` marker in the Capture plugin makes Hot-Reload reload that plugin after each rebuild. Atlas and Lab tabs close during plugin reload because the views are detached on unload; run their commands again to reopen them. Changes to `manifest.json` may still require an Obsidian restart.
-
-In the development vault, open **Settings → Community plugins**, allow community plugins if prompted, then enable **Obsidian UI Atlas**. Enable **Hot Reload** there only if it is installed locally. Run **Open Obsidian UI Atlas** from the Command Palette. It opens or reveals one scrollable workspace tab containing canonical registry specimens. Press **Export snapshot** for an individual Atlas export. The plugin requires Obsidian 1.13.1 or newer for `DisplayValueComponent` support.
-
-Each export creates a timestamped folder at `dev-vault/.obsidian-ui-system/ui-catalog-exports/<UTC timestamp>/` with `manifest.json`, `tokens.json`, and `components.json`. The manifest distinguishes the runtime Obsidian API version from the installed `obsidian` SDK package version and the snapshot schema version. These local outputs are ignored by Git. The [schema package](packages/ui-schema/README.md) describes the contract; [snapshot guide](docs/obsidian-ui-atlas/atlas/snapshot.md) explains what the export measures and its current limits. See the [registry guide](docs/obsidian-ui-atlas/atlas/component-registry.md) to add a component or variant.
-
-## Compare two exports
-
-Run the semantic snapshot diff from the repository root:
-
-```sh
-npm run diff:snapshots -- <before-export-folder> <after-export-folder> [output-folder]
-```
-
-The command writes `diff.json` and `diff.md`. Without an output argument, it uses an ignored folder under `dev-vault/.obsidian-ui-system/snapshot-diffs/`. Reports remain there until optional development-export cleanup or manual removal. A custom output folder may be tracked by Git. It compares specimens by `id + variant`, tokens by custom property name, and manifest fields separately. See the [comparison guide](docs/obsidian-ui-atlas/snapshot-diff/snapshot-diff.md) for a usage example and an explanation of the categories.
-
-The manifest records Light or Dark mode; specimen identity remains `id + variant`. Compare exports from matching environments when assessing component changes. The [public UI inventory](docs/obsidian-ui-atlas/atlas/public-ui-inventory.md) lists the 26 captured families and the current public API boundary.
-
-The [Layout Probe Lab](docs/obsidian-ui-atlas/layout-lab/layout-lab.md) is a separate technical workspace view. Open it with **Open Obsidian UI Layout Lab**. It measures registry definitions for Button, Search, Dropdown, Slider and Setting in controlled hosts, displays experimental sizing classifications, and saves `layout.json` under ignored `dev-vault/.obsidian-ui-system/layout-lab-exports/<UTC timestamp>/`. The Lab has its own **Measure layout probes** and **Export layout probes** actions. Atlas **Export snapshot** does not run probes or write into the Lab export directory. The [inference analysis](docs/obsidian-ui-atlas/layout-lab/layout-inference.md) records current evidence and unknowns.
-
-The individual Atlas and Lab exports above remain available for development and diagnosis; the ZIP is the normal Figma transfer artifact.
-
-`dev-vault/obsidian-ui-exports/` contains final packages you may keep or delete. `dev-vault/.obsidian-ui-system/` contains hidden development captures, diff reports, package staging, and failure diagnostics. **Developer: Clean Obsidian UI Development Exports** is an optional maintenance command for individual Atlas/Lab exports and diff reports. It asks for confirmation and leaves both Figma Packages and failure diagnostics untouched. It is not part of package export; there is no automatic retention policy for deliberate development exports.
-
-Hot-Reload is a local development dependency, installed at `dev-vault/.obsidian/plugins/hot-reload/` and ignored by Git. To reinstall the pinned version after cloning, run from the repository root:
-
-```sh
-mkdir -p dev-vault/.obsidian/plugins/hot-reload
-curl -fL https://github.com/pjeby/hot-reload/releases/download/0.3.1/manifest.json -o dev-vault/.obsidian/plugins/hot-reload/manifest.json
-curl -fL https://github.com/pjeby/hot-reload/releases/download/0.3.1/main.js -o dev-vault/.obsidian/plugins/hot-reload/main.js
-```
-
-## Why the plugin is a symlink
-
-Obsidian loads local plugins from `<vault>/.obsidian/plugins/<plugin-id>/`. The tracked relative link at `dev-vault/.obsidian/plugins/obsidian-ui-atlas` points to `../../../apps/obsidian-ui-atlas` from its containing directory. Thus Obsidian sees `manifest.json`, `styles.css`, and the built `main.js` inside the vault, while the only source tree remains under `apps/`.
-
-If the link is removed, recreate it from the repository root on macOS:
-
-```sh
-mkdir -p dev-vault/.obsidian/plugins
-ln -s ../../../apps/obsidian-ui-atlas dev-vault/.obsidian/plugins/obsidian-ui-atlas
-```
-
-If a real directory occupies that path, inspect its contents before removing it; the command above intentionally will not overwrite it. The link is tracked by Git and normally returns with a clone or checkout.
-
-## Project layout
-
-- `apps/obsidian-ui-atlas/`: Obsidian UI Atlas plugin source and build configuration.
-- `apps/obsidian-ui-system-figma/`: Figma Design importer for the Button and Search pilots; see its [local installation guide](apps/obsidian-ui-system-figma/README.md) and [component reconstruction reference](docs/obsidian-ui-system-figma/components/component-reconstruction.md).
-- `apps/obsidian-ui-skill/`: future Agent Skill product; no skill is implemented yet.
-- `packages/ui-schema/`: shared TypeScript snapshot contract for the product surfaces.
-- `dev-vault/`: isolated Obsidian test vault.
-- `docs/`: public guides for the products and their integration, grouped by topic; see the [index](docs/README.md).
-- `private/docs/plans/`: local, Git-ignored implementation plans; research notes and experimental models live under the matching product and topic in `private/docs/`.
-- `scripts/snapshot-diff/`: monorepo tooling for semantic snapshot comparison and its tests. Build output under `.build/` is disposable and ignored by Git.
-
-## Verification commands
-
-From the repository root, run TypeScript checks, all builds and the existing test suites:
-
-```sh
-npm run check
-npm run build
-npm run test:diff
-npm run test:layout
-npm run test:typography --workspace @obsidian-ui-system/capture
-npm run test:package --workspace @obsidian-ui-system/capture
-npm run test:exports --workspace @obsidian-ui-system/capture
-npm run test:lifecycle --workspace @obsidian-ui-system/capture
-npm run test:font --workspace @obsidian-ui-system/figma-plugin
-npm run test:search --workspace @obsidian-ui-system/figma-plugin
-npm run test:ui-kit --workspace @obsidian-ui-system/figma-plugin
-npm run test:package --workspace @obsidian-ui-system/figma-plugin
-```
+- [Technical documentation index](docs/README.md)
+- [Developing and testing the monorepo](docs/development.md)
+- [Atlas inventory](docs/obsidian-ui-atlas/atlas/public-ui-inventory.md) and [snapshot guide](docs/obsidian-ui-atlas/atlas/snapshot.md)
+- [Figma plugin setup](apps/obsidian-ui-system-figma/README.md) and [component reconstruction rules](docs/obsidian-ui-system-figma/components/component-reconstruction.md)
+- [Figma Package workflow and format](docs/integration/figma-package/figma-package.md)
