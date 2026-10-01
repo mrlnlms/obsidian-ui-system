@@ -46,6 +46,24 @@ Os exports individuais e o ZIP final são locais, ignorados por Git e retidos at
 
 Os pacotes ficam locais e ignorados por Git. O teste `npm run test:package --workspace @obsidian-ui-system/mapping` verifica a estrutura ZIP e rejeições de inconsistência. A captura real depende do Obsidian Desktop e deve ser conferida após o build.
 
+## Projeção futura de tokens para Figma Variables
+
+Esta é uma direção investigada, não um contrato implementado. A fonte canônica continua sendo `tokens.json` do Package v2; uma projeção para Figma será derivada e seletiva. O importer atual continua aceitando somente v1 e não cria Variables.
+
+A análise usou o ZIP local `dev-vault/obsidian-ui-exports/figma-packages/obsidian-ui-package-v2-2026-10-01T21-31-26-285Z.zip` (SHA-256 `718ba4062b001be12d0284263b2de565f05b25b0ff2f5a62651ed1df9d9450a3`). Das 1.181 identidades, 940 resolvem em ambos os modes, 5 somente no Dark, 3 somente no Light e 233 em nenhum. Esses 233 permanecem evidência válida e podem ganhar contexto em capturas futuras.
+
+| Decisão de projeção | Triagem neste par | Regra |
+| --- | ---: | --- |
+| `direct` | Até 551 candidatos técnicos: 266 cores diretas, 233 escalares `px` e 52 números visuais plausíveis | Criar somente quando a representação for fiel **e** útil ao UI Kit; o total não é meta de cobertura. |
+| `needs-evaluation → COLOR` | 65 expressões de cor completas e resolvidas nos dois modes: 38 com `color-mix()` e 27 com HSL/`calc()` | Avaliar em uma propriedade CSS tipada no browser, normalizar para RGBA e conferir contra estilos resolvidos dos specimens antes de criar Variable. |
+| `omit` por enquanto | Pelo menos 565; mais qualquer candidato acima sem uso visual claro | Preservar no Package v2. Inclui valores sem ambos os modes, timing/easing, strings arbitrárias, keywords, blend modes, sombras, gradientes e listas sem binding claro. |
+
+Essas contagens são limites de triagem, não contagens de Variables aprovadas. Coincidência de valor entre token e specimen não comprova vínculo nem alias. Para alias, exigir declaração atribuída exatamente como `var(--x)`, sem fallback ou expressão adicional, e tipos compatíveis. O alvo pode diferir por mode quando o CSS observado diferir. `var(--x, fallback)` e `calc(var(--x) + ...)` não viram Figma Alias. Valores ausentes, `unresolved`, `no-applicable-declaration` ou `unknown` não recebem fallback de outro mode.
+
+Prova de browser, sem alteração de código: em Chrome 154 headless isolado, as 130 observações dos 65 tokens de expressão foram aceitas como cor CSS. `--interactive-accent` produziu `rgb(138, 92, 245)` no Dark e `rgb(152, 115, 247)` no Light, exatamente os backgrounds de Button CTA em `components.json`. Para `--background-modifier-hover`, o CSS computado saiu em `oklch(...)`; a rasterização sRGB coincidiu com os pixels de um fundo observado de `abstract-input-suggest` em cada mode, sem provar vínculo de origem. Canvas de 8 bits arredonda cor/alfa, e Chrome isolado não prova o comportamento do browser da UI do Figma. A custom property em si continua retornando a expressão; a avaliação ocorre quando aplicada a `color`/`background-color`. Não generalizar esse método para `calc()` de dimensões relativas ou dependentes do elemento.
+
+**Próximo piloto mínimo:** adicionar uma entrada isolada de desenvolvimento para ler v2 sem modificar o importer v1 nem a geração de Button/Search; em arquivo Figma descartável, criar uma collection com Dark/Light e apenas `--background-primary` (`COLOR`), `--modal-background` (alias `COLOR` para o primeiro em ambos os modes) e `--button-radius` (`FLOAT`, `8px → 8`). Ler os valores de volta e alternar o mode. Investigar `--interactive-accent` separadamente no browser da UI do plugin antes de criá-lo como Variable. Timing/easing e `STRING` ficam fora do piloto. Nenhuma mudança upstream foi demonstrada como necessária.
+
 ## Artefatos locais e limpeza
 
 `dev-vault/obsidian-ui-exports/figma-packages/` guarda os ZIPs finais de transferência. O usuário pode mantê-los ou apagá-los quando não forem mais necessários. `dev-vault/.obsidian-ui-system/` guarda os exports técnicos do Mapping (`ui-catalog-exports/`), do Lab (`layout-lab-exports/`), os relatórios de diff (`snapshot-diffs/`), staging do pacote (`package-staging/`) e diagnósticos de falha (`package-failures/`). O prefixo de ponto mantém a área técnica fora da navegação normal do vault. Ambas as áreas são ignoradas pelo Git.
