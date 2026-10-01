@@ -1,22 +1,37 @@
 import { readButtonImport } from './button-data';
 import { requiredFont, SF_PRO_SETUP_INSTRUCTIONS } from './font-resolution';
 import { generateSearch } from './search-generation';
+import { planUiKitPlacement } from './ui-kit-layout';
 
 figma.showUI(__html__, { width: 380, height: 420 });
 
 figma.ui.onmessage = async (message: unknown) => {
-  if (isGenerateSearchMessage(message)) {
-    await generateSearch(message.components, message.layout);
-    return;
+  if (!isGenerateUiKitMessage(message)) return;
+  const sets: ComponentSetNode[] = [];
+  const sections: SectionNode[] = [];
+  try {
+    sets.push(await generateButton(message.components, message.layout));
+    sets.push(await generateSearch(message.components, message.layout));
+    organizeUiKit(sets[0]!, sets[1]!, sections);
+    figma.currentPage.selection = sets;
+    figma.viewport.scrollAndZoomIntoView(sections);
+    figma.ui.postMessage({ type: 'result', ok: true,
+      text: 'UI Kit criado: Obsidian / Button em Actions e Obsidian / Search em Inputs.' });
+  } catch (error) {
+    for (const section of sections) if (!section.removed) section.remove();
+    for (const set of sets) if (!set.removed) set.remove();
+    figma.ui.postMessage({ type: 'result', ok: false,
+      text: error instanceof Error ? error.message : String(error) });
   }
-  if (!isGenerateMessage(message)) return;
+};
 
+async function generateButton(componentsJson: unknown, layoutJson: unknown): Promise<ComponentSetNode> {
   let set: ComponentSetNode | undefined;
   let fontProbe: TextNode | undefined;
   const components: ComponentNode[] = [];
   const textNodes: TextNode[] = [];
   try {
-    const data = readButtonImport(message.components, message.layout);
+    const data = readButtonImport(componentsJson, layoutJson);
     validateSharedTypography(data);
     const available = await figma.listAvailableFontsAsync();
     const font = requiredFont({ cssStack: data[0].fontFamily, platform: data[0].platform,
@@ -94,14 +109,7 @@ figma.ui.onmessage = async (message: unknown) => {
 
     set = figma.combineAsVariants(components, figma.currentPage);
     set.name = 'Obsidian / Button';
-    // Development manifests can have no Figma-issued plugin ID; private plugin data requires one.
-    // Component descriptions are native, inspectable, and work for an imported development plugin.
-    set.description = [
-      `Typography requested (CSS): ${data[0].fontFamily}`,
-      `Typography declaration: ${data[0].typography.fontFamilyDeclaration}`,
-      `Typography CSS variables: ${JSON.stringify(data[0].typography.cssVariables)}`,
-      `Figma font used: ${font.family} / ${font.style}`,
-    ].join('\n');
+    set.description = 'Button em estados Normal, Disabled e CTA.';
     if (set.children.length !== 3 || set.componentPropertyDefinitions.State?.type !== 'VARIANT') {
       throw new Error('O Figma não criou as três variants com a propriedade State.');
     }
@@ -129,33 +137,47 @@ figma.ui.onmessage = async (message: unknown) => {
     }
     set.resizeWithoutConstraints(maxWidth + inset * 2, nextY - gutter + inset);
 
-    const center = figma.viewport.center;
-    set.x = center.x - set.width / 2;
-    set.y = center.y - set.height / 2;
-    figma.currentPage.selection = [set];
-    figma.viewport.scrollAndZoomIntoView([set]);
-    figma.ui.postMessage({ type: 'result', ok: true, text: `Obsidian / Button criado com 3 variants. Crie uma instance e altere Label para OK.` });
+    return set;
   } catch (error) {
     if (fontProbe && !fontProbe.removed) fontProbe.remove();
     if (set && !set.removed) set.remove();
     else for (const component of components) if (!component.removed) component.remove();
     for (const label of textNodes) if (!label.removed) label.remove();
-    const detail = error instanceof Error ? error.message : String(error);
-    figma.ui.postMessage({ type: 'result', ok: false, text: detail });
+    throw error;
   }
-};
+}
 
-function isGenerateSearchMessage(value: unknown): value is { type: 'generate-search'; components: unknown; layout: unknown } {
-  return typeof value === 'object' && value !== null && 'type' in value && value.type === 'generate-search' &&
-    'components' in value && 'layout' in value;
+function organizeUiKit(button: ComponentSetNode, search: ComponentSetNode, sections: SectionNode[]): void {
+  const existing = figma.currentPage.children.filter((node) => node !== button && node !== search)
+    .map((node) => node.absoluteBoundingBox)
+    .filter((bounds): bounds is Rect => bounds !== null);
+  const placement = planUiKitPlacement(existing, button, search);
+  for (const [name, set, bounds] of [
+    ['Actions', button, placement.actions],
+    ['Inputs', search, placement.inputs],
+  ] as const) {
+    const section = figma.createSection();
+    sections.push(section);
+    section.name = name;
+    section.resize(bounds.width, bounds.height);
+    section.x = bounds.x;
+    section.y = bounds.y;
+    section.appendChild(set);
+    set.x = placement.inset;
+    set.y = placement.inset;
+    if (set.parent !== section || set.x + set.width > section.width ||
+        set.y + set.height > section.height) {
+      throw new Error(`UI Kit: ${name} não contém o Component Set corretamente.`);
+    }
+  }
 }
 
 function fontFailure(font: FontName, detail: string): Error {
   return new Error(font.family === 'SF Pro' ? `${detail}\n\n${SF_PRO_SETUP_INSTRUCTIONS}` : detail);
 }
 
-function isGenerateMessage(value: unknown): value is { type: 'generate-button'; components: unknown; layout: unknown } {
-  return typeof value === 'object' && value !== null && 'type' in value && value.type === 'generate-button' &&
+function isGenerateUiKitMessage(value: unknown): value is { type: 'generate-ui-kit'; components: unknown; layout: unknown } {
+  return typeof value === 'object' && value !== null && 'type' in value && value.type === 'generate-ui-kit' &&
     'components' in value && 'layout' in value;
 }
 

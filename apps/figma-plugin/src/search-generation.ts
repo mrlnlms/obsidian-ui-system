@@ -2,7 +2,7 @@ import { readSearchImport } from './search-data';
 import { requiredFont, SF_PRO_SETUP_INSTRUCTIONS } from './font-resolution';
 
 /** Search uses the observed positioned layers, not a horizontal Auto Layout. */
-export async function generateSearch(componentsJson: unknown, layoutJson: unknown): Promise<void> {
+export async function generateSearch(componentsJson: unknown, layoutJson: unknown): Promise<ComponentSetNode> {
   let set: ComponentSetNode | undefined;
   let fontProbe: TextNode | undefined;
   const components: ComponentNode[] = [];
@@ -125,13 +125,7 @@ export async function generateSearch(componentsJson: unknown, layoutJson: unknow
 
     set = figma.combineAsVariants(components, figma.currentPage);
     set.name = 'Obsidian / Search';
-    set.description = [
-      `Experimental Figma-ready model; Atlas + Layout Lab; ${models.length} variants.`,
-      `Root sizing: ${first.rootSizing.mode} (${first.rootSizing.confidence}); canvas width ${first.widthForCanvas}px is only a demonstration host.`,
-      `Typography requested (CSS): ${first.input.fontFamily}`,
-      `Figma font used: ${font.family} / ${font.style}`,
-      'Icons: native vector nodes imported from observed CSS mask SVG data URIs.',
-    ].join('\n');
+    set.description = 'Campo de busca em estados Empty e Filled.';
     if (set.children.length !== 2 || set.componentPropertyDefinitions.State?.type !== 'VARIANT') {
       throw new Error('Figma não criou as duas variants Search com State.');
     }
@@ -167,16 +161,12 @@ export async function generateSearch(componentsJson: unknown, layoutJson: unknow
         placeholderProperty, valueProperty);
     }
     arrangeSet(set, components);
-    figma.currentPage.selection = [set];
-    figma.viewport.scrollAndZoomIntoView([set]);
-    figma.ui.postMessage({ type: 'result', ok: true,
-      text: 'Obsidian / Search criado com Empty e Filled. Edite Placeholder e Value na instance e alterne State para validar no Figma.' });
+    return set;
   } catch (error) {
     if (fontProbe && !fontProbe.removed) fontProbe.remove();
     if (set && !set.removed) set.remove();
     else for (const component of components) if (!component.removed) component.remove();
-    figma.ui.postMessage({ type: 'result', ok: false,
-      text: error instanceof Error ? error.message : String(error) });
+    throw error;
   }
 }
 

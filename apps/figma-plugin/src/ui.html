@@ -22,15 +22,13 @@
   <p>Importe os JSONs do Atlas e do Layout Lab do mesmo ambiente.</p>
   <label>Atlas components.json <input id="components" type="file" accept=".json,application/json"></label>
   <label>Layout Lab layout.json <input id="layout" type="file" accept=".json,application/json"></label>
-  <button id="generate" type="button">Generate Button</button>
-  <button id="generate-search" type="button">Generate Search</button>
+  <button id="generate" type="button">Generate UI Kit</button>
   <div id="typography" role="status" aria-live="polite"></div>
   <div id="status" role="status" aria-live="polite"></div>
   <script>
     const componentsInput = document.getElementById('components');
     const layoutInput = document.getElementById('layout');
     const generate = document.getElementById('generate');
-    const generateSearch = document.getElementById('generate-search');
     const typography = document.getElementById('typography');
     const status = document.getElementById('status');
 
@@ -52,9 +50,8 @@
       });
     }
 
-    async function run(type, name) {
+    async function run() {
       generate.disabled = true;
-      generateSearch.disabled = true;
       typography.textContent = '';
       show('Lendo arquivos…');
       try {
@@ -62,17 +59,15 @@
           readJson(componentsInput.files[0], 'Atlas components.json'),
           readJson(layoutInput.files[0], 'Layout Lab layout.json'),
         ]);
-        show(`Verificando evidência e tipografia; gerando Obsidian / ${name}…`);
-        parent.postMessage({ pluginMessage: { type, components, layout } }, '*');
+        show('Verificando evidência e tipografia; gerando UI Kit…');
+        parent.postMessage({ pluginMessage: { type: 'generate-ui-kit', components, layout } }, '*');
       } catch (error) {
         show(error.message || String(error), 'error');
         generate.disabled = false;
-        generateSearch.disabled = false;
       }
     }
 
-    generate.onclick = () => run('generate-button', 'Button');
-    generateSearch.onclick = () => run('generate-search', 'Search');
+    generate.onclick = run;
 
     onmessage = (event) => {
       const message = event.data.pluginMessage;
@@ -81,7 +76,6 @@
         if (!message.ok) typography.textContent = '';
         show(message.text, message.ok ? 'success' : 'error');
         generate.disabled = false;
-        generateSearch.disabled = false;
       }
     };
   </script>
