@@ -123,3 +123,17 @@ export interface MergedTokenEvidence {
   sourceEquality: 'unverified';
   tokens: Record<string, { dark?: TokenModeObservation; light?: TokenModeObservation }>;
 }
+
+/** Independently versioned provenance for one individual Mapping or Layout Lab export. */
+export interface CaptureContext {
+  format: 'obsidian-ui-capture-context';
+  version: 1;
+  kind: 'mapping' | 'layout';
+  environment: SnapshotManifest;
+  pluginBuild: {
+    algorithm: 'SHA-256';
+    path: string;
+    sha256: string;
+  };
+  viewport: { widthPx: number; heightPx: number; devicePixelRatio: number };
+}

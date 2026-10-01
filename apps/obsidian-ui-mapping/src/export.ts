@@ -3,6 +3,7 @@ import { componentRegistry, type RenderedSpecimen } from './component-registry';
 import { captureComponents, captureManifest } from './snapshot';
 import { captureTokenEvidence, projectLegacyTokens } from './token-evidence';
 import { CATALOG_EXPORT_ROOT, ensureDirectory } from './export-paths';
+import { assertCaptureContextMatches, assertCaptureContextStable, readCaptureContext } from './capture-context';
 
 export async function captureCatalog(specimens: RenderedSpecimen[], capturedAt: string): Promise<{
   manifest: ReturnType<typeof captureManifest>;
@@ -27,7 +28,15 @@ export async function captureCatalog(specimens: RenderedSpecimen[], capturedAt: 
 
 export async function exportCatalog(app: App, specimens: RenderedSpecimen[]): Promise<string> {
   const capturedAt = new Date().toISOString();
+  const doc = specimens[0]?.root.ownerDocument;
+  if (!doc) throw new Error('Open the catalog before exporting');
+  const context = await readCaptureContext(app.vault.adapter, app.vault.configDir,
+    doc, captureManifest(doc, capturedAt), 'mapping');
   const { manifest, tokens, tokenEvidence, components } = await captureCatalog(specimens, capturedAt);
+  const after = await readCaptureContext(app.vault.adapter, app.vault.configDir,
+    doc, captureManifest(doc, capturedAt), 'mapping');
+  assertCaptureContextStable(context, after);
+  assertCaptureContextMatches(context, 'mapping', manifest);
 
   const adapter = app.vault.adapter;
   await ensureDirectory(adapter, CATALOG_EXPORT_ROOT);
@@ -41,5 +50,6 @@ export async function exportCatalog(app: App, specimens: RenderedSpecimen[]): Pr
   await adapter.write(`${folder}/tokens.json`, JSON.stringify(tokens, null, 2) + '\n');
   await adapter.write(`${folder}/token-evidence.json`, JSON.stringify(tokenEvidence, null, 2) + '\n');
   await adapter.write(`${folder}/components.json`, JSON.stringify(components, null, 2) + '\n');
+  await adapter.write(`${folder}/capture-context.json`, JSON.stringify(context, null, 2) + '\n');
   return folder;
 }

@@ -6,6 +6,7 @@ import { inferLayout, type LayoutInference } from './layout-inference';
 import { captureTypographyContext } from './typography-capture';
 import type { TypographyContext } from '@obsidian-ui-system/ui-schema';
 import { ensureDirectory, LAYOUT_EXPORT_ROOT } from './export-paths';
+import { assertCaptureContextMatches, assertCaptureContextStable, readCaptureContext } from './capture-context';
 
 /** Explicit experimental CSSOM selection; this does not change ui-schema. */
 const LAYOUT_PROPERTIES = [
@@ -291,7 +292,15 @@ export async function captureLayoutProbes(fixtures: LayoutFixture[], capturedAt:
 
 export async function exportLayoutProbes(app: App, fixtures: LayoutFixture[]): Promise<{ folder: string; observations: LayoutObservation[]; inferences: LayoutInference[] }> {
   const capturedAt = new Date().toISOString();
+  const doc = fixtures[0]?.host.ownerDocument;
+  if (!doc) throw new Error('Open Layout Lab before exporting');
+  const context = await readCaptureContext(app.vault.adapter, app.vault.configDir,
+    doc, captureManifest(doc, capturedAt), 'layout');
   const { layout, observations, inferences } = await captureLayoutProbes(fixtures, capturedAt);
+  const after = await readCaptureContext(app.vault.adapter, app.vault.configDir,
+    doc, captureManifest(doc, capturedAt), 'layout');
+  assertCaptureContextStable(context, after);
+  assertCaptureContextMatches(context, 'layout', layout.environment, layout.viewport);
   const adapter = app.vault.adapter;
   await ensureDirectory(adapter, LAYOUT_EXPORT_ROOT);
   const baseName = capturedAt.replace(/[:.]/g, '-');
@@ -299,5 +308,6 @@ export async function exportLayoutProbes(app: App, fixtures: LayoutFixture[]): P
   for (let suffix = 2; await adapter.exists(folder); suffix++) folder = `${LAYOUT_EXPORT_ROOT}/${baseName}-${suffix}`;
   await adapter.mkdir(folder);
   await adapter.write(`${folder}/layout.json`, JSON.stringify(layout, null, 2) + '\n');
+  await adapter.write(`${folder}/capture-context.json`, JSON.stringify(context, null, 2) + '\n');
   return { folder, observations, inferences };
 }

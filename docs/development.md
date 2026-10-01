@@ -23,7 +23,7 @@ In Obsidian, choose **Open folder as vault** and select exactly `<repository>/de
 
 Open **Settings → Community plugins**, allow community plugins if prompted, and enable **Obsidian UI Mapping**. When migrating an existing vault, the new plugin ID requires enabling Mapping once. Run **Open Obsidian UI Mapping** from the Command Palette. The command opens or reveals one scrollable workspace tab with the canonical registry specimens. Press **Export snapshot** for an individual Mapping export.
 
-Each export creates `dev-vault/.obsidian-ui-system/ui-catalog-exports/<UTC timestamp>/` with `manifest.json`, `tokens.json`, `token-evidence.json`, and `components.json`. The manifest records the runtime Obsidian API version, the installed SDK package version used at build time, and the snapshot schema version separately. The versioned token evidence file preserves CSSOM declarations, references, computed values, and uncertainty for the captured mode; `tokens.json` is its compatibility projection. Exports are local and ignored by Git. The [schema package](../packages/ui-schema/README.md), [snapshot guide](obsidian-ui-mapping/capture/snapshot.md), and [component registry guide](obsidian-ui-mapping/capture/component-registry.md) describe their contract and limits.
+Each export creates `dev-vault/.obsidian-ui-system/ui-catalog-exports/<UTC timestamp>/` with `manifest.json`, `tokens.json`, `token-evidence.json`, `components.json`, and `capture-context.json`. The manifest records the runtime Obsidian API version, the installed SDK package version used at build time, and the snapshot schema version separately. The versioned token evidence file preserves CSSOM declarations, references, computed values, and uncertainty for the captured mode; `tokens.json` is its compatibility projection. The technical context sidecar records the installed Mapping `main.js` SHA-256, window viewport, and that capture's manifest. Exports are local and ignored by Git. The [schema package](../packages/ui-schema/README.md), [snapshot guide](obsidian-ui-mapping/capture/snapshot.md), and [component registry guide](obsidian-ui-mapping/capture/component-registry.md) describe their contract and limits.
 
 `ui-catalog-exports/` remains the stable technical directory for individual specimen exports, including existing local captures. It names that export type, not the Mapping product.
 
@@ -60,6 +60,8 @@ Inspect a real directory at that path before removing it; the command does not o
 
 Mapping **Export snapshot** does not run the Lab or write to its export directory. The two individual export commands are for development and diagnosis; the Figma Package ZIP is the normal transfer artifact. The [Lab guide](obsidian-ui-mapping/layout-lab/layout-lab.md) explains the view and measurements, and the [inference guide](obsidian-ui-mapping/layout-lab/layout-inference.md) records the current evidence and unknowns.
 
+For a controlled appearance pair, export Mapping and Layout Lab once in Dark and once in Light without rebuilding the plugin or resizing the Obsidian window. Each of the four timestamped folders contains `capture-context.json`; compare its build hash, viewport, runtime/SDK/schema versions, platform, and mode. The two Layout exports preserve raw visual observations separately. Select one Layout export as the inference source and record its mode and `environment.capturedAt`; this does not create two layout models. The current individual exports do not create a multi-mode Package. Restore the original appearance after capture. Community theme name is still `null`, so matching technical context does not prove that an unreported theme or snippet setting stayed unchanged.
+
 ## Semantic snapshot diff
 
 Compare two complete Mapping export folders from the repository root:
@@ -92,6 +94,7 @@ npm run build
 npm run test:diff
 npm run test:layout
 npm run test:typography --workspace @obsidian-ui-system/mapping
+npm run test:context --workspace @obsidian-ui-system/mapping
 npm run test:tokens --workspace @obsidian-ui-system/mapping
 npm run test:package --workspace @obsidian-ui-system/mapping
 npm run test:exports --workspace @obsidian-ui-system/mapping

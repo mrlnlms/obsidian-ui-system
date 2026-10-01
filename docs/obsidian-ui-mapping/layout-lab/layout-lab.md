@@ -4,8 +4,8 @@ O plugin oferece duas abas independentes no workspace do Obsidian:
 
 | Entrada na paleta de comandos | Conteúdo | Export local |
 | --- | --- | --- |
-| **Open Obsidian UI Mapping** | Specimens e variants canônicos do `component-registry.ts`; captura pública normal | `dev-vault/.obsidian-ui-system/ui-catalog-exports/<timestamp>/` com `manifest.json`, `tokens.json`, `components.json` |
-| **Open Obsidian UI Layout Lab** | Fixtures experimentais dos mesmos componentes reais em hosts e conteúdos controlados; medidas e inferências | `dev-vault/.obsidian-ui-system/layout-lab-exports/<timestamp>/layout.json` |
+| **Open Obsidian UI Mapping** | Specimens e variants canônicos do `component-registry.ts`; captura pública normal | `dev-vault/.obsidian-ui-system/ui-catalog-exports/<timestamp>/` com `manifest.json`, `tokens.json`, `token-evidence.json`, `components.json`, `capture-context.json` |
+| **Open Obsidian UI Layout Lab** | Fixtures experimentais dos mesmos componentes reais em hosts e conteúdos controlados; medidas e inferências | `dev-vault/.obsidian-ui-system/layout-lab-exports/<timestamp>/` com `layout.json` e `capture-context.json` |
 
 Cada comando revela sua aba existente se já estiver aberta. O Mapping não monta fixtures nem roda probes ao abrir ou exportar o snapshot oficial. O Lab não produz o snapshot oficial. Ambos os diretórios de exportação são locais e ignorados pelo Git. Host, conteúdo e largura são contextos de medição, não variants do registry. O schema público permanece em `packages/ui-schema`; observações, inferências e `intermediateModel` do Lab permanecem experimentais.
 
@@ -19,6 +19,8 @@ Cada comando revela sua aba existente se já estiver aberta. O Mapping não mont
 O comando `npm run test:layout` testa a inferência sem abrir Obsidian; `npm run check`, `npm run build` e `npm run test:diff` validam TypeScript, plugin e comparador. Uma medição real continua necessária após mudanças em DOM, CSS, suite ou runtime do Obsidian.
 
 O código fica em `layout-lab.ts` (view), `layout-probes.ts` (suite declarativa), `layout-capture.ts` (DOM/CSSOM, medidas e export) e `layout-inference.ts` (regras puras).
+
+O `capture-context.json` associa cada export do Lab ao hash SHA-256 do `main.js` instalado, ao viewport e às versões/mode do manifest em `layout.environment`. Para um par Dark/Light, preserve dois `layout.json`: cada um mantém suas observações visuais brutas. A futura agregação selecionará as inferências de um deles como camada única, identificada pelo mode e horário da captura escolhida. Isso não muda a conclusão já validada de que Light/Dark não requer modelos diferentes de comportamento de layout.
 
 ## Adicionar um probe
 

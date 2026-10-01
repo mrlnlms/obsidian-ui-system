@@ -79,7 +79,7 @@ export class MappingView extends ItemView {
           // Recreate deterministic specimens if someone interacted with the examples.
           this.renderSpecimens();
           const folder = await exportCatalog(this.app, this.specimens);
-          status.setText(`Saved manifest.json, tokens.json, token-evidence.json and components.json to ${folder}`);
+          status.setText(`Saved Mapping snapshot and capture-context.json to ${folder}`);
         } catch (error) {
           status.setText(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
         } finally {

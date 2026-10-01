@@ -66,7 +66,7 @@ export class LayoutLabView extends ItemView {
       if (save) {
         const { folder, observations, inferences } = await exportLayoutProbes(this.app, this.fixtures);
         this.renderResults(observations, inferences);
-        status.setText(`Saved layout.json to ${folder}`);
+        status.setText(`Saved layout.json and capture-context.json to ${folder}`);
       } else {
         const observations = await measureLayoutFixtures(this.fixtures);
         this.renderResults(observations, inferLayout(observations));
