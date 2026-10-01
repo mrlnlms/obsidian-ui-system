@@ -13,7 +13,7 @@ This monorepo captures and describes the current Obsidian UI so that a future Fi
 - `dev-vault/` is only an Obsidian execution and test vault, not a source archive. Its plugin entry is a relative symlink to `apps/obsidian-ui-atlas/`; do not create a second code copy there. Final ZIPs live under `obsidian-ui-exports/figma-packages/`; technical captures and reports live under hidden `.obsidian-ui-system/`. Both are local and ignored by Git.
 - `docs/` holds maintained public documentation. Keep `docs/README.md` as the index. Use `docs/obsidian-ui-atlas/atlas/` for registry, inventory, and snapshot guides; `docs/obsidian-ui-atlas/layout-lab/` for measurement and inference; `docs/obsidian-ui-atlas/snapshot-diff/` for the comparison CLI; `docs/obsidian-ui-system-figma/components/` for native Figma component reconstruction; and `docs/integration/figma-package/` for the cross-app ZIP contract.
 - `private/` is local and ignored by Git. Keep implementation plans in `private/plans/`. Put investigations, dated validation records, and experimental models in `private/docs/` under the same product and topic structure as `docs/`. Cross-app checkpoints and transfer evidence belong under `private/docs/integration/`.
-- `scripts/` contains the standalone snapshot comparison CLI. It reads Atlas exports and writes local `dev-vault/.obsidian-ui-system/snapshot-diffs/` reports; it does not run in the Obsidian plugin.
+- `scripts/snapshot-diff/` contains the standalone snapshot comparison CLI and its tests. It reads Atlas exports and writes local `dev-vault/.obsidian-ui-system/snapshot-diffs/` reports; it does not run in the Obsidian plugin.
 
 ## Documentation organization
 
@@ -23,6 +23,12 @@ This monorepo captures and describes the current Obsidian UI so that a future Fi
 - Keep public navigation in `docs/README.md` and update links when moving files. Before committing, check that public links resolve, `private/` is ignored, and no plan or research artifact is staged.
 - Paths recorded in dated private documents may describe an older checkout. Use the current source tree and public index for operational paths.
 - Do not keep Git bundles or other temporary rollback files after a history operation has been verified unless the user explicitly asks to retain them.
+
+## Generated artifacts
+
+- Keep `scripts/` for maintained source, configuration, and tests. Do not put dated captures, comparison reports, or investigation output there. Commit a fixture only when an automated test consumes it and needs it to reproduce behavior.
+- `.build/` is ignored, disposable build output. Regenerate it with the relevant build command; remove leftover investigative build files when work ends.
+- Keep deliberate Atlas and Layout Lab exports and default snapshot diff reports under the ignored `dev-vault/.obsidian-ui-system/` area. They remain there until explicit cleanup. Every new command that writes a retained diagnostic artifact must state its destination and retention behavior to the user. For a custom output path, check Git tracking before committing.
 
 ## Architecture rules
 
@@ -41,7 +47,7 @@ This monorepo captures and describes the current Obsidian UI so that a future Fi
 - Layout Lab code is split into `layout-lab.ts` (view), `layout-probes.ts` (declarations), `layout-capture.ts` (DOM/CSSOM and export) and `layout-inference.ts` (pure inference). Do not reintroduce probe imports into `catalog.ts`.
 - `docs/obsidian-ui-atlas/layout-lab/layout-inference.md` documents the generalized experimental suite for Button, Search, Dropdown, Slider and Setting. The suite lives in `layout-probes.ts`, and the pure inference lives in `layout-inference.ts`; both remain separate from `ui-schema`. Preserve evidence/confidence and unknowns, and never add component-ID exceptions just to force classifications.
 - Preserve every canonical public registry component and variant during experimental cleanup. Probe-only fixtures may be replaced when their evidence remains covered by tests or maintained documentation.
-- Compare exports by `(id, variant)` and token name in `scripts/snapshot-diff.ts`; keep the comparison format separate from the snapshot schema until there is evidence to merge them.
+- Compare exports by `(id, variant)` and token name in `scripts/snapshot-diff/snapshot-diff.ts`; keep the comparison format separate from the snapshot schema until there is evidence to merge them.
 - Treat Obsidian-generated vault settings as local state. Keep only the relative plugin symlink under `dev-vault/.obsidian/` in Git.
 - Keep the `.hotreload` marker in the Capture source. Hot-Reload itself is an ignored local development dependency inside `dev-vault/.obsidian/plugins/hot-reload/`.
 

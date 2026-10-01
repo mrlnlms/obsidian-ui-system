@@ -53,7 +53,7 @@ Run the semantic snapshot diff from the repository root:
 npm run diff:snapshots -- <before-export-folder> <after-export-folder> [output-folder]
 ```
 
-The command writes `diff.json` and `diff.md`. Without an output argument, it uses an ignored folder under `dev-vault/.obsidian-ui-system/snapshot-diffs/`. It compares specimens by `id + variant`, tokens by custom property name, and manifest fields separately. See the [comparison guide](docs/obsidian-ui-atlas/snapshot-diff/snapshot-diff.md) for an example using two real exports and an explanation of the categories.
+The command writes `diff.json` and `diff.md`. Without an output argument, it uses an ignored folder under `dev-vault/.obsidian-ui-system/snapshot-diffs/`. Reports remain there until optional development-export cleanup or manual removal. A custom output folder may be tracked by Git. It compares specimens by `id + variant`, tokens by custom property name, and manifest fields separately. See the [comparison guide](docs/obsidian-ui-atlas/snapshot-diff/snapshot-diff.md) for a usage example and an explanation of the categories.
 
 The manifest records Light or Dark mode; specimen identity remains `id + variant`. Compare exports from matching environments when assessing component changes. The [public UI inventory](docs/obsidian-ui-atlas/atlas/public-ui-inventory.md) lists the 26 captured families and the current public API boundary.
 
@@ -93,7 +93,7 @@ If a real directory occupies that path, inspect its contents before removing it;
 - `dev-vault/`: isolated Obsidian test vault.
 - `docs/`: public guides grouped by named product and topic; see the [index](docs/README.md).
 - `private/`: local, Git-ignored plans, thematic research notes, and experimental models.
-- `scripts/`: standalone semantic snapshot comparison CLI and tests.
+- `scripts/snapshot-diff/`: standalone semantic snapshot comparison CLI and tests. Build output under `.build/` is disposable and ignored by Git.
 
 ## Verification commands
 

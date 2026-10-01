@@ -97,6 +97,9 @@ async function main(): Promise<void> {
     writeFile(path.join(outputDirectory, 'diff.md'), renderMarkdown(report)),
   ]);
   console.log(`Wrote ${path.join(outputDirectory, 'diff.json')} and diff.md`);
+  console.log(args[2]
+    ? 'Report stays in the chosen output directory until you remove it. Check that directory before committing.'
+    : 'Report stays in the Git-ignored development area until you run the optional Obsidian development-export cleanup or remove it.');
   console.log(`Specimens: ${JSON.stringify(report.components.counts)}; tokens: ${JSON.stringify(report.tokens.counts)}`);
 }
 

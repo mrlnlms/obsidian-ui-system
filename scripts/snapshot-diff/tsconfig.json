@@ -9,7 +9,7 @@
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
     "rootDir": ".",
-    "outDir": "../.build/snapshot-diff"
+    "outDir": "../../.build/snapshot-diff"
   },
   "include": ["*.ts"]
 }
