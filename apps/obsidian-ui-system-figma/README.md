@@ -56,6 +56,8 @@ The build also creates `variables-pilot/dist/code.js`. In a **disposable Figma D
 
 The v2 reader and projection are independent of `src/package-data.ts`; the normal importer still rejects v2. `--interactive-accent` is evaluated in the pilot UI browser and compared with the captured Button CTA, but is not created as a Variable. `TIMING`, `EASING`, and `STRING` are outside this pilot. Run `npm run test:variables --workspace @obsidian-ui-system/figma-plugin` for the pure projection and v2 reader tests.
 
+The three-Variable readback and the `--interactive-accent` UI-browser proof were confirmed in Figma Desktop on 2026-10-01 with the controlled v2 ZIP. The [package guide](../../docs/integration/figma-package/figma-package.md) records the values and limits of that proof.
+
 ## Files
 
 - `src/code.ts`: Figma Component Set creation and font loading.
