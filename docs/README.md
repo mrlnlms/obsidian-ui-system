@@ -10,6 +10,6 @@ These documents describe the current open project: how to use it, what its expor
 | **Obsidian UI System for Figma → Components** | [Component reconstruction rules](obsidian-ui-system-figma/components/component-reconstruction.md) |
 | **Integration → Figma Package** | [ZIP format and workflow](integration/figma-package/figma-package.md) |
 
-Implementation plans, completed investigations, dated validation records, and experimental JSON models belong under the local, Git-ignored `private/` directory, organized by the same subjects. Public documents must remain understandable without that directory. Generated Atlas and Lab exports stay under the ignored development vault paths described in the [project README](../README.md).
+Implementation plans belong in the local, Git-ignored `private/docs/plans/` directory. Completed investigations, dated validation records, and experimental JSON models belong in `private/docs/` under the matching product and topic. Public documents must remain understandable without that directory. Generated Atlas and Lab exports stay under the ignored development vault paths described in the [project README](../README.md).
 
 Place a new public guide under its named product and closest topic, then link it here. Use `integration/` only for a contract that connects the apps.

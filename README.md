@@ -92,7 +92,7 @@ If a real directory occupies that path, inspect its contents before removing it;
 - `skills/obsidian-ui/`: future agent skill placeholder.
 - `dev-vault/`: isolated Obsidian test vault.
 - `docs/`: public guides grouped by named product and topic; see the [index](docs/README.md).
-- `private/`: local, Git-ignored plans, thematic research notes, and experimental models.
+- `private/docs/plans/`: local, Git-ignored implementation plans; research notes and experimental models live under the matching product and topic in `private/docs/`.
 - `scripts/snapshot-diff/`: standalone semantic snapshot comparison CLI and tests. Build output under `.build/` is disposable and ignored by Git.
 
 ## Verification commands
