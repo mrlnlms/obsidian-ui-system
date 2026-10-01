@@ -1,10 +1,10 @@
 # Probes declarativos e inferência experimental de layout
 
-O [Layout Probe Lab](layout-lab.md) mede specimens reais do registry em hosts de **160, 240 e 480 CSS px**, com amostras opcionais de texto curto e longo. A suite é declarada em [`layout-probes.ts`](../apps/obsidian-capture/src/layout-probes.ts). Host, conteúdo e largura são contextos de medição, não variants do catálogo. O Lab exporta `layout.json` com observações DOM/CSSOM, viewport, ambiente, inferências e um `intermediateModel` experimental. Esses dados ficam fora do snapshot público e de `ui-schema`.
+O [Layout Probe Lab](layout-lab.md) mede specimens reais do registry em hosts de **160, 240 e 480 CSS px**, com amostras opcionais de texto curto e longo. A suite é declarada em [`layout-probes.ts`](../../apps/obsidian-capture/src/layout-probes.ts). Host, conteúdo e largura são contextos de medição, não variants do catálogo. O Lab exporta `layout.json` com observações DOM/CSSOM, viewport, ambiente, inferências e um `intermediateModel` experimental. Esses dados ficam fora do snapshot público e de `ui-schema`.
 
 ## Regras de inferência
 
-O [inferidor puro](../apps/obsidian-capture/src/layout-inference.ts) compara medições dentro de cada `(id, variant)`:
+O [inferidor puro](../../apps/obsidian-capture/src/layout-inference.ts) compara medições dentro de cada `(id, variant)`:
 
 - **Fill:** a largura da raiz acompanha a largura do host. A confiança aumenta quando ambas coincidem; um offset estável reduz a confiança.
 - **Hug:** a largura permanece estável entre hosts para cada conteúdo e acompanha a mudança da largura do texto direto. Ultrapassar um host estreito reforça a evidência.

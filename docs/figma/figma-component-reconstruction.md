@@ -1,6 +1,6 @@
 # Reconstrução de componentes Obsidian no Figma
 
-Esta é a referência de trabalho para os próximos componentes. Consulte-a junto com as skills indicadas em [`AGENTS.md`](../AGENTS.md). Atualize apenas regras que se mostrem reutilizáveis; mantenha medidas e resultados específicos de cada investigação nos documentos do respectivo componente.
+Esta é a referência de trabalho para os próximos componentes. Consulte-a junto com as skills indicadas em [`AGENTS.md`](../../AGENTS.md). Atualize apenas regras que se mostrem reutilizáveis; mantenha medidas e resultados específicos de cada investigação nos documentos do respectivo componente.
 
 ## Evidência antes da estrutura Figma
 
