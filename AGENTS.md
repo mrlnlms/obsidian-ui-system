@@ -1,71 +1,109 @@
 # Project guidance
 
-## Purpose and scope
+## Project model
 
-This monorepo captures and describes the current Obsidian UI so that the Figma product and a future coding-agent skill can use the same structured representation. The Obsidian UI Atlas workspace view renders public API specimens and exports a minimal structured snapshot.
+Obsidian UI System builds a shared, evidence-based representation of Obsidian UI that can support design in Figma and, eventually, implementation by coding agents.
 
-## Directory roles
+This monorepo develops three first-class product surfaces:
 
-- `apps/` contains first-class products developed here that can evolve and be distributed independently, whether they are plugins or Agent Skills. It is not limited to applications with a UI or their own process.
-- `apps/obsidian-ui-atlas/` is the real source and build location for **Obsidian UI Atlas** (`id: obsidian-ui-atlas`). The plugin's `manifest.json`, `styles.css`, and generated `main.js` live here.
-- `apps/obsidian-ui-system-figma/` contains **Obsidian UI System** for Figma Design. Its normal input is one ZIP exported by **Export Obsidian UI Figma Package**; Button and Search are the only authorized component pilots. Add another component only after a new milestone request.
-- `apps/obsidian-ui-skill/` is reserved for **Obsidian UI Skill**, the future Agent Skill developed by this project to interpret the shared system and eventually turn structured designs into Obsidian implementations. Do not implement it without a new milestone request.
-- `packages/` contains shared contracts, schemas, and code for these products. `packages/ui-schema/` holds the initial generic TypeScript snapshot contract; refine it as capture evidence grows.
-- `dev-vault/` is only an Obsidian execution and test vault, not a source archive. Its plugin entry is a relative symlink to `apps/obsidian-ui-atlas/`; do not create a second code copy there. Final ZIPs live under `obsidian-ui-exports/figma-packages/`; technical captures and reports live under hidden `.obsidian-ui-system/`. Both are local and ignored by Git.
-- `README.md` introduces the project, its current scope, and a short path to try it. `docs/development.md` owns detailed monorepo setup, vault operation, exports, local artifacts, and verification commands. `docs/` holds maintained public documentation for products and integration; keep `docs/README.md` as its index. Use `docs/obsidian-ui-atlas/atlas/` for registry, inventory, and snapshot guides; `docs/obsidian-ui-atlas/layout-lab/` for measurement and inference; `docs/obsidian-ui-atlas/snapshot-diff/` for comparison rules; `docs/obsidian-ui-system-figma/components/` for native Figma component reconstruction; and `docs/integration/figma-package/` for the cross-product ZIP contract. Place future Skill documentation under `docs/obsidian-ui-skill/` when that product exists.
-- `private/` is local and ignored by Git. Keep implementation plans in `private/docs/plans/`. Put investigations, dated validation records, and experimental models in `private/docs/` under the same product and topic structure as `docs/`. Cross-product checkpoints and transfer evidence belong under `private/docs/integration/`.
-- `scripts/` contains tooling for this monorepo. `scripts/snapshot-diff/` holds the standalone snapshot comparison CLI and its tests. It reads Atlas exports and writes local `dev-vault/.obsidian-ui-system/snapshot-diffs/` reports; it does not run in the Obsidian plugin.
+- `apps/obsidian-ui-atlas/` — **Obsidian UI Atlas**, the Obsidian plugin that observes and captures UI evidence.
+- `apps/obsidian-ui-system-figma/` — **Obsidian UI System Figma**, the Figma plugin that turns validated package data into an editable UI Kit.
+- `apps/obsidian-ui-skill/` — **Obsidian UI Skill**, the agent-facing product that will eventually help translate structured designs into Obsidian implementations.
 
-## Documentation organization
+In this repository, `apps/` means independently developed and distributable product surfaces. It is not limited to traditional applications with a UI or process.
 
-- Before adding a document, decide whether it is a maintained public guide or local development evidence. Public docs describe current behavior, contracts, methods, limits, and reusable rules. Plans, session notes, one-off probes, experimental JSON, and dated run reports go in `private/docs/`.
-- Choose both the named product and the narrow topic before writing: Atlas, Layout Lab, snapshot diff, Figma components, future Skill, or integration. Put a cross-product ZIP or schema handoff in `integration/`. Add a new topic folder when its subject does not fit the existing ones; do not use a product root as a catch-all or duplicate a document across areas.
-- Any planning workflow or skill, including Superpowers and `writing-plans`, must write implementation plans to `private/docs/plans/` with a date and topic in the filename. Never create `docs/superpowers/plans/` or another tracked plans folder. Do not create a plan merely to record a small direct edit.
-- A plan stays in `private/docs/plans/` after execution. Place its actual deliverables by role: code and tests with the relevant app, package, or script; maintained public guidance in `docs/<product>/<topic>/` or `docs/integration/<topic>/`; investigation notes, validation records, and experimental models in the matching `private/docs/<product>/<topic>/` or `private/docs/integration/<topic>/`; runtime exports and diagnostics in their ignored development-vault locations. Do not leave deliverables beside the plan or move a historical plan into public docs.
-- Keep public navigation in `docs/README.md`; use short links in the root README and put operational steps in `docs/development.md` or the relevant product guide. Update links when moving files. Before committing, check that public links resolve, `private/` is ignored, and no plan or research artifact is staged.
-- Paths recorded in dated private documents may describe an older checkout. Use the current source tree and public index for operational paths.
-- Do not keep Git bundles or other temporary rollback files after a history operation has been verified unless the user explicitly asks to retain them.
+- `packages/` contains shared contracts and implementation used across products.
+- `scripts/` contains repository tooling.
+- `dev-vault/` is the local Obsidian execution and test environment.
+- `docs/` contains maintained project and technical documentation.
+- `private/` contains Git-ignored plans, investigations, validation records, and other development evidence.
 
-## Generated artifacts
+The Skill developed under `apps/obsidian-ui-skill/` is distinct from skills installed for Codex, Claude, or another agent to help develop this repository. Installed skills follow the configuration convention of the consuming agent.
 
-- Keep `scripts/` for maintained source, configuration, and tests. Do not put dated captures, comparison reports, or investigation output there. Commit a fixture only when an automated test consumes it and needs it to reproduce behavior.
-- `.build/` is ignored, disposable build output. Regenerate it with the relevant build command; remove leftover investigative build files when work ends.
-- Keep deliberate Atlas and Layout Lab exports and default snapshot diff reports under the ignored `dev-vault/.obsidian-ui-system/` area. They remain there until explicit cleanup. Every new command that writes a retained diagnostic artifact must state its destination and retention behavior to the user. For a custom output path, check Git tracking before committing.
+## Repository invariants
 
-## Architecture rules
+- Keep one Git repository at the root. Do not create nested repositories.
+- Keep one source tree for each product. The development vault may reference product code but must not contain a second source copy.
+- Treat `apps/` as product surfaces, `packages/` as shared infrastructure, `scripts/` as repository tooling, and `dev-vault/` as runtime/test state.
+- When moving a product or shared package, update workspace configuration, scripts, ignore rules, symlinks, and documentation references together.
+- Keep the shared UI representation generic to Obsidian interface development. Do not couple shared schemas or contracts to an individual downstream plugin.
+- Preserve the distinction between:
+  - observed Obsidian UI evidence;
+  - inferred abstractions or layout behavior;
+  - generated outputs such as the Figma UI Kit.
+- Atlas owns canonical capture evidence. Layout Lab owns experimental measurement and inference. Experimental conclusions must not silently become canonical facts.
+- Preserve uncertainty when evidence is insufficient. `unknown` is a valid result; do not force a classification to make a downstream representation easier.
+- Figma is a generated consumer of the shared representation, not the canonical source of Obsidian UI truth.
+- Keep semantic identity stable where it already exists, including specimen identity by `id + variant` and token comparison by token name, unless an intentional contract change requires otherwise.
 
-- Keep one Git repository at the root. Do not initialize nested repositories.
-- `apps/` means products developed and potentially distributed by this repository. `packages/` means shared infrastructure; `scripts/` means repository tooling; `dev-vault/` means the local Obsidian development and test environment. Do not introduce a parallel top-level product category. Keep a product's directory name aligned with its identity; plugin IDs and npm workspace names are separate identifiers. If an existing app directory moves, update affected lockfile entries, root scripts, ignore rules, vault symlinks, local workspace links, and documentation references together.
-- `apps/obsidian-ui-skill/` is the Skill this project will develop. Skills consumed by Codex, Claude, or another agent to help develop this repository follow that agent's configuration convention, such as `.agents/skills/` or `.claude/skills/`; they are not this product and do not belong in `apps/`.
-- Do not make a public document depend on a file under `private/`. When private evidence changes a durable project rule, summarize that rule and its limits in the relevant public document. Keep reproducible test fixtures and versioned contracts in their existing source/test locations rather than moving them to `private/` solely because they are JSON.
-- Capture, Figma, and the future agent skill should eventually share the same versioned schema rather than separate interpretations.
-- Keep the schema generic for Obsidian plugin interface development. Do not couple it to Qualia or any other individual plugin.
-- Preserve the distinction between observed Obsidian UI, inferred abstractions, and generated outputs when designing future capture data.
-- Follow the coverage in `docs/obsidian-ui-atlas/atlas/public-ui-inventory.md`. Define specimens once in `component-registry.ts`; the Atlas renderer and capture both consume those definitions. Batch 6 is complete: three contextual API specimens were added, while `HoverPopover` remains limited by its public lifecycle. Do not add internal-observed APIs, additional Figma components, or the agent skill without a new milestone request.
-- The public API capture phase is closed at 26 families and 59 specimens. Button and Search are the two validated Figma pilots. Treat other missing fields as evidence-gated capture candidates, not as authorization for a full importer. The internal-observed backlog remains separate.
-- The Obsidian Command Palette export builds a consistent Figma Package ZIP from Atlas and Layout Lab without opening either view. The Figma Custom UI imports that ZIP and offers one **Generate UI Kit** action. Individual Atlas/Lab exports remain for development and diagnosis, not the normal importer input.
-- The Package Builder owns its staging and removes recognized orphaned partials before a new run. Handled failures write small records under `.obsidian-ui-system/package-failures/`. **Developer: Clean Obsidian UI Development Exports** is optional maintenance for explicit Atlas/Lab exports and diff reports; it must never remove final ZIPs or package failure diagnostics. No cleanup command belongs to the normal package workflow.
-- Layout Lab writes its separate `layout.json` export under ignored `dev-vault/.obsidian-ui-system/layout-lab-exports/`. Experimental Figma-ready models are local research artifacts, not the public schema. Preserve unknown sizing decisions until content and viewport tests support them.
-- `docs/obsidian-ui-atlas/layout-lab/layout-lab.md` explains the two workspace views: Atlas owns canonical specimens and official snapshots; Layout Probe Lab owns experimental fixtures, measurements, inference and `layout.json`. The Lab opens with **Open Obsidian UI Layout Lab** and never runs as part of Atlas export.
-- Layout Lab code is split into `layout-lab.ts` (view), `layout-probes.ts` (declarations), `layout-capture.ts` (DOM/CSSOM and export) and `layout-inference.ts` (pure inference). Do not reintroduce probe imports into `catalog.ts`.
-- `docs/obsidian-ui-atlas/layout-lab/layout-inference.md` documents the generalized experimental suite for Button, Search, Dropdown, Slider and Setting. The suite lives in `layout-probes.ts`, and the pure inference lives in `layout-inference.ts`; both remain separate from `ui-schema`. Preserve evidence/confidence and unknowns, and never add component-ID exceptions just to force classifications.
-- Preserve every canonical public registry component and variant during experimental cleanup. Probe-only fixtures may be replaced when their evidence remains covered by tests or maintained documentation.
-- Compare exports by `(id, variant)` and token name in `scripts/snapshot-diff/snapshot-diff.ts`; keep the comparison format separate from the snapshot schema until there is evidence to merge them.
-- Treat Obsidian-generated vault settings as local state. Keep only the relative plugin symlink under `dev-vault/.obsidian/` in Git.
-- Keep the `.hotreload` marker in the Capture source. Hot-Reload itself is an ignored local development dependency inside `dev-vault/.obsidian/plugins/hot-reload/`.
+## Documentation and artifacts
 
-## Figma component reconstruction workflow
+Use each documentation surface for a distinct purpose:
 
-- Before changing the Figma importer or starting another component, read `docs/obsidian-ui-system-figma/components/component-reconstruction.md` alongside the relevant skills. Update that reference only when a new rule is reusable across components, not for conversation history or one-off probe results.
-- Use `figma-generative-plugins` when changing the plugin. Also use `figma-use` for Figma Plugin API work, and `figma-generate-library` whenever creating or changing components, Component Sets, variants, component properties, bindings, Auto Layout, or resize behavior.
-- Use local `@figma/plugin-typings` and those skills' API references as the primary sources. Search the web only for a real gap in those sources or to verify a recent API change.
-- Keep observed Atlas data, Layout Lab inference, the experimental Figma-ready model, and generated Figma nodes distinct. Do not turn an unproven sizing or anatomy claim into a component rule. Preserve already validated Button and Search behavior when working on later components.
-- Close a component only after TypeScript/build/tests and manual Figma Desktop checks for native nodes, variants, instance properties, resizing, clipping, icons, typography, and the intended text edit behavior. Record clearly which checks remain manual or pending.
+- `README.md` introduces the project, current capabilities, and short path to try it.
+- `docs/development.md` owns detailed local setup, vault operation, development exports, and verification commands.
+- `docs/README.md` is the public technical documentation index.
+- Product and integration guides under `docs/` describe maintained behavior, contracts, methods, limits, and reusable rules.
+- `private/docs/plans/` contains implementation plans.
+- Other investigations, dated validation records, experimental models, session evidence, and one-off probes belong under the matching area of `private/docs/`.
 
-## Obsidian UI validation workflow
+Before creating a new document, check whether its subject already has an established home. Extend the existing document when that is clearer than adding another file.
 
-- The user operates the Obsidian interface. Do not take focus or control of their Mac to open the Atlas or click Export unless they explicitly ask.
-- After a build, tell the user when the Atlas or Layout Lab is ready. Hot Reload may close either tab, so they may need to run the matching command again.
-- While the agent's turn is active, check `dev-vault/.obsidian-ui-system/ui-catalog-exports/` for a canonical snapshot and `dev-vault/.obsidian-ui-system/layout-lab-exports/` for a Lab measurement. Validate files directly. Do not repeatedly ask the user to confirm a successful export when the files provide that evidence.
-- If no new export appears or the UI reports an error that is not available in files, ask the user for the exact message or a screenshot.
-- An export does not automatically wake the agent after its turn ends; there is no background folder monitoring between turns.
+Public documentation must stand on its own and must not depend on files under `private/`. When private evidence produces a durable rule, summarize that rule and its limits in the appropriate maintained document.
+
+Place deliverables according to their role:
+
+- product code and tests with the relevant app or package;
+- maintained tooling under `scripts/`;
+- reproducible fixtures with the tests that consume them;
+- runtime captures, generated reports, staging, and diagnostics in their defined ignored locations;
+- disposable build output under `.build/`;
+- plans and development evidence under `private/`.
+
+Do not create a plan merely to record a small direct edit. When a plan is useful, keep it in `private/docs/plans/` after execution; its deliverables belong in their normal code, documentation, or evidence locations.
+
+Any new command that persists generated artifacts must have a clear destination and retention policy.
+
+## Working rules
+
+- Read the existing code and relevant documentation before adding a new rule, abstraction, document, or output location.
+- Prefer extending an established structure over creating a parallel one.
+- Keep changes scoped to the requested milestone. Do not expand capture coverage, Figma generation, or the future Skill simply because adjacent infrastructure makes it possible.
+- Preserve already validated behavior when changing adjacent systems.
+- Let evidence drive reconstruction and inference rather than visual guesswork.
+- Update maintained documentation when a durable path, contract, workflow, or architectural rule changes.
+- Avoid duplicating the same project rule across multiple documents. Keep the canonical explanation in the most appropriate place and link to it when needed.
+
+## Task references
+
+For Atlas capture and registry work, use the maintained guides under:
+
+- `docs/obsidian-ui-atlas/atlas/`
+- `docs/obsidian-ui-atlas/snapshot-diff/`
+
+For Layout Lab measurement and inference, use:
+
+- `docs/obsidian-ui-atlas/layout-lab/`
+
+For Figma component generation, read:
+
+- `docs/obsidian-ui-system-figma/components/component-reconstruction.md`
+
+Use the relevant Figma development skills and local `@figma/plugin-typings` when changing the importer or generated components.
+
+For the Obsidian-to-Figma transfer contract, use:
+
+- `docs/integration/figma-package/figma-package.md`
+
+For local setup, vault behavior, generated artifact locations, and verification commands, use:
+
+- `docs/development.md`
+
+## Validation and user interaction
+
+- Run the relevant TypeScript checks, builds, and automated tests described in `docs/development.md` before closing implementation work.
+- Automated tests do not replace runtime validation when behavior depends on Obsidian Desktop or Figma Desktop.
+- The user normally operates the Obsidian and Figma interfaces. Do not take control of those interfaces unless explicitly asked.
+- When runtime exports can provide evidence, inspect the generated files before asking the user to manually confirm information already available there.
+- When a required result exists only in the UI, clearly identify the remaining manual check.
+- There is no background monitoring between agent turns; do not imply that a future export will automatically resume the current task.
