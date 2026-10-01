@@ -1,5 +1,5 @@
 import { readSearchImport } from './search-data';
-import { requiredFont, SF_PRO_SETUP_INSTRUCTIONS } from './font-resolution';
+import { fontFailure, requiredFont } from './font-resolution';
 
 /** Search uses the observed positioned layers, not a horizontal Auto Layout. */
 export async function generateSearch(componentsJson: unknown, layoutJson: unknown): Promise<ComponentSetNode> {
@@ -255,8 +255,4 @@ function arrangeSet(set: ComponentSetNode, components: ComponentNode[]): void {
   const center = figma.viewport.center;
   set.x = center.x - set.width / 2;
   set.y = center.y - set.height / 2;
-}
-
-function fontFailure(font: FontName, detail: string): Error {
-  return new Error(font.family === 'SF Pro' ? `${detail}\n\n${SF_PRO_SETUP_INSTRUCTIONS}` : detail);
 }

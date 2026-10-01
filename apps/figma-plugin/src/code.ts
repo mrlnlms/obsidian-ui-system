@@ -1,5 +1,5 @@
 import { readButtonImport } from './button-data';
-import { requiredFont, SF_PRO_SETUP_INSTRUCTIONS } from './font-resolution';
+import { fontFailure, requiredFont } from './font-resolution';
 import { generateSearch } from './search-generation';
 import { planUiKitPlacement } from './ui-kit-layout';
 import { readFigmaPackage, type ImportedPackage } from './package-data';
@@ -202,10 +202,6 @@ function organizeUiKit(button: ComponentSetNode, search: ComponentSetNode, secti
       throw new Error(`UI Kit: ${name} não contém o Component Set corretamente.`);
     }
   }
-}
-
-function fontFailure(font: FontName, detail: string): Error {
-  return new Error(font.family === 'SF Pro' ? `${detail}\n\n${SF_PRO_SETUP_INSTRUCTIONS}` : detail);
 }
 
 function isGenerateUiKitMessage(value: unknown): value is { type: 'generate-ui-kit' } {

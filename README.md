@@ -1,6 +1,12 @@
 # Obsidian UI System
 
-A monorepo for a structured representation of the Obsidian UI, a future Figma design system built from it, and a future coding-agent skill that uses the same representation. The **Obsidian UI Atlas** plugin currently renders 26 public API families in a workspace tab and exports an initial snapshot.
+A monorepo for a structured representation of the Obsidian UI, a Figma importer for the validated Button and Search pilots, and a future coding-agent skill. The **Obsidian UI Atlas** plugin renders 26 public API families in a workspace tab and exports canonical snapshots.
+
+## Current Figma workflow
+
+In Obsidian Desktop, run **Export Obsidian UI Figma Package** from the Command Palette. The Atlas and Layout Lab tabs can remain closed. This creates one ZIP in `dev-vault/figma-packages/` from a consistent Atlas capture and Layout Lab run.
+
+In Figma Desktop, run the local **Obsidian UI System** plugin, **Choose ZIP** in **Figma Package**, then click **Generate UI Kit**. It creates the validated `Obsidian / Button` and `Obsidian / Search` Component Sets in `Actions` and `Inputs` sections. See the [Figma plugin installation guide](apps/figma-plugin/README.md) and [package format](docs/figma-package.md).
 
 ## Requirements and installation
 
@@ -53,7 +59,7 @@ The [public API phase closure](docs/public-api-phase-complete.md) records the 26
 
 The [Layout Probe Lab](docs/layout-lab.md) is a separate technical workspace view. Open it with **Open Obsidian UI Layout Lab**. It measures registry definitions for Button, Search, Dropdown, Slider and Setting in controlled hosts, displays experimental sizing classifications, and saves `layout.json` under ignored `dev-vault/layout-spike-exports/<UTC timestamp>/`. The Lab has its own **Measure layout probes** and **Export layout probes** actions. Atlas **Export snapshot** does not run probes or write into the Lab export directory. The [inference analysis](docs/layout-inference.md) records current evidence and unknowns.
 
-For one transfer artifact, run **Export Obsidian UI Figma Package** from the Command Palette. It works with both views closed and saves a validated ZIP under ignored `dev-vault/figma-packages/`. See the [package guide](docs/figma-package.md) for contents, compatibility, and current Figma importer status.
+The individual Atlas and Lab exports above remain available for development and diagnosis; the ZIP is the normal Figma transfer artifact.
 
 The [Settings batch notes](docs/settings-batch.md) document the four Settings APIs, their runtime quirks, and the comparison with the preceding Dark snapshot.
 
@@ -85,7 +91,7 @@ If a real directory occupies that path, inspect its contents before removing it;
 ## Project layout
 
 - `apps/obsidian-capture/`: current plugin source and build configuration.
-- `apps/figma-plugin/`: Figma Design development plugin with a Button-only Atlas/Layout Lab spike; see its [local installation guide](apps/figma-plugin/README.md) and [mapping notes](docs/figma-button-spike.md).
+- `apps/figma-plugin/`: Figma Design importer for the Button and Search pilots; see its [local installation guide](apps/figma-plugin/README.md) and [component reconstruction reference](docs/figma-component-reconstruction.md).
 - `packages/ui-schema/`: initial shared TypeScript snapshot contract.
 - `skills/obsidian-ui/`: future agent skill placeholder.
 - `dev-vault/`: isolated Obsidian test vault.

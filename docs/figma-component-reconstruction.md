@@ -4,7 +4,7 @@ Esta é a referência de trabalho para os próximos componentes. Consulte-a junt
 
 ## Evidência antes da estrutura Figma
 
-1. O Atlas exporta `components.json`: identidade `(id, variant)`, conteúdo, anatomia e estilos observados no Obsidian. O Layout Lab exporta `layout.json`: probes declarativos em diferentes larguras de host e conteúdos, medições e inferências com evidência e confiança. Esses arquivos locais são importados pela Custom UI; o código principal do plugin não lê o filesystem.
+1. O Atlas produz `components.json`: identidade `(id, variant)`, conteúdo, anatomia e estilos observados no Obsidian. O Layout Lab produz `layout.json`: probes declarativos em diferentes larguras de host e conteúdos, medições e inferências com evidência e confiança. O comando **Export Obsidian UI Figma Package** executa ambos no mesmo ambiente e entrega um ZIP validado; a Custom UI importa esse ZIP com `FileReader`. O código principal do plugin não lê o filesystem. Os exports individuais continuam disponíveis para diagnóstico.
 2. Construa um modelo experimental Figma-ready entre os exports e os nodes. Registre separadamente o campo **observado**, a regra **inferida** e a **tradução Figma**. Preserve `unknown` quando os probes não distinguirem as hipóteses. Não altere o schema público apenas para acomodar a tradução.
 3. Valide raiz e descendentes por eixo. `display:flex` sozinho não demonstra Hug, e uma largura medida em um viewport não demonstra Fixed. Use variação de host e de conteúdo para distinguir os casos; não introduza exceções por ID de componente na inferência genérica.
 4. Obtenha ícones de SVG, máscara ou geometria observável. Se a origem ou geometria não puder ser reconstruída com confiança, registre a lacuna antes de gerar o componente. Não desenhe um substituto aproximado.
@@ -35,7 +35,7 @@ Para texto de uma linha, preserve o comportamento de overflow medido. Um viewpor
 | Componente | Evidência e estrutura | Validação |
 | --- | --- | --- |
 | `Obsidian / Button` | Largura Hug e altura Fixed inferidas pelo Lab; Auto Layout horizontal, sem wrap, padding e estilos dos exports; `State=Normal/Disabled/CTA`; propriedade `Label`. | No Figma Desktop, uma instance passou de `Example button` para `OK` e a largura se ajustou automaticamente. |
-| `Obsidian / Search` | Raiz Fill horizontal e altura Fixed; interior com posicionamento relativo/absoluto, superfície e viewport textual que esticam, lupa à esquerda e clear à direita; SVGs das máscaras capturadas; clipping sem ellipsis; `State=Empty/Filled`. | Layout, resize, altura, ícones e corte simples foram validados manualmente. Consulte o documento específico para o estado da validação das Component Properties. |
+| `Obsidian / Search` | Raiz Fill horizontal e altura Fixed; interior com posicionamento relativo/absoluto, superfície e viewport textual que esticam, lupa à esquerda e clear à direita; SVGs das máscaras capturadas; clipping sem ellipsis; `State=Empty/Filled`; `Placeholder` e `Value` separados. | Layout, resize, altura, ícones, corte simples e edição de texto por estado foram validados manualmente. |
 
 Os SVGs Search vêm do CSSOM observado. O Button não tem ícones nesse specimen. Consulte [`figma-button-spike.md`](figma-button-spike.md) e [`figma-search-spike.md`](figma-search-spike.md) para provas e limites específicos, sem copiar suas medidas como regras gerais.
 

@@ -1,6 +1,6 @@
 # Obsidian UI System for Figma Design
 
-This local Figma Design development plugin imports the validated ButtonComponent and SearchComponent pilots. Its Custom UI reads one local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. The plugin validates and unpacks the ZIP locally, then creates native Component Sets. It does not read the local filesystem directly or access the network. Button and Search were validated end to end in Figma Desktop before this ZIP input change.
+This local Figma Design development plugin imports the validated ButtonComponent and SearchComponent pilots. Its Custom UI reads one local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. The plugin validates and unpacks the ZIP locally, then creates native Component Sets. It does not read the local filesystem directly or access the network. Button and Search behavior was validated in Figma Desktop; the newer ZIP input has automated fixture coverage and still needs a manual Desktop run.
 
 For the next component, follow the [reusable reconstruction reference](../../docs/figma-component-reconstruction.md) and the Figma workflow in the repository's `AGENTS.md`.
 
@@ -32,9 +32,9 @@ The default Obsidian UI uses the macOS system UI font stack. The Figma importer 
 5. Confirm that the text renders normally.
 6. Run **Obsidian UI System** again.
 
-If SF Pro is still unavailable, install it from [Apple Fonts](https://developer.apple.com/fonts/) under Apple's terms, restart Figma Desktop, and run the plugin again. Do not add font files to this repository. The license has already been accepted manually in the development Figma Desktop, and the user confirmed that SF Pro now renders correctly. The earlier `hasMissingFont=true` result was an unmet Figma environment prerequisite.
+If SF Pro is still unavailable, install it from [Apple Fonts](https://developer.apple.com/fonts/) under Apple's terms, restart Figma Desktop, and run the plugin again. Do not add font files to this repository. The historical `hasMissingFont=true` diagnosis and its resolution are recorded in the [Button investigation](../../docs/figma-button-spike.md).
 
-The plugin checks `figma.listAvailableFontsAsync()`, loads the exact `FontName` returned by Figma with `loadFontAsync()`, and tests a temporary TextNode before creating any component. If the font is absent or fails to render, it stops and displays the human setup steps. It does not activate fonts, alter the imported JSON, or substitute another family.
+The plugin checks `figma.listAvailableFontsAsync()`, loads the exact `FontName` returned by Figma with `loadFontAsync()`, and tests a temporary TextNode before creating any component. If the font is absent or fails to render, it stops and displays the human setup steps. It does not activate fonts, alter the imported package, or substitute another family.
 
 The checked package uses schema `0.4.0` and includes the Button's `fontStyle=normal`. Older `0.3.0` exports cannot satisfy automatic typography validation. Obsidian's `??` entries are a no-override sentinel, not a font family; Capture omits them from usable typography CSS variable values while `tokens.json` retains the literal raw CSS values. The plugin also filters sentinels during import.
 
