@@ -1,8 +1,8 @@
 # Obsidian UI System for Figma Design
 
-This local Figma Design development plugin imports the validated ButtonComponent and SearchComponent pilots. Its Custom UI reads one local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. The plugin validates and unpacks the ZIP locally, then creates native Component Sets. It does not read the local filesystem directly or access the network. Button and Search behavior was validated in Figma Desktop; the newer ZIP input has automated fixture coverage and still needs a manual Desktop run.
+This local Figma Design development plugin imports the validated ButtonComponent and SearchComponent pilots. Its Custom UI reads one local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. The plugin validates and unpacks the ZIP locally, then creates native Component Sets. It does not read the local filesystem directly or access the network. Button and Search behavior was validated in Figma Desktop. The single-ZIP workflow was confirmed manually for the v0.1.0 checkpoint; automated importer tests also cover a real ZIP fixture.
 
-For the next component, follow the [reusable reconstruction reference](../../docs/figma-component-reconstruction.md) and the Figma workflow in the repository's `AGENTS.md`.
+The [reconstruction reference](../../docs/figma-component-reconstruction.md) records the reusable rules demonstrated by these pilots.
 
 ## Build and install
 

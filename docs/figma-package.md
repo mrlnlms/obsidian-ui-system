@@ -30,6 +30,8 @@ Os pacotes ficam locais e ignorados por Git. O teste `npm run test:package --wor
 
 Em 2026-10-01, uma execução real gerou `obsidian-ui-package-2026-10-01T12-12-18-735Z.zip`: ZIP íntegro (CRC válido), cinco JSONs legíveis, 59 specimens, 945 tokens, 102 observações e 16 inferências. `manifest.json` e `layout.environment` coincidiram; Button manteve inferência horizontal `hug/high` e Search `fill/high`.
 
+No fechamento da v0.1.0, uma nova execução no Obsidian Desktop gerou `obsidian-ui-package-2026-10-01T15-16-28-749Z.zip`. A inspeção confirmou o mesmo conjunto de cinco arquivos, metadados consistentes, 59 specimens, 945 tokens, 102 observações, 16 inferências, e nenhum `.partial`, arquivo em staging ou diagnóstico de falha. O parser do importer aceitou esse ZIP; o usuário confirmou a geração no Figma Desktop.
+
 ## Artefatos locais e limpeza
 
 `dev-vault/obsidian-ui-exports/figma-packages/` guarda os ZIPs finais de transferência. O usuário pode mantê-los ou apagá-los quando não forem mais necessários. `dev-vault/.obsidian-ui-system/` guarda os exports técnicos do Atlas (`ui-catalog-exports/`), do Lab (`layout-lab-exports/`), os relatórios de diff (`snapshot-diffs/`), staging do pacote (`package-staging/`) e diagnósticos de falha (`package-failures/`). O prefixo de ponto mantém a área técnica fora da navegação normal do vault. Ambas as áreas são ignoradas pelo Git.
@@ -38,6 +40,6 @@ Em 2026-10-01, uma execução real gerou `obsidian-ui-package-2026-10-01T12-12-1
 
 Os históricos anteriores à migração foram removidos dos locais visíveis após auditoria. As conclusões permanecem nos documentos de investigação; os caminhos timestampados desses documentos são referências históricas, não arquivos que ainda existam no vault. Para uma comparação reproduzível atual, gere dois novos exports individuais e use a CLI de diff.
 
-## Dívida técnica para o próximo componente
+## Limites atuais do importer
 
-O pré-voo do ZIP chama os leitores de Button e Search para recusar evidência incompleta; a geração os chama novamente para construir os modelos. Essa dupla leitura preserva os contratos atuais, mas, ao adicionar outra família, vale considerar passar os modelos já validados adiante. A geração remove os sets parciais se uma etapa falhar. Os pequenos validadores de campos nos dois leitores também se repetem; permanecem locais porque seus contratos e mensagens diferem. Nenhum deles é código morto ou um caminho antigo de importação.
+O pré-voo do ZIP e a geração chamam os leitores de Button e Search separadamente. Os validadores de campos são locais a cada leitor. A geração remove os sets parciais se uma etapa falhar. O importer não atualiza Component Sets anteriores e ainda não cria Figma Variables a partir de `tokens.json`.

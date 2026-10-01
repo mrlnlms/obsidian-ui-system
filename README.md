@@ -1,6 +1,6 @@
 # Obsidian UI System
 
-A monorepo for a structured representation of the Obsidian UI, a Figma importer for the validated Button and Search pilots, and a future coding-agent skill. The **Obsidian UI Atlas** plugin renders 26 public API families in a workspace tab and exports canonical snapshots.
+A monorepo that captures the public Obsidian UI and imports the validated Button and Search pilots into Figma Design. The **Obsidian UI Atlas** plugin renders 26 public API families and exports canonical snapshots. The [v0.1.0 checkpoint](docs/v0.1-checkpoint.md) records the implemented scope and its limits.
 
 ## Current Figma workflow
 
@@ -10,9 +10,11 @@ The ZIP is ready when the command reports success. The export cleans its own sta
 
 In Figma Desktop, run the local **Obsidian UI System** plugin, **Choose ZIP** in **Figma Package**, then click **Generate UI Kit**. It creates the validated `Obsidian / Button` and `Obsidian / Search` Component Sets in `Actions` and `Inputs` sections. See the [Figma plugin installation guide](apps/figma-plugin/README.md) and [package format](docs/figma-package.md).
 
+To install the local importer, open a Figma Design file in **Figma Desktop**, choose **Plugins → Development → Import plugin from manifest** (or the equivalent **Import new plugin from manifest…** action), and select `<repository>/apps/figma-plugin/manifest.json`. On macOS, **SF Pro / Regular** must be available and render in Figma Desktop: choose it on a text layer and accept Apple's license prompt if shown. If absent, install SF Pro from Apple's official font distribution and restart Figma. The importer stops without generating if the font requirement fails; it does not substitute another family. Then run the development plugin, choose the exported ZIP and click **Generate UI Kit**.
+
 ## Requirements and installation
 
-- macOS with [Obsidian](https://obsidian.md/) installed.
+- macOS with [Obsidian](https://obsidian.md/) Desktop and Figma Desktop installed.
 - Node.js 22 or newer and npm 10 or newer.
 - Git.
 
@@ -39,7 +41,7 @@ For this checkout, that is `/Users/mosx/Desktop/obsidian-ui-system/dev-vault`. T
 
 Run `npm run dev` at the repository root to rebuild `main.js` when `apps/obsidian-capture/src/` changes. For a one-time production build, run `npm run build`; `npm run check` runs TypeScript checks only. The development vault also has [Hot-Reload](https://github.com/pjeby/hot-reload) installed. Once you enable it in Obsidian, the tracked `.hotreload` marker in the Capture plugin makes Hot-Reload reload that plugin after each rebuild. Atlas and Lab tabs close during plugin reload because the views are detached on unload; run their commands again to reopen them. Changes to `manifest.json` may still require an Obsidian restart.
 
-In the development vault, open **Settings → Community plugins**, allow community plugins if prompted, then enable **Obsidian UI Atlas** and **Hot Reload**. Run **Open Obsidian UI Atlas** from the command palette. It opens or reveals one scrollable workspace tab containing only canonical registry specimens. The tab renders the public API families listed in the [inventory](docs/public-ui-inventory.md), grouped by category and labeled by variant. Direct overlays (`Modal`, `ConfirmationModal`, `Menu`, `Notice`) have **Open specimen** buttons; export opens and captures them one at a time. Press **Export snapshot** to recreate the declared variants and capture them. Running the command again reveals the existing tab. The plugin requires Obsidian 1.13.1 or newer for `DisplayValueComponent` support.
+In the development vault, open **Settings → Community plugins**, allow community plugins if prompted, then enable **Obsidian UI Atlas**. Enable **Hot Reload** there only if it is installed locally. Run **Open Obsidian UI Atlas** from the Command Palette. It opens or reveals one scrollable workspace tab containing canonical registry specimens. Press **Export snapshot** for an individual Atlas export. The plugin requires Obsidian 1.13.1 or newer for `DisplayValueComponent` support.
 
 Each export creates a timestamped folder at `dev-vault/.obsidian-ui-system/ui-catalog-exports/<UTC timestamp>/` with `manifest.json`, `tokens.json`, and `components.json`. The manifest distinguishes the runtime Obsidian API version from the installed `obsidian` SDK package version and the snapshot schema version. These local outputs are ignored by Git. The [schema package](packages/ui-schema/README.md) describes the contract; [capture notes](docs/capture-milestone.md) explain what the export measures and its current limits. See the [registry guide](docs/component-registry.md) to add a component or variant.
 
@@ -57,7 +59,7 @@ The [determinism check](docs/snapshot-determinism.md) records consecutive export
 
 The [Light/Dark capture](docs/light-dark-capture.md) documents how to export the same Atlas under each base color scheme and the observed semantic diff for the default theme. Mode belongs to the manifest; specimen identity remains `id + variant`.
 
-The [public API phase closure](docs/public-api-phase-complete.md) records the 26-family / 59-specimen milestone and its backlog. The [Figma readiness assessment](docs/figma-readiness.md) checks six representative specimens against the information needed for editable, responsive reconstruction. It is an analysis of the current snapshot, not a Figma importer.
+The [public API phase closure](docs/public-api-phase-complete.md) records the 26-family / 59-specimen capture milestone. The [Figma readiness assessment](docs/figma-readiness.md) is a historical analysis of schema 0.3.0, before the Button/Search importer.
 
 The [Layout Probe Lab](docs/layout-lab.md) is a separate technical workspace view. Open it with **Open Obsidian UI Layout Lab**. It measures registry definitions for Button, Search, Dropdown, Slider and Setting in controlled hosts, displays experimental sizing classifications, and saves `layout.json` under ignored `dev-vault/.obsidian-ui-system/layout-lab-exports/<UTC timestamp>/`. The Lab has its own **Measure layout probes** and **Export layout probes** actions. Atlas **Export snapshot** does not run probes or write into the Lab export directory. The [inference analysis](docs/layout-inference.md) records current evidence and unknowns.
 
@@ -102,4 +104,21 @@ If a real directory occupies that path, inspect its contents before removing it;
 - `docs/`: project documentation.
 - `scripts/`: standalone semantic snapshot comparison CLI and tests.
 
-The plugin ID matches the local folder name. Obsidian's current [manifest rules](https://docs.obsidian.md/Reference/Manifest) disallow `obsidian` in IDs submitted to the community directory; rename the ID and folder together if publication becomes a goal.
+## Verification commands
+
+From the repository root, run TypeScript checks, all builds and the existing test suites:
+
+```sh
+npm run check
+npm run build
+npm run test:diff
+npm run test:layout
+npm run test:typography --workspace @obsidian-ui-system/capture
+npm run test:package --workspace @obsidian-ui-system/capture
+npm run test:exports --workspace @obsidian-ui-system/capture
+npm run test:lifecycle --workspace @obsidian-ui-system/capture
+npm run test:font --workspace @obsidian-ui-system/figma-plugin
+npm run test:search --workspace @obsidian-ui-system/figma-plugin
+npm run test:ui-kit --workspace @obsidian-ui-system/figma-plugin
+npm run test:package --workspace @obsidian-ui-system/figma-plugin
+```

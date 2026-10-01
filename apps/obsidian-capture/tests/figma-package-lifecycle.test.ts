@@ -55,6 +55,8 @@ test('publishes only the final ZIP and removes safely identified orphans before 
   assert.match(output, /^obsidian-ui-exports\/figma-packages\/obsidian-ui-package-.*\.zip$/);
   assert.ok(files.get(output) instanceof ArrayBuffer);
   assert.equal([...files.keys()].some((path) => path.endsWith('.partial') && path !== unrelated && path !== unrelatedStaging), false);
+  assert.deepEqual([...files.keys()].filter((path) => path.startsWith(`${PACKAGE_FAILURE_ROOT}/`)), [diagnostic]);
+  assert.deepEqual([...files.keys()].filter((path) => path.startsWith(`${FIGMA_PACKAGE_ROOT}/`) && path.endsWith('.zip')).sort(), [finished, output].sort());
   for (const path of [finished, unrelated, unrelatedStaging, diagnostic, atlas]) assert.equal(files.has(path), true);
 });
 
