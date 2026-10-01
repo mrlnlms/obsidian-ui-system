@@ -6,6 +6,7 @@ export async function generateSearch(componentsJson: unknown, layoutJson: unknow
   let set: ComponentSetNode | undefined;
   let fontProbe: TextNode | undefined;
   const components: ComponentNode[] = [];
+  const textNodes: TextNode[] = [];
   try {
     const models = readSearchImport(componentsJson, layoutJson);
     const first = models[0]!;
@@ -77,6 +78,7 @@ export async function generateSearch(componentsJson: unknown, layoutJson: unknow
       label.textAlignHorizontal = 'LEFT';
       label.fills = [{ type: 'SOLID', color: model.input.textColor, opacity: model.input.textOpacity }];
       label.characters = model.text;
+      textNodes.push(label);
       if (label.width <= 0 || label.height <= 0 || label.hasMissingFont) {
         throw new Error(`Search ${model.state}: TextNode não renderizou o texto.`);
       }
@@ -119,6 +121,11 @@ export async function generateSearch(componentsJson: unknown, layoutJson: unknow
           textViewport.width !== component.width - model.input.padding.left - model.input.padding.right) {
         throw new Error(`Search ${model.state}: sizing inicial no Figma divergiu do modelo.`);
       }
+      const textProperty = component.addComponentProperty('Text', 'TEXT', model.text);
+      label.componentPropertyReferences = { characters: textProperty };
+      if (label.characters !== model.text || !textViewport.clipsContent) {
+        throw new Error(`Search ${model.state}: a propriedade Text alterou o texto ou o clipping.`);
+      }
     }
 
     set = figma.combineAsVariants(components, figma.currentPage);
@@ -133,17 +140,49 @@ export async function generateSearch(componentsJson: unknown, layoutJson: unknow
     if (set.children.length !== 2 || set.componentPropertyDefinitions.State?.type !== 'VARIANT') {
       throw new Error('Figma não criou as duas variants Search com State.');
     }
+    const textProperties = Object.entries(set.componentPropertyDefinitions)
+      .filter(([name, definition]) => name.startsWith('Text#') && definition.type === 'TEXT');
+    if (textProperties.length !== 1) {
+      throw new Error('Figma não consolidou Text como uma única propriedade das duas variants Search.');
+    }
+    const textProperty = textProperties[0]![0];
+    for (let index = 0; index < components.length; index++) {
+      const label = textNodes[index]!;
+      const model = models[index]!;
+      if (label.characters !== model.text) {
+        throw new Error(`Search ${model.state}: Text alterou o valor padrão da variant.`);
+      }
+      verifyInstanceText(components[index]!, model.state, model.text, textProperty);
+    }
     arrangeSet(set, components);
     figma.currentPage.selection = [set];
     figma.viewport.scrollAndZoomIntoView([set]);
     figma.ui.postMessage({ type: 'result', ok: true,
-      text: 'Obsidian / Search criado com Empty e Filled. Redimensione uma instance e edite o TextNode para validar no Figma.' });
+      text: 'Obsidian / Search criado com Empty e Filled. Edite Text no painel da instance e redimensione para validar no Figma.' });
   } catch (error) {
     if (fontProbe && !fontProbe.removed) fontProbe.remove();
     if (set && !set.removed) set.remove();
     else for (const component of components) if (!component.removed) component.remove();
     figma.ui.postMessage({ type: 'result', ok: false,
       text: error instanceof Error ? error.message : String(error) });
+  }
+}
+
+function verifyInstanceText(component: ComponentNode, state: string, expected: string, property: string): void {
+  const instance = component.createInstance();
+  try {
+    const label = instance.findOne((node) => node.type === 'TEXT') as TextNode | null;
+    if (instance.componentProperties.State?.value !== state ||
+        instance.componentProperties[property]?.type !== 'TEXT' || label?.characters !== expected) {
+      throw new Error(`Search ${state}: a instance não expôs Text com seu valor padrão.`);
+    }
+    instance.setProperties({ [property]: 'OK' });
+    const updatedLabel = instance.findOne((node) => node.type === 'TEXT') as TextNode | null;
+    if (instance.componentProperties[property]?.value !== 'OK' || updatedLabel?.characters !== 'OK') {
+      throw new Error(`Search ${state}: editar Text na instance não atualizou o TextNode.`);
+    }
+  } finally {
+    instance.remove();
   }
 }
 

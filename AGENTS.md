@@ -7,7 +7,7 @@ This monorepo captures and describes the current Obsidian UI so that a future Fi
 ## Directory roles
 
 - `apps/obsidian-capture/` is the real source and build location for the TypeScript Obsidian UI Atlas plugin (`id: obsidian-ui-atlas`). The plugin's `manifest.json`, `styles.css`, and generated `main.js` live here.
-- `apps/figma-plugin/` contains the local Figma Design plugin and its Button-only import spike. Keep it limited to this milestone until new work is requested.
+- `apps/figma-plugin/` contains the local Figma Design importer. Button and Search are the only authorized component pilots; add another component only after a new milestone request.
 - `packages/ui-schema/` holds the initial generic TypeScript snapshot contract. Refine it as capture evidence grows.
 - `skills/obsidian-ui/` is reserved for the future coding-agent skill. Do not implement it yet.
 - `dev-vault/` is only an Obsidian execution and test vault, not a source archive. Its plugin entry is a relative symlink to `apps/obsidian-capture/`; do not create a second code copy there. Timestamped `ui-catalog-exports/` outputs stay local and ignored by Git.
@@ -21,7 +21,7 @@ This monorepo captures and describes the current Obsidian UI so that a future Fi
 - Keep the schema generic for Obsidian plugin interface development. Do not couple it to Qualia or any other individual plugin.
 - Preserve the distinction between observed Obsidian UI, inferred abstractions, and generated outputs when designing future capture data.
 - Follow the batches in `docs/public-ui-inventory.md`. Define specimens once in `component-registry.ts`; the Atlas renderer and capture both consume those definitions. Batch 6 is complete: three contextual API specimens were added, while `HoverPopover` remains limited by its public lifecycle. Do not add internal-observed APIs, Figma integration, or the agent skill without a new milestone request.
-- The public API capture phase is closed in `docs/public-api-phase-complete.md`. `docs/figma-readiness.md` assesses six specimens against editable and responsive reconstruction. `docs/figma-button-spike.md` records the separately authorized Button-only Figma experiment. Treat other missing fields as evidence-gated capture candidates, not as authorization for a full importer. The internal-observed backlog remains separate.
+- The public API capture phase is closed in `docs/public-api-phase-complete.md`. `docs/figma-readiness.md` assesses six specimens against editable and responsive reconstruction. `docs/figma-button-spike.md` and `docs/figma-search-spike.md` record the two authorized Figma pilots. Treat other missing fields as evidence-gated capture candidates, not as authorization for a full importer. The internal-observed backlog remains separate.
 - `docs/layout-spike.md` records a bounded Button/Search experiment in 240px/480px hosts and a 160px long-label Button probe. Its separate `layout.json` export lives under ignored `dev-vault/layout-spike-exports/`; `docs/layout-spike-model.experimental.json` is not the public schema. Preserve unknown sizing decisions until content/viewport tests support them.
 - `docs/layout-lab.md` explains the two workspace views: Atlas owns canonical specimens and official snapshots; Layout Probe Lab owns experimental fixtures, measurements, inference and `layout.json`. The Lab opens with **Open Obsidian UI Layout Lab** and never runs as part of Atlas export.
 - Layout Lab code is split into `layout-lab.ts` (view), `layout-probes.ts` (declarations), `layout-capture.ts` (DOM/CSSOM and export) and `layout-inference.ts` (pure inference). Do not reintroduce probe imports into `catalog.ts`.
@@ -30,6 +30,14 @@ This monorepo captures and describes the current Obsidian UI so that a future Fi
 - Compare exports by `(id, variant)` and token name in `scripts/snapshot-diff.ts`; keep the comparison format separate from the snapshot schema until there is evidence to merge them.
 - Treat Obsidian-generated vault settings as local state. Keep only the relative plugin symlink under `dev-vault/.obsidian/` in Git.
 - Keep the `.hotreload` marker in the Capture source. Hot-Reload itself is an ignored local development dependency inside `dev-vault/.obsidian/plugins/hot-reload/`.
+
+## Figma component reconstruction workflow
+
+- Before changing the Figma importer or starting another component, read `docs/figma-component-reconstruction.md` alongside the relevant skills. Update that reference only when a new rule is reusable across components, not for conversation history or one-off probe results.
+- Use `figma-generative-plugins` when changing the plugin. Also use `figma-use` for Figma Plugin API work, and `figma-generate-library` whenever creating or changing components, Component Sets, variants, component properties, bindings, Auto Layout, or resize behavior.
+- Use local `@figma/plugin-typings` and those skills' API references as the primary sources. Search the web only for a real gap in those sources or to verify a recent API change.
+- Keep observed Atlas data, Layout Lab inference, the experimental Figma-ready model, and generated Figma nodes distinct. Do not turn an unproven sizing or anatomy claim into a component rule. Preserve already validated Button and Search behavior when working on later components.
+- Close a component only after TypeScript/build/tests and manual Figma Desktop checks for native nodes, variants, instance properties, resizing, clipping, icons, typography, and the intended text edit behavior. Record clearly which checks remain manual or pending.
 
 ## Obsidian UI validation workflow
 

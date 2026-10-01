@@ -1,6 +1,8 @@
 # Obsidian UI System for Figma Design
 
-This local Figma Design development plugin imports the bounded ButtonComponent and SearchComponent pilots. Its Custom UI reads two local JSON files with `FileReader`; the plugin code receives their parsed contents through `postMessage` and creates native Component Sets. It does not read the local filesystem directly or access the network. The Button pilot was validated manually in Figma Desktop; Search still needs visual validation there.
+This local Figma Design development plugin imports the bounded ButtonComponent and SearchComponent pilots. Its Custom UI reads two local JSON files with `FileReader`; the plugin code receives their parsed contents through `postMessage` and creates native Component Sets. It does not read the local filesystem directly or access the network. Button was validated manually in Figma Desktop. Search layout, resizing, icons and text clipping were also validated manually; its new `Text` instance property still needs a panel check.
+
+For the next component, follow the [reusable reconstruction reference](../../docs/figma-component-reconstruction.md) and the Figma workflow in the repository's `AGENTS.md`.
 
 ## Build and install
 
@@ -17,7 +19,7 @@ For this checkout, the latest locally checked pair is:
 
 These exports are ignored local evidence and may not exist in another checkout. Search requires a Lab export with `input::placeholder` CSSOM, present in the checked pair above; older Lab exports produce a clear error. `tokens.json` is not required: Atlas already exports computed colors, without recording which token produced each one. See [Button notes](../../docs/figma-button-spike.md) and [Search notes](../../docs/figma-search-spike.md) for mapping and limits.
 
-For Search visual validation, create an instance of `Obsidian / Search`, resize it horizontally and check that the surface/text stretch, the magnifier remains on the left and the clear icon stays on the right in Filled. Edit the `Placeholder` or `Query` TextNode to confirm that the text remains editable. Empty and Filled are static variants; changing text does not switch state. The 240 px initial width is a demonstration host measured by the Lab, not an intrinsic Search width.
+For the remaining Search check, generate a new `Obsidian / Search` with this build, create an instance of each `State` variant and edit `Text` in the right panel. Confirm that the displayed text changes, then resize the instances horizontally to confirm the previously validated positioning and clipping. Empty and Filled are static variants; changing `Text` does not switch `State`. The 240 px initial width is a demonstration host measured by the Lab, not an intrinsic Search width. Existing Component Sets do not gain the new property automatically; generate a new one for this check.
 
 ## Typography prerequisite — macOS
 
