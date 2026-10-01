@@ -14,7 +14,7 @@ figma.ui.onmessage = async (message: unknown) => {
     validateSharedTypography(data);
     const available = await figma.listAvailableFontsAsync();
     const font = requiredFont({ cssStack: data[0].fontFamily, platform: data[0].platform,
-      size: data[0].fontSize, weight: data[0].fontWeight, style: data[0].fontStyle },
+      weight: data[0].fontWeight, style: data[0].fontStyle },
     available.map((item) => item.fontName));
     await figma.loadFontAsync(font);
     figma.ui.postMessage({ type: 'typography', text: `Typography: ${font.family} / ${font.style} ✓` });
@@ -56,7 +56,8 @@ figma.ui.onmessage = async (message: unknown) => {
       label.characters = button.text;
       // Measure populated text before adding it to the hugging component.
       if (label.width <= 0 || label.height <= 0) {
-        throw new Error(`Button ${button.state}: TextNode não mediu o label; geração cancelada.`);
+        throw new Error(`Button ${button.state}: TextNode não mediu o label ` +
+          `(width=${label.width}, height=${label.height}, chars=${label.characters.length}, missingFont=${label.hasMissingFont}); geração cancelada.`);
       }
       component.appendChild(label);
       label.layoutSizingHorizontal = 'HUG';

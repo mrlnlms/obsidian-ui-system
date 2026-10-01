@@ -1,7 +1,6 @@
 export interface FontRequest {
   cssStack: string;
   platform: string;
-  size: number;
   weight: number;
   style: string | null;
 }
@@ -39,7 +38,7 @@ export function requiredFont(request: FontRequest, available: readonly FontName[
     if (request.platform !== 'macos') {
       throw new Error(`Typography requirement unresolved: ${first} em ${request.platform} não possui mapeamento validado.`);
     }
-    // Apple's default macOS system sans is SF Pro. At 13px its text optical design applies.
+    // Apple's default macOS system sans is SF Pro; the named instance is required in Figma.
     family = 'SF Pro';
   } else if (/^(sans-serif|serif|monospace|ui-serif|ui-monospace)$/i.test(first)) {
     throw new Error(`Typography requirement unresolved: família genérica ${first} sem mapeamento validado.`);
@@ -48,10 +47,8 @@ export function requiredFont(request: FontRequest, available: readonly FontName[
   if (!match) {
     throw new Error(`Required font not available: ${family} / ${style}. Install the required font and restart Figma.`);
   }
-  if (generic && match.variationSettings && Object.prototype.hasOwnProperty.call(match.variationSettings, 'opsz')) {
-    return { ...match, variationSettings: { ...match.variationSettings, opsz: request.size } };
-  }
-  return match;
+  // Use the named instance advertised by Figma without overriding variable axes.
+  return { family: match.family, style: match.style };
 }
 
 function figmaStyle(weight: number, style: string): string {

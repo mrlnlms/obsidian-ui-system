@@ -19,7 +19,7 @@ These exports are ignored local evidence and may not exist in another checkout. 
 
 ## Required font on macOS
 
-For the current macOS Button stack, the plugin requires **SF Pro / Regular**. The Button is 13 px; when Figma exposes the SF Pro `opsz` variation axis, the plugin sets it to 13 to use the text optical design. The plugin does not install fonts or substitute Google Sans Flex, Inter, or Roboto. If the exact family and style are absent from `figma.listAvailableFontsAsync()`, generation stops with `Required font not available: SF Pro / Regular. Install the required font and restart Figma.`
+For the current macOS Button stack, the plugin requires **SF Pro / Regular**. It applies the exact named family and style without overriding font variation axes. The plugin does not install fonts or substitute Google Sans Flex, Inter, or Roboto. If the exact family and style are absent from `figma.listAvailableFontsAsync()`, generation stops with `Required font not available: SF Pro / Regular. Install the required font and restart Figma.`
 
 In Figma Desktop, accept the SF Pro font license when prompted by an Apple UI kit or a text layer using SF Pro. [Figma's Apple UI kit instructions](https://help.figma.com/hc/en-us/articles/24037833895831-Get-started-with-Apple-s-UI-kit) say this makes SF Pro available in Figma. If it is still missing, download SF Pro from [Apple Fonts](https://developer.apple.com/fonts/), install it locally according to Apple's terms, then restart Figma Desktop. Do not add font files to this repository. The desktop app includes local font support; the separate Figma font installer is for browser use.
 
