@@ -262,14 +262,24 @@ export async function measureLayoutFixtures(fixtures: LayoutFixture[]): Promise<
   });
 }
 
-export async function exportLayoutProbes(app: App, fixtures: LayoutFixture[]): Promise<{ folder: string; observations: LayoutObservation[]; inferences: LayoutInference[] }> {
+export async function captureLayoutProbes(fixtures: LayoutFixture[], capturedAt: string): Promise<{
+  layout: {
+    experimentalFormat: string;
+    probeSuite: typeof layoutProbeSuite;
+    environment: ReturnType<typeof captureManifest>;
+    viewport: { widthPx: number; heightPx: number; devicePixelRatio: number };
+    observations: LayoutObservation[];
+    inferences: LayoutInference[];
+  };
+  observations: LayoutObservation[];
+  inferences: LayoutInference[];
+}> {
   const observations = await measureLayoutFixtures(fixtures);
   const inferences = inferLayout(observations);
   const doc = fixtures[0]!.host.ownerDocument;
   const view = doc.defaultView;
   if (!view) throw new Error('Layout fixtures need a connected window');
-  const capturedAt = new Date().toISOString();
-  const result = {
+  const layout = {
     experimentalFormat: 'atlas-layout-probes-2',
     probeSuite: layoutProbeSuite,
     environment: captureManifest(doc, capturedAt),
@@ -277,12 +287,18 @@ export async function exportLayoutProbes(app: App, fixtures: LayoutFixture[]): P
     observations,
     inferences,
   };
+  return { layout, observations, inferences };
+}
+
+export async function exportLayoutProbes(app: App, fixtures: LayoutFixture[]): Promise<{ folder: string; observations: LayoutObservation[]; inferences: LayoutInference[] }> {
+  const capturedAt = new Date().toISOString();
+  const { layout, observations, inferences } = await captureLayoutProbes(fixtures, capturedAt);
   const adapter = app.vault.adapter;
   if (!(await adapter.exists(EXPORT_ROOT))) await adapter.mkdir(EXPORT_ROOT);
   const baseName = capturedAt.replace(/[:.]/g, '-');
   let folder = `${EXPORT_ROOT}/${baseName}`;
   for (let suffix = 2; await adapter.exists(folder); suffix++) folder = `${EXPORT_ROOT}/${baseName}-${suffix}`;
   await adapter.mkdir(folder);
-  await adapter.write(`${folder}/layout.json`, JSON.stringify(result, null, 2) + '\n');
+  await adapter.write(`${folder}/layout.json`, JSON.stringify(layout, null, 2) + '\n');
   return { folder, observations, inferences };
 }

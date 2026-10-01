@@ -53,6 +53,8 @@ The [public API phase closure](docs/public-api-phase-complete.md) records the 26
 
 The [Layout Probe Lab](docs/layout-lab.md) is a separate technical workspace view. Open it with **Open Obsidian UI Layout Lab**. It measures registry definitions for Button, Search, Dropdown, Slider and Setting in controlled hosts, displays experimental sizing classifications, and saves `layout.json` under ignored `dev-vault/layout-spike-exports/<UTC timestamp>/`. The Lab has its own **Measure layout probes** and **Export layout probes** actions. Atlas **Export snapshot** does not run probes or write into the Lab export directory. The [inference analysis](docs/layout-inference.md) records current evidence and unknowns.
 
+For one transfer artifact, run **Export Obsidian UI Figma Package** from the Command Palette. It works with both views closed and saves a validated ZIP under ignored `dev-vault/figma-packages/`. See the [package guide](docs/figma-package.md) for contents, compatibility, and current Figma importer status.
+
 The [Settings batch notes](docs/settings-batch.md) document the four Settings APIs, their runtime quirks, and the comparison with the preceding Dark snapshot.
 
 The [direct overlay notes](docs/overlays-batch.md) document batch 4, including opening and cleanup, capture roots, and the real export comparison.

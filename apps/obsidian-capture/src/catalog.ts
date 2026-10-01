@@ -1,8 +1,41 @@
-import { ButtonComponent, ItemView, WorkspaceLeaf } from 'obsidian';
+import { type App, ButtonComponent, ItemView, WorkspaceLeaf } from 'obsidian';
 import { componentRegistry, type RenderedSpecimen } from './component-registry';
 import { exportCatalog } from './export';
 
 export const ATLAS_VIEW_TYPE = 'obsidian-ui-atlas-view';
+
+/** Shared registry renderer for the Atlas view and one-shot package capture. */
+export function renderCatalogSpecimens(host: HTMLElement, app: App, onActivate?: () => void): RenderedSpecimen[] {
+  host.empty();
+  const specimens: RenderedSpecimen[] = [];
+  const categories = new Map<string, HTMLDivElement>();
+  for (const definition of componentRegistry) {
+    let category = categories.get(definition.category);
+    if (!category) {
+      category = host.createDiv({ cls: 'obsidian-ui-atlas-category' });
+      category.createEl('h3', { text: definition.category });
+      categories.set(definition.category, category);
+    }
+    const component = category.createDiv({ cls: 'obsidian-ui-atlas-component' });
+    if (definition.category === 'Settings') component.addClass('obsidian-ui-atlas-composite');
+    component.createEl('h4', { text: definition.name });
+    for (const variant of definition.variants) {
+      const specimen = component.createDiv({ cls: 'obsidian-ui-atlas-specimen' });
+      specimen.createEl('div', { cls: 'obsidian-ui-atlas-variant-name', text: variant.name });
+      const rendered = definition.render(specimen.createDiv(), variant, app);
+      if (rendered.activate && onActivate) {
+        new ButtonComponent(specimen)
+          .setButtonText('Open specimen')
+          .onClick(() => {
+            onActivate();
+            rendered.activate?.();
+          });
+      }
+      specimens.push({ definition, variant, ...rendered });
+    }
+  }
+  return specimens;
+}
 
 export class AtlasView extends ItemView {
   private specimens: RenderedSpecimen[] = [];
@@ -70,32 +103,7 @@ export class AtlasView extends ItemView {
     host.empty();
     this.specimens = [];
 
-    const categories = new Map<string, HTMLDivElement>();
-    for (const definition of componentRegistry) {
-      let category = categories.get(definition.category);
-      if (!category) {
-        category = host.createDiv({ cls: 'obsidian-ui-atlas-category' });
-        category.createEl('h3', { text: definition.category });
-        categories.set(definition.category, category);
-      }
-      const component = category.createDiv({ cls: 'obsidian-ui-atlas-component' });
-      if (definition.category === 'Settings') component.addClass('obsidian-ui-atlas-composite');
-      component.createEl('h4', { text: definition.name });
-      for (const variant of definition.variants) {
-        const specimen = component.createDiv({ cls: 'obsidian-ui-atlas-specimen' });
-        specimen.createEl('div', { cls: 'obsidian-ui-atlas-variant-name', text: variant.name });
-        const rendered = definition.render(specimen.createDiv(), variant, this.app);
-        if (rendered.activate) {
-          new ButtonComponent(specimen)
-            .setButtonText('Open specimen')
-            .onClick(() => {
-              this.closeSurfaces();
-              rendered.activate?.();
-            });
-        }
-        this.specimens.push({ definition, variant, ...rendered });
-      }
-    }
+    this.specimens = renderCatalogSpecimens(host, this.app, () => this.closeSurfaces());
   }
 
   private closeSurfaces(): void {
