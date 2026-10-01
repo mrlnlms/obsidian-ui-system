@@ -8,6 +8,7 @@ figma.ui.onmessage = async (message: unknown) => {
 
   let set: ComponentSetNode | undefined;
   const components: ComponentNode[] = [];
+  const textNodes: TextNode[] = [];
   try {
     const data = readButtonImport(message.components, message.layout);
     validateSharedTypography(data);
@@ -18,7 +19,6 @@ figma.ui.onmessage = async (message: unknown) => {
     await figma.loadFontAsync(font);
     figma.ui.postMessage({ type: 'typography', text: `Typography: ${font.family} / ${font.style} ✓` });
 
-    const textNodes: TextNode[] = [];
     for (const button of data) {
       const component = figma.createComponent();
       components.push(component);
@@ -45,7 +45,7 @@ figma.ui.onmessage = async (message: unknown) => {
       component.opacity = button.opacity;
 
       const label = figma.createText();
-      component.appendChild(label);
+      textNodes.push(label);
       label.name = 'Label';
       label.fontName = font;
       label.fontSize = button.fontSize;
@@ -54,7 +54,16 @@ figma.ui.onmessage = async (message: unknown) => {
       label.textAlignHorizontal = button.textAlign;
       label.fills = [{ type: 'SOLID', color: button.color }];
       label.characters = button.text;
-      textNodes.push(label);
+      // Measure populated text before adding it to the hugging component.
+      if (label.width <= 0 || label.height <= 0) {
+        throw new Error(`Button ${button.state}: TextNode não mediu o label; geração cancelada.`);
+      }
+      component.appendChild(label);
+      label.layoutSizingHorizontal = 'HUG';
+      label.layoutSizingVertical = 'HUG';
+      if (component.width < label.width + button.padding.left + button.padding.right - 0.5) {
+        throw new Error(`Button ${button.state}: largura Hug colapsou após inserir o label; geração cancelada.`);
+      }
     }
 
     set = figma.combineAsVariants(components, figma.currentPage);
@@ -72,6 +81,10 @@ figma.ui.onmessage = async (message: unknown) => {
     }
     const labelProperty = set.addComponentProperty('Label', 'TEXT', data[0].text);
     for (const label of textNodes) label.componentPropertyReferences = { characters: labelProperty };
+    if (textNodes.some((label, index) => label.characters !== data[index].text || label.width <= 0 ||
+        components[index].width < label.width + data[index].padding.left + data[index].padding.right - 0.5)) {
+      throw new Error('A propriedade Label alterou o texto ou colapsou a largura Hug; geração cancelada.');
+    }
     if (components.some((component) => component.layoutMode !== 'HORIZONTAL' ||
         component.primaryAxisSizingMode !== 'AUTO' || component.counterAxisSizingMode !== 'FIXED')) {
       throw new Error('O Figma não preservou Auto Layout, Hug horizontal e altura fixa nas variants.');
@@ -99,6 +112,7 @@ figma.ui.onmessage = async (message: unknown) => {
   } catch (error) {
     if (set && !set.removed) set.remove();
     else for (const component of components) if (!component.removed) component.remove();
+    for (const label of textNodes) if (!label.removed) label.remove();
     const detail = error instanceof Error ? error.message : String(error);
     figma.ui.postMessage({ type: 'result', ok: false, text: detail });
   }
