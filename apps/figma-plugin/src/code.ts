@@ -1,7 +1,7 @@
 import { readButtonImport } from './button-data';
-import { requiredFont } from './font-resolution';
+import { selectTypography, type TypographyMode } from './font-resolution';
 
-figma.showUI(__html__, { width: 380, height: 330 });
+figma.showUI(__html__, { width: 400, height: 500 });
 
 figma.ui.onmessage = async (message: unknown) => {
   if (!isGenerateMessage(message)) return;
@@ -11,12 +11,14 @@ figma.ui.onmessage = async (message: unknown) => {
   const components: ComponentNode[] = [];
   const textNodes: TextNode[] = [];
   try {
+    const mode: TypographyMode = message.mode === 'lab' ? 'lab' : 'strict';
     const data = readButtonImport(message.components, message.layout);
     validateSharedTypography(data);
     const available = await figma.listAvailableFontsAsync();
-    const font = requiredFont({ cssStack: data[0].fontFamily, platform: data[0].platform,
+    const typography = selectTypography({ cssStack: data[0].fontFamily, platform: data[0].platform,
       weight: data[0].fontWeight, style: data[0].fontStyle },
-    available.map((item) => item.fontName));
+    available.map((item) => item.fontName), mode);
+    const font = typography.rendered;
     await figma.loadFontAsync(font);
     fontProbe = figma.createText();
     fontProbe.fontName = font;
@@ -24,16 +26,20 @@ figma.ui.onmessage = async (message: unknown) => {
     fontProbe.textAutoResize = 'WIDTH_AND_HEIGHT';
     fontProbe.characters = data[0].text;
     if (fontProbe.hasMissingFont) {
+      if (mode === 'lab') throw new Error(`Lab placeholder unusable: ${font.family} / ${font.style}. TextNode reports this placeholder missing.`);
       throw new Error(`Required font unusable: ${font.family} / ${font.style}. ` +
-        'Figma lists this font, but the TextNode reports it missing. Accept the SF Pro font license or install the font, then restart Figma.');
+        'Figma lists this font, but the TextNode reports it missing.');
     }
     if (fontProbe.width <= 0 || fontProbe.height <= 0) {
-      throw new Error(`Required font did not render: ${font.family} / ${font.style} ` +
+      throw new Error(`${mode === 'lab' ? 'Lab placeholder' : 'Required font'} did not render: ${font.family} / ${font.style} ` +
         `(width=${fontProbe.width}, height=${fontProbe.height}, chars=${fontProbe.characters.length}).`);
     }
+    const renderCheck = { hasMissingFont: false, sampleWidthPx: fontProbe.width, sampleHeightPx: fontProbe.height };
     fontProbe.remove();
     fontProbe = undefined;
-    figma.ui.postMessage({ type: 'typography', text: `Typography: ${font.family} / ${font.style} ✓` });
+    figma.ui.postMessage({ type: 'typography', text: mode === 'lab'
+      ? `Typography: ${font.family} / ${font.style} — LAB PLACEHOLDER (Obsidian unresolved)`
+      : `Typography: ${font.family} / ${font.style} ✓` });
 
     for (const button of data) {
       const component = figma.createComponent();
@@ -84,15 +90,24 @@ figma.ui.onmessage = async (message: unknown) => {
     }
 
     set = figma.combineAsVariants(components, figma.currentPage);
-    set.name = 'Obsidian / Button';
+    set.name = mode === 'lab' ? 'Obsidian / Button [Lab]' : 'Obsidian / Button';
     // Development manifests can have no Figma-issued plugin ID; private plugin data requires one.
     // Component descriptions are native, inspectable, and work for an imported development plugin.
-    set.description = [
-      `Typography requested (CSS): ${data[0].fontFamily}`,
-      `Typography declaration: ${data[0].typography.fontFamilyDeclaration}`,
-      `Typography CSS variables: ${JSON.stringify(data[0].typography.cssVariables)}`,
-      `Figma font used: ${font.family} / ${font.style}`,
-    ].join('\n');
+    set.description = `${mode === 'lab' ? 'LAB OUTPUT — typography placeholder, not faithful to Obsidian.\n' : ''}` +
+      JSON.stringify({
+        typography: {
+          mode,
+          status: typography.status,
+          requested: { cssStack: data[0].fontFamily, fontSizePx: data[0].fontSize,
+            fontWeight: data[0].fontWeight, fontStyle: data[0].fontStyle,
+            lineHeight: data[0].lineHeight, letterSpacing: data[0].letterSpacing,
+            declaration: data[0].typography.fontFamilyDeclaration,
+            cssVariables: data[0].typography.cssVariables },
+          resolved: typography.resolved,
+          rendered: { fontName: typography.rendered, ...renderCheck,
+            role: mode === 'lab' ? 'placeholder' : 'required-font' },
+        },
+      }, null, 2);
     if (set.children.length !== 3 || set.componentPropertyDefinitions.State?.type !== 'VARIANT') {
       throw new Error('O Figma não criou as três variants com a propriedade State.');
     }
@@ -125,7 +140,8 @@ figma.ui.onmessage = async (message: unknown) => {
     set.y = center.y - set.height / 2;
     figma.currentPage.selection = [set];
     figma.viewport.scrollAndZoomIntoView([set]);
-    figma.ui.postMessage({ type: 'result', ok: true, text: `Obsidian / Button criado com 3 variants. Crie uma instance e altere Label para OK.` });
+    figma.ui.postMessage({ type: 'result', ok: true, text: `${set.name} criado com 3 variants. ` +
+      `${mode === 'lab' ? 'Tipografia placeholder; valide apenas a estrutura. ' : ''}Crie uma instance e altere Label para OK.` });
   } catch (error) {
     if (fontProbe && !fontProbe.removed) fontProbe.remove();
     if (set && !set.removed) set.remove();
@@ -136,7 +152,7 @@ figma.ui.onmessage = async (message: unknown) => {
   }
 };
 
-function isGenerateMessage(value: unknown): value is { type: 'generate-button'; components: unknown; layout: unknown } {
+function isGenerateMessage(value: unknown): value is { type: 'generate-button'; components: unknown; layout: unknown; mode?: TypographyMode } {
   return typeof value === 'object' && value !== null && 'type' in value && value.type === 'generate-button' &&
     'components' in value && 'layout' in value;
 }

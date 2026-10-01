@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { fontFamilies, requiredFont } from '../src/font-resolution';
+import { fontFamilies, requiredFont, selectTypography } from '../src/font-resolution';
 
 const macButton = {
   cssStack: '"??", "??", ui-sans-serif, -apple-system, "system-ui", system-ui, "Google Sans Flex", Inter',
@@ -35,4 +35,15 @@ test('requires the first explicit family and the corresponding weight', () => {
 test('does not infer unsupported generic stacks or uncaptured font style', () => {
   assert.throws(() => requiredFont({ ...macButton, platform: 'windows' }, []), /não possui mapeamento validado/);
   assert.throws(() => requiredFont({ ...macButton, style: null }, []), /fontStyle ausente/);
+});
+
+test('Lab mode declares a fixed placeholder and never resolves the Obsidian stack', () => {
+  const fonts = [{ family: 'SF Pro', style: 'Regular' }, { family: 'Inter', style: 'Regular' }];
+  assert.deepEqual(selectTypography(macButton, fonts, 'lab'), {
+    status: 'lab-placeholder', resolved: null, rendered: { family: 'Inter', style: 'Regular' },
+  });
+  assert.deepEqual(selectTypography(macButton, fonts, 'strict'), {
+    status: 'resolved', resolved: fonts[0], rendered: fonts[0],
+  });
+  assert.throws(() => selectTypography(macButton, fonts.slice(0, 1), 'lab'), /Lab placeholder font not available/);
 });

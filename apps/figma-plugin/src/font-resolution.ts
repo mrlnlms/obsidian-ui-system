@@ -5,6 +5,25 @@ export interface FontRequest {
   style: string | null;
 }
 
+export type TypographyMode = 'strict' | 'lab';
+
+export interface TypographySelection {
+  status: 'resolved' | 'lab-placeholder';
+  resolved: FontName | null;
+  rendered: FontName;
+}
+
+/** Lab is an explicit structural test; Inter is never presented as an Obsidian font. */
+export function selectTypography(request: FontRequest, available: readonly FontName[], mode: TypographyMode): TypographySelection {
+  if (mode === 'lab') {
+    const placeholder = available.find((font) => font.family === 'Inter' && font.style === 'Regular');
+    if (!placeholder) throw new Error('Lab placeholder font not available: Inter / Regular. Cannot validate Figma structure.');
+    return { status: 'lab-placeholder', resolved: null, rendered: placeholder };
+  }
+  const font = requiredFont(request, available);
+  return { status: 'resolved', resolved: font, rendered: font };
+}
+
 /** The computed CSS stack is evidence; `??` is Obsidian's no-override sentinel. */
 export function fontFamilies(stack: string): string[] {
   const parts: string[] = [];
