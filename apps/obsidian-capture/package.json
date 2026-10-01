@@ -9,7 +9,8 @@
     "check": "tsc --noEmit",
     "test:typography": "esbuild tests/typography-capture.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/typography-capture.test.cjs && node --test ../../.build/typography-capture.test.cjs",
     "test:package": "esbuild tests/figma-package.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/figma-package.test.cjs && node --test ../../.build/figma-package.test.cjs",
-    "test:exports": "esbuild tests/development-exports.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/development-exports.test.cjs && node --test ../../.build/development-exports.test.cjs"
+    "test:exports": "esbuild tests/development-exports.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/development-exports.test.cjs && node --test ../../.build/development-exports.test.cjs",
+    "test:lifecycle": "esbuild tests/figma-package-lifecycle.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/figma-package-lifecycle.test.cjs && node --test ../../.build/figma-package-lifecycle.test.cjs"
   },
   "dependencies": {
     "@obsidian-ui-system/ui-schema": "0.4.0",

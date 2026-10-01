@@ -4,6 +4,8 @@ export const DEVELOPMENT_ROOT = '.obsidian-ui-system';
 export const CATALOG_EXPORT_ROOT = `${DEVELOPMENT_ROOT}/ui-catalog-exports`;
 export const LAYOUT_EXPORT_ROOT = `${DEVELOPMENT_ROOT}/layout-lab-exports`;
 export const FIGMA_PACKAGE_ROOT = 'obsidian-ui-exports/figma-packages';
+export const PACKAGE_STAGING_ROOT = `${DEVELOPMENT_ROOT}/package-staging`;
+export const PACKAGE_FAILURE_ROOT = `${DEVELOPMENT_ROOT}/package-failures`;
 
 export async function ensureDirectory(adapter: DataAdapter, directory: string): Promise<void> {
   let current = '';

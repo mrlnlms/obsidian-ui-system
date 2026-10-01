@@ -29,7 +29,7 @@ export default class ObsidianUIAtlasPlugin extends Plugin {
     });
     this.addCommand({
       id: 'clean-development-exports',
-      name: 'Clean Obsidian UI Development Exports',
+      name: 'Developer: Clean Obsidian UI Development Exports',
       callback: () => { void this.confirmDevelopmentExportCleanup(); },
     });
   }
@@ -92,7 +92,7 @@ export default class ObsidianUIAtlasPlugin extends Plugin {
         return;
       }
       const modal = new Modal(this.app);
-      modal.setTitle('Clean Obsidian UI Development Exports');
+      modal.setTitle('Developer: Clean Obsidian UI Development Exports');
       modal.contentEl.createEl('p', {
         text: `Remove ${inventory.fileCount} files in ${inventory.folderCount} folders from these technical export directories?`,
       });

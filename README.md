@@ -6,6 +6,8 @@ A monorepo for a structured representation of the Obsidian UI, a Figma importer 
 
 In Obsidian Desktop, run **Export Obsidian UI Figma Package** from the Command Palette. The Atlas and Layout Lab tabs can remain closed. This creates one ZIP in `dev-vault/obsidian-ui-exports/figma-packages/` from a consistent Atlas capture and Layout Lab run.
 
+The ZIP is ready when the command reports success. The export cleans its own staging files; no cleanup command is needed afterward. A failed run records a small diagnostic under `dev-vault/.obsidian-ui-system/package-failures/` and reports its path.
+
 In Figma Desktop, run the local **Obsidian UI System** plugin, **Choose ZIP** in **Figma Package**, then click **Generate UI Kit**. It creates the validated `Obsidian / Button` and `Obsidian / Search` Component Sets in `Actions` and `Inputs` sections. See the [Figma plugin installation guide](apps/figma-plugin/README.md) and [package format](docs/figma-package.md).
 
 ## Requirements and installation
@@ -61,7 +63,7 @@ The [Layout Probe Lab](docs/layout-lab.md) is a separate technical workspace vie
 
 The individual Atlas and Lab exports above remain available for development and diagnosis; the ZIP is the normal Figma transfer artifact.
 
-`dev-vault/obsidian-ui-exports/` contains final packages you may keep or delete. `dev-vault/.obsidian-ui-system/` contains hidden development captures and diff reports. Run **Clean Obsidian UI Development Exports** from the Obsidian Command Palette to review counts and confirm deletion of only the technical captures and reports. It never deletes Figma Packages. There is no automatic retention policy.
+`dev-vault/obsidian-ui-exports/` contains final packages you may keep or delete. `dev-vault/.obsidian-ui-system/` contains hidden development captures, diff reports, package staging, and failure diagnostics. **Developer: Clean Obsidian UI Development Exports** is an optional maintenance command for individual Atlas/Lab exports and diff reports. It asks for confirmation and leaves both Figma Packages and failure diagnostics untouched. It is not part of package export; there is no automatic retention policy for deliberate development exports.
 
 The [Settings batch notes](docs/settings-batch.md) document the four Settings APIs, their runtime quirks, and the comparison with the preceding Dark snapshot.
 

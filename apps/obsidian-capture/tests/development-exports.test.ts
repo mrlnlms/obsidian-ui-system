@@ -37,17 +37,21 @@ test('creates nested final export directories', async () => {
 
 test('cleans only inventoried development files and preserves Figma Packages', async () => {
   const packagePath = `${FIGMA_PACKAGE_ROOT}/obsidian-ui-package.zip`;
+  const failurePath = '.obsidian-ui-system/package-failures/run.json';
+  const stagingPath = '.obsidian-ui-system/package-staging/orphan.zip.partial';
   const { adapter, files, folders } = fakeAdapter([
     '.obsidian-ui-system/ui-catalog-exports/one/components.json',
     '.obsidian-ui-system/layout-lab-exports/two/layout.json',
     '.obsidian-ui-system/snapshot-diffs/three/diff.md',
     packagePath,
+    failurePath,
+    stagingPath,
   ]);
   const inventory = await inspectDevelopmentExports(adapter);
   assert.equal(inventory.fileCount, 3);
   assert.equal(inventory.folderCount, 3);
   await cleanDevelopmentExports(adapter, inventory);
-  assert.deepEqual([...files], [packagePath]);
+  assert.deepEqual([...files], [packagePath, failurePath, stagingPath]);
   assert.equal(folders.has(FIGMA_PACKAGE_ROOT), true);
 });
 
