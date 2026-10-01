@@ -45,8 +45,8 @@ test('publishes only the final ZIP and removes safely identified orphans before 
   const unrelated = `${FIGMA_PACKAGE_ROOT}/other.partial`;
   const unrelatedStaging = `${PACKAGE_STAGING_ROOT}/notes.partial`;
   const diagnostic = `${PACKAGE_FAILURE_ROOT}/older.json`;
-  const atlas = '.obsidian-ui-system/ui-catalog-exports/one/components.json';
-  const { adapter, files } = fakeAdapter([orphan, legacy, finished, unrelated, unrelatedStaging, diagnostic, atlas]);
+  const mapping = '.obsidian-ui-system/ui-catalog-exports/one/components.json';
+  const { adapter, files } = fakeAdapter([orphan, legacy, finished, unrelated, unrelatedStaging, diagnostic, mapping]);
   const output = await runFigmaPackageLifecycle(adapter, async () => {
     assert.equal(files.has(orphan), false);
     assert.equal(files.has(legacy), false);
@@ -57,7 +57,7 @@ test('publishes only the final ZIP and removes safely identified orphans before 
   assert.equal([...files.keys()].some((path) => path.endsWith('.partial') && path !== unrelated && path !== unrelatedStaging), false);
   assert.deepEqual([...files.keys()].filter((path) => path.startsWith(`${PACKAGE_FAILURE_ROOT}/`)), [diagnostic]);
   assert.deepEqual([...files.keys()].filter((path) => path.startsWith(`${FIGMA_PACKAGE_ROOT}/`) && path.endsWith('.zip')).sort(), [finished, output].sort());
-  for (const path of [finished, unrelated, unrelatedStaging, diagnostic, atlas]) assert.equal(files.has(path), true);
+  for (const path of [finished, unrelated, unrelatedStaging, diagnostic, mapping]) assert.equal(files.has(path), true);
 });
 
 test('preserves a small diagnostic when capture fails without publishing a ZIP', async () => {

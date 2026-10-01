@@ -36,7 +36,7 @@ export function requiredFont(request: FontRequest, available: readonly FontName[
   const first = fontFamilies(request.cssStack)[0];
   if (!first) throw new Error('Typography requirement unresolved: a stack CSS não contém família utilizável.');
   if (request.style === null) {
-    throw new Error('Typography requirement unresolved: fontStyle ausente. Exporte novamente o Atlas e o Layout Lab.');
+    throw new Error('Typography requirement unresolved: fontStyle ausente. Exporte novamente o Mapping e o Layout Lab.');
   }
   const style = figmaStyle(request.weight, request.style);
   const generic = /^(ui-sans-serif|-apple-system|BlinkMacSystemFont|system-ui)$/i.test(first);

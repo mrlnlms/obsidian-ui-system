@@ -1,3 +1,5 @@
+import { isSupportedButtonLayoutModel, isTypographyLayoutModel } from './layout-model';
+
 export interface ButtonData {
   state: 'Normal' | 'Disabled' | 'CTA';
   text: string;
@@ -29,9 +31,9 @@ const STATES = [
 ] as const;
 
 export function readButtonImport(components: unknown, layout: unknown): ButtonData[] {
-  if (!Array.isArray(components)) throw new Error('components.json inválido: esperada uma lista de specimens do Atlas.');
+  if (!Array.isArray(components)) throw new Error('components.json inválido: esperada uma lista de specimens do Mapping.');
   const lab = record(layout, 'layout.json inválido');
-  if (lab.experimentalFormat !== 'atlas-layout-probes-1' && lab.experimentalFormat !== 'atlas-layout-probes-2') {
+  if (!isSupportedButtonLayoutModel(lab.experimentalFormat)) {
     throw new Error('layout.json inválido: formato experimental do Layout Lab não reconhecido.');
   }
   if (!Array.isArray(lab.inferences) || !Array.isArray(lab.observations)) {
@@ -58,8 +60,8 @@ export function readButtonImport(components: unknown, layout: unknown): ButtonDa
     const typography = dom.typography && typeof dom.typography === 'object'
       ? record(dom.typography, `Button ${variant}: contexto tipográfico inválido`)
       : null;
-    if (lab.experimentalFormat === 'atlas-layout-probes-2' && !typography) {
-      throw new Error(`Button ${variant}: contexto tipográfico do Atlas ausente; exporte novamente o Atlas.`);
+    if (isTypographyLayoutModel(lab.experimentalFormat) && !typography) {
+      throw new Error(`Button ${variant}: contexto tipográfico do Mapping ausente; exporte novamente o Mapping.`);
     }
     const declaration = typography?.fontFamilyDeclaration && typeof typography.fontFamilyDeclaration === 'object'
       ? record(typography.fontFamilyDeclaration, `Button ${variant}: origem tipográfica inválida`)
@@ -95,7 +97,7 @@ export function readButtonImport(components: unknown, layout: unknown): ButtonDa
     const padding = record(model.padding, `Button ${variant}: padding ausente`);
     const height = model.heightPx;
     const domSize = record(dom.sizePx, `Button ${variant}: sizePx ausente`);
-    if (domSize.height !== height) throw new Error(`Button ${variant}: altura diverge entre Atlas e Lab.`);
+    if (domSize.height !== height) throw new Error(`Button ${variant}: altura diverge entre Mapping e Lab.`);
 
     const observation = observations.find((item) => {
       if (!item || typeof item !== 'object') return false;
@@ -112,20 +114,20 @@ export function readButtonImport(components: unknown, layout: unknown): ButtonDa
     }
     if (labStyles['background-color'] !== styles.background || labStyles.color !== styles.color ||
         labStyles.opacity !== styles.opacity || labStyles['font-size'] !== styles.fontSize) {
-      throw new Error(`Button ${variant}: Atlas e Layout Lab têm estilos computados divergentes; selecione exports do mesmo ambiente/modo.`);
+      throw new Error(`Button ${variant}: Mapping e Layout Lab têm estilos computados divergentes; selecione exports do mesmo ambiente/modo.`);
     }
-    if (lab.experimentalFormat === 'atlas-layout-probes-2' &&
+    if (isTypographyLayoutModel(lab.experimentalFormat) &&
         (labStyles['font-family'] !== styles.fontFamily || labStyles['font-weight'] !== styles.fontWeight ||
          labStyles['font-style'] !== styles.fontStyle || labStyles['line-height'] !== styles.lineHeight ||
          labStyles['letter-spacing'] !== styles.letterSpacing)) {
-      throw new Error(`Button ${variant}: tipografia diverge entre Atlas e Layout Lab.`);
+      throw new Error(`Button ${variant}: tipografia diverge entre Mapping e Layout Lab.`);
     }
     const children = root.children;
     if (!Array.isArray(children) || children.length !== 1) throw new Error(`Button ${variant}: texto medido ausente.`);
     const textChild = record(children[0], `Button ${variant}: filho de texto inválido`);
     const textRect = record(textChild.rect, `Button ${variant}: retângulo do texto ausente`);
     if (textChild.kind !== 'text' || textChild.text !== dom.text || !positive(textRect.height)) {
-      throw new Error(`Button ${variant}: texto ou altura diverge entre Atlas e Lab.`);
+      throw new Error(`Button ${variant}: texto ou altura diverge entre Mapping e Lab.`);
     }
 
     const parsedPadding = {
@@ -136,7 +138,7 @@ export function readButtonImport(components: unknown, layout: unknown): ButtonDa
     };
     if (parsedPadding.top !== parsedPadding.bottom || parsedPadding.left !== parsedPadding.right ||
         styles.padding !== `${parsedPadding.top}px ${parsedPadding.right}px`) {
-      throw new Error(`Button ${variant}: padding diverge entre Atlas e Lab.`);
+      throw new Error(`Button ${variant}: padding diverge entre Mapping e Lab.`);
     }
     if (height < parsedPadding.top + parsedPadding.bottom + textRect.height) {
       throw new Error(`Button ${variant}: texto e padding excedem a altura observada.`);

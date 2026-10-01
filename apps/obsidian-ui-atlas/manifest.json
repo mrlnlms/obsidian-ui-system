@@ -1,9 +1,0 @@
-{
-  "id": "obsidian-ui-atlas",
-  "name": "Obsidian UI Atlas",
-  "version": "0.1.0",
-  "minAppVersion": "1.13.1",
-  "description": "Explore and export snapshots of Obsidian UI components.",
-  "author": "obsidian-ui-system",
-  "isDesktopOnly": false
-}

@@ -6,9 +6,9 @@ import {
   SuggestModal,
 } from 'obsidian';
 
-const OPTIONS = ['Atlas alpha', 'Atlas beta', 'Atlas gamma'];
+const OPTIONS = ['Mapping alpha', 'Mapping beta', 'Mapping gamma'];
 
-export class AtlasPopoverSuggest extends PopoverSuggest<string> {
+export class MappingPopoverSuggest extends PopoverSuggest<string> {
   renderSuggestion(value: string, el: HTMLElement): void {
     el.setText(value);
   }
@@ -18,7 +18,7 @@ export class AtlasPopoverSuggest extends PopoverSuggest<string> {
   }
 }
 
-export class AtlasInputSuggest extends AbstractInputSuggest<string> {
+export class MappingInputSuggest extends AbstractInputSuggest<string> {
   constructor(app: App, input: HTMLInputElement) {
     super(app, input);
   }
@@ -36,10 +36,10 @@ export class AtlasInputSuggest extends AbstractInputSuggest<string> {
   }
 }
 
-export class AtlasSuggestModal extends SuggestModal<string> {
+export class MappingSuggestModal extends SuggestModal<string> {
   constructor(app: App) {
     super(app);
-    this.setPlaceholder('Search Atlas examples');
+    this.setPlaceholder('Search Mapping examples');
   }
 
   getSuggestions(query: string): string[] {
@@ -55,10 +55,10 @@ export class AtlasSuggestModal extends SuggestModal<string> {
   }
 }
 
-export class AtlasFuzzySuggestModal extends FuzzySuggestModal<string> {
+export class MappingFuzzySuggestModal extends FuzzySuggestModal<string> {
   constructor(app: App) {
     super(app);
-    this.setPlaceholder('Search Atlas examples');
+    this.setPlaceholder('Search Mapping examples');
   }
 
   getItems(): string[] {

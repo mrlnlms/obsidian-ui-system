@@ -19,7 +19,7 @@ function input(): FigmaPackageInput {
   return {
     manifest: { ...manifest }, components, tokens,
     layout: {
-      experimentalFormat: 'atlas-layout-probes-2', environment: { ...manifest },
+      experimentalFormat: 'mapping-layout-probes-2', environment: { ...manifest },
       observations, inferences,
     },
   };
@@ -35,7 +35,7 @@ test('writes a real ZIP with the canonical payload and transport metadata', () =
   ]);
   assert.deepEqual(JSON.parse(strFromU8(entries['manifest.json']!)), manifest);
   assert.equal(JSON.parse(strFromU8(entries['layout.json']!)).environment.capturedAt, manifest.capturedAt);
-  assert.equal(JSON.parse(strFromU8(entries['package-manifest.json']!)).layoutModel, 'atlas-layout-probes-2');
+  assert.equal(JSON.parse(strFromU8(entries['package-manifest.json']!)).layoutModel, 'mapping-layout-probes-2');
 });
 
 test('rejects mismatched capture environments before creating an archive', () => {

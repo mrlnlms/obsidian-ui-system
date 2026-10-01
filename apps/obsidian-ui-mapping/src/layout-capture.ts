@@ -191,7 +191,7 @@ export function renderLayoutFixtures(mount: HTMLElement, app: App): LayoutFixtur
     }
     const card = group.createDiv({ cls: 'obsidian-ui-layout-lab-card' });
     card.createEl('div', {
-      cls: 'obsidian-ui-atlas-variant-name',
+      cls: 'obsidian-ui-mapping-variant-name',
       text: `${variant.name} · ${content.id} · ${context.id} (${context.widthPx}px host)`,
     });
     const host = card.createDiv({ cls: 'obsidian-ui-layout-lab-host' });
@@ -279,7 +279,7 @@ export async function captureLayoutProbes(fixtures: LayoutFixture[], capturedAt:
   const view = doc.defaultView;
   if (!view) throw new Error('Layout fixtures need a connected window');
   const layout = {
-    experimentalFormat: 'atlas-layout-probes-2',
+    experimentalFormat: 'mapping-layout-probes-2',
     probeSuite: layoutProbeSuite,
     environment: captureManifest(doc, capturedAt),
     viewport: { widthPx: view.innerWidth, heightPx: view.innerHeight, devicePixelRatio: view.devicePixelRatio },

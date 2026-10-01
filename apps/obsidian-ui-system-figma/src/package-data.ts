@@ -1,6 +1,7 @@
 import { strFromU8, unzipSync } from 'fflate';
 import { readButtonImport } from './button-data';
 import { readSearchImport } from './search-data';
+import { isTypographyLayoutModel } from './layout-model';
 
 const REQUIRED_FILES = [
   'package-manifest.json', 'manifest.json', 'components.json', 'tokens.json', 'layout.json',
@@ -88,7 +89,7 @@ export function readFigmaPackage(bytes: Uint8Array): ImportedPackage {
   }
 
   const layout = object(json('layout.json'), 'layout.json');
-  if (packageManifest.layoutModel !== 'atlas-layout-probes-2' ||
+  if (!isTypographyLayoutModel(packageManifest.layoutModel) ||
       layout.experimentalFormat !== packageManifest.layoutModel) {
     throw new Error('Figma Package incompatível: layout model ausente ou não suportado.');
   }
@@ -107,7 +108,7 @@ export function readFigmaPackage(bytes: Uint8Array): ImportedPackage {
   for (const item of layout.observations) {
     const row = object(item, 'layout.json: observation');
     const key = `${String(row.id)}/${String(row.variant)}`;
-    if (!keys.has(key)) throw new Error(`Figma Package inconsistente: ${key} não está no Atlas.`);
+    if (!keys.has(key)) throw new Error(`Figma Package inconsistente: ${key} não está no Mapping.`);
     measured.add(key);
   }
   for (const item of layout.inferences) {

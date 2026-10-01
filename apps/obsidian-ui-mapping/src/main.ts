@@ -1,21 +1,21 @@
 import { FileSystemAdapter, Modal, Notice, Plugin } from 'obsidian';
-import { AtlasView, ATLAS_VIEW_TYPE } from './catalog';
+import { MappingView, MAPPING_VIEW_TYPE } from './catalog';
 import { LayoutLabView, LAYOUT_LAB_VIEW_TYPE } from './layout-lab';
 import { exportFigmaPackage } from './figma-package';
 import { cleanDevelopmentExports, inspectDevelopmentExports } from './development-exports';
 
-export default class ObsidianUIAtlasPlugin extends Plugin {
+export default class ObsidianUIMappingPlugin extends Plugin {
   private openingViews = new Map<string, Promise<void>>();
   private exportingPackage = false;
   private cleaningExports = false;
 
   onload(): void {
-    this.registerView(ATLAS_VIEW_TYPE, (leaf) => new AtlasView(leaf));
+    this.registerView(MAPPING_VIEW_TYPE, (leaf) => new MappingView(leaf));
     this.registerView(LAYOUT_LAB_VIEW_TYPE, (leaf) => new LayoutLabView(leaf));
     this.addCommand({
-      id: 'open-ui-catalog',
-      name: 'Open Obsidian UI Atlas',
-      callback: () => this.openView(ATLAS_VIEW_TYPE),
+      id: 'open-ui-mapping',
+      name: 'Open Obsidian UI Mapping',
+      callback: () => this.openView(MAPPING_VIEW_TYPE),
     });
     this.addCommand({
       id: 'open-ui-layout-lab',
@@ -35,7 +35,7 @@ export default class ObsidianUIAtlasPlugin extends Plugin {
   }
 
   onunload(): void {
-    this.app.workspace.detachLeavesOfType(ATLAS_VIEW_TYPE);
+    this.app.workspace.detachLeavesOfType(MAPPING_VIEW_TYPE);
     this.app.workspace.detachLeavesOfType(LAYOUT_LAB_VIEW_TYPE);
   }
 

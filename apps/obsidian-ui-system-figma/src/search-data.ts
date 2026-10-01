@@ -1,3 +1,5 @@
+import { isTypographyLayoutModel } from './layout-model';
+
 /** Experimental Figma-ready model. It is deliberately separate from ui-schema. */
 export interface SearchVariantModel {
   state: 'Empty' | 'Filled';
@@ -34,9 +36,9 @@ export interface SearchVariantModel {
 const SEARCH_ID = 'obsidian.search';
 
 export function readSearchImport(components: unknown, layout: unknown): SearchVariantModel[] {
-  if (!Array.isArray(components)) throw new Error('components.json inválido: lista do Atlas ausente.');
+  if (!Array.isArray(components)) throw new Error('components.json inválido: lista do Mapping ausente.');
   const lab = record(layout, 'layout.json inválido.');
-  if (lab.experimentalFormat !== 'atlas-layout-probes-2' || !Array.isArray(lab.observations) ||
+  if (!isTypographyLayoutModel(lab.experimentalFormat) || !Array.isArray(lab.observations) ||
       !Array.isArray(lab.inferences)) {
     throw new Error('Search precisa de layout.json do Layout Lab com observations e inferences.');
   }
@@ -47,22 +49,22 @@ export function readSearchImport(components: unknown, layout: unknown): SearchVa
 
   return (['empty', 'filled'] as const).map((variant) => {
     const state = variant === 'empty' ? 'Empty' : 'Filled';
-    const specimen = unique(components, variant, 'Atlas');
+    const specimen = unique(components, variant, 'Mapping');
     if (specimen.origin !== 'public-api') throw new Error(`Search ${state}: origem public-api ausente.`);
-    const dom = record(specimen.dom, `Search ${state}: DOM do Atlas ausente.`);
+    const dom = record(specimen.dom, `Search ${state}: DOM do Mapping ausente.`);
     if (dom.tag !== 'div' || !arrayHas(dom.classes, 'search-input-container')) {
-      throw new Error(`Search ${state}: wrapper esperado ausente no Atlas.`);
+      throw new Error(`Search ${state}: wrapper esperado ausente no Mapping.`);
     }
-    const children = array(dom.children, `Search ${state}: filhos do Atlas ausentes.`);
-    if (children.length !== 2) throw new Error(`Search ${state}: anatomia do Atlas mudou.`);
-    const atlasInput = record(children[0], `Search ${state}: input do Atlas inválido.`);
-    const atlasClear = record(children[1], `Search ${state}: clear do Atlas inválido.`);
-    if (atlasInput.tag !== 'input' || record(atlasInput.attributes, 'Search: atributos do input ausentes.').type !== 'search' ||
-        !arrayHas(atlasClear.classes, 'search-input-clear-button')) {
+    const children = array(dom.children, `Search ${state}: filhos do Mapping ausentes.`);
+    if (children.length !== 2) throw new Error(`Search ${state}: anatomia do Mapping mudou.`);
+    const mappingInput = record(children[0], `Search ${state}: input do Mapping inválido.`);
+    const mappingClear = record(children[1], `Search ${state}: clear do Mapping inválido.`);
+    if (mappingInput.tag !== 'input' || record(mappingInput.attributes, 'Search: atributos do input ausentes.').type !== 'search' ||
+        !arrayHas(mappingClear.classes, 'search-input-clear-button')) {
       throw new Error(`Search ${state}: input ou clear esperado não encontrado.`);
     }
-    const inputAttrs = record(atlasInput.attributes, 'Search: placeholder ausente.');
-    const inputProps = record(atlasInput.properties, 'Search: valor do input ausente.');
+    const inputAttrs = record(mappingInput.attributes, 'Search: placeholder ausente.');
+    const inputProps = record(mappingInput.properties, 'Search: valor do input ausente.');
     const placeholder = string(inputAttrs.placeholder, `Search ${state}: placeholder ausente.`);
     const text = variant === 'empty' ? placeholder : string(inputProps.value, 'Search Filled: valor ausente.');
     if ((variant === 'empty' && inputProps.value !== '') || (variant === 'filled' && !inputProps.value)) {
@@ -71,9 +73,9 @@ export function readSearchImport(components: unknown, layout: unknown): SearchVa
     if (text.includes('\n') || placeholder.includes('\n')) {
       throw new Error(`Search ${state}: input de linha única recebeu texto multilinha.`);
     }
-    const atlasStyles = record(atlasInput.styles, `Search ${state}: estilos do input ausentes.`);
-    const rootAtlasStyles = record(dom.styles, `Search ${state}: estilos da raiz ausentes.`);
-    const clearAtlasStyles = record(atlasClear.styles, `Search ${state}: estilos do clear ausentes.`);
+    const mappingStyles = record(mappingInput.styles, `Search ${state}: estilos do input ausentes.`);
+    const rootMappingStyles = record(dom.styles, `Search ${state}: estilos da raiz ausentes.`);
+    const clearMappingStyles = record(mappingClear.styles, `Search ${state}: estilos do clear ausentes.`);
 
     const inference = unique(inferences, variant, 'Layout inference');
     const horizontal = record(inference.horizontal, `Search ${state}: horizontal ausente.`);
@@ -187,21 +189,21 @@ export function readSearchImport(components: unknown, layout: unknown): SearchVa
       ['input font', (s: typeof sample) => s.inputStyles['font-family']],
     ] as const) stable(select, label);
 
-    for (const [labKey, atlasKey] of [
+    for (const [labKey, mappingKey] of [
       ['background-color', 'background'], ['color', 'color'], ['font-family', 'fontFamily'],
       ['font-size', 'fontSize'], ['font-weight', 'fontWeight'], ['font-style', 'fontStyle'],
       ['line-height', 'lineHeight'], ['letter-spacing', 'letterSpacing'],
     ] as const) {
-      if (sample.inputStyles[labKey] !== atlasStyles[atlasKey]) {
-        throw new Error(`Search ${state}: ${labKey} diverge entre Atlas e Lab; use exports do mesmo ambiente.`);
+      if (sample.inputStyles[labKey] !== mappingStyles[mappingKey]) {
+        throw new Error(`Search ${state}: ${labKey} diverge entre Mapping e Lab; use exports do mesmo ambiente.`);
       }
     }
-    if (sample.rootStyles['background-color'] !== rootAtlasStyles.background ||
-        sample.clearStyles.color !== clearAtlasStyles.color ||
-        sample.clearStyles.display !== clearAtlasStyles.display ||
-        sample.inputStyles.padding !== atlasStyles.padding ||
+    if (sample.rootStyles['background-color'] !== rootMappingStyles.background ||
+        sample.clearStyles.color !== clearMappingStyles.color ||
+        sample.clearStyles.display !== clearMappingStyles.display ||
+        sample.inputStyles.padding !== mappingStyles.padding ||
         vertical.observedPx !== record(dom.sizePx, 'Search: sizePx da raiz ausente.').height) {
-      throw new Error(`Search ${state}: estilos ou altura divergem entre Atlas e Lab.`);
+      throw new Error(`Search ${state}: estilos ou altura divergem entre Mapping e Lab.`);
     }
     for (const key of ['font-family', 'font-size', 'font-weight', 'font-style', 'line-height', 'letter-spacing'] as const) {
       if (sample.placeholderStyles[key] !== sample.inputStyles[key]) {
@@ -221,19 +223,19 @@ export function readSearchImport(components: unknown, layout: unknown): SearchVa
         evidence: array(inputHorizontal.evidence, 'Search: evidência do input ausente.').map(String) },
       input: {
         padding,
-        background: rgb(atlasStyles.background, `Search ${state}: fundo do input`),
-        border: border(atlasStyles.border, `Search ${state}: borda do input`),
-        radius: px(atlasStyles.borderRadius, `Search ${state}: raio do input`),
-        textColor: rgb(variant === 'empty' ? sample.placeholderStyles.color : atlasStyles.color,
+        background: rgb(mappingStyles.background, `Search ${state}: fundo do input`),
+        border: border(mappingStyles.border, `Search ${state}: borda do input`),
+        radius: px(mappingStyles.borderRadius, `Search ${state}: raio do input`),
+        textColor: rgb(variant === 'empty' ? sample.placeholderStyles.color : mappingStyles.color,
           `Search ${state}: cor do texto`),
-        textOpacity: unit(variant === 'empty' ? sample.placeholderStyles.opacity : atlasStyles.opacity,
+        textOpacity: unit(variant === 'empty' ? sample.placeholderStyles.opacity : mappingStyles.opacity,
           `Search ${state}: opacidade do texto`),
-        fontFamily: string(atlasStyles.fontFamily, `Search ${state}: fontFamily`),
-        fontSize: px(atlasStyles.fontSize, `Search ${state}: fontSize`),
-        fontWeight: number(atlasStyles.fontWeight, `Search ${state}: fontWeight`),
-        fontStyle: string(atlasStyles.fontStyle, `Search ${state}: fontStyle`),
-        lineHeight: string(atlasStyles.lineHeight, `Search ${state}: lineHeight`),
-        letterSpacing: string(atlasStyles.letterSpacing, `Search ${state}: letterSpacing`),
+        fontFamily: string(mappingStyles.fontFamily, `Search ${state}: fontFamily`),
+        fontSize: px(mappingStyles.fontSize, `Search ${state}: fontSize`),
+        fontWeight: number(mappingStyles.fontWeight, `Search ${state}: fontWeight`),
+        fontStyle: string(mappingStyles.fontStyle, `Search ${state}: fontStyle`),
+        lineHeight: string(mappingStyles.lineHeight, `Search ${state}: lineHeight`),
+        letterSpacing: string(mappingStyles.letterSpacing, `Search ${state}: letterSpacing`),
       },
       icons: {
         search: { svg: sample.searchSvg, width: px(sample.searchStyles.width, 'Search: largura da lupa'),

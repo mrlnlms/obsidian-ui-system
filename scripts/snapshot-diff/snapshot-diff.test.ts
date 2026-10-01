@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { compareExports, renderMarkdown, type AtlasExport, type DomNode, type Specimen } from './snapshot-diff.js';
+import { compareExports, renderMarkdown, type MappingExport, type DomNode, type Specimen } from './snapshot-diff.js';
 
 function node(tag = 'input'): DomNode {
   return {
@@ -21,7 +21,7 @@ function specimen(id: string, variant: string): Specimen {
   };
 }
 
-function exportData(directory: string, components: Specimen[], tokens: Record<string, string>): AtlasExport {
+function exportData(directory: string, components: Specimen[], tokens: Record<string, string>): MappingExport {
   return {
     directory,
     manifest: { obsidianVersion: '1.14.3', schemaVersion: '0.2.0', mode: 'dark' },

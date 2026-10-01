@@ -124,7 +124,7 @@ test('declarative specimen selection resolves variants, hosts and content', () =
   };
   const suite: LayoutProbeSuite = {
     defaultHosts: [{ id: 'default', widthPx: 240 }],
-    defaultContents: [{ id: 'default-content', text: 'Atlas' }],
+    defaultContents: [{ id: 'default-content', text: 'Mapping' }],
     specimens: [{
       id: 'example', variants: ['selected'],
       hosts: [{ id: 'small', widthPx: 160 }, { id: 'large', widthPx: 480 }],

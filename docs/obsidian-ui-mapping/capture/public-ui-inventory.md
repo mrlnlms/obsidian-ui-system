@@ -1,12 +1,12 @@
 # Inventário da UI pública do SDK Obsidian
 
-Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.13.1`** instalado neste checkout, confirmado por `npm ls obsidian --workspace @obsidian-ui-system/capture --depth=0` e pelo lockfile. As referências `L...` apontam para linhas desse arquivo. `canvas.d.ts` descreve dados de Canvas e `publish.d.ts` descreve a API de Publish; nenhum dos dois acrescenta um controle de plugin diretamente renderizável ao inventário abaixo. A versão do pacote de tipos não é a versão do aplicativo Obsidian em execução.
+Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.13.1`** instalado neste checkout, confirmado por `npm ls obsidian --workspace @obsidian-ui-system/mapping --depth=0` e pelo lockfile. As referências `L...` apontam para linhas desse arquivo. `canvas.d.ts` descreve dados de Canvas e `publish.d.ts` descreve a API de Publish; nenhum dos dois acrescenta um controle de plugin diretamente renderizável ao inventário abaixo. A versão do pacote de tipos não é a versão do aplicativo Obsidian em execução.
 
-**Critério.** “Direta” significa construtor público utilizável sem criar uma subclasse; “via host” significa que a API é obtida por outra API pública. “UI visual” indica se a API cria ou descreve algo visível, mesmo quando depende de um host. `captured` já tem specimen no registry; `limited` foi avaliada mas não tem captura independente segura sob o contrato público; `not-applicable` não é um specimen independente para o Atlas atual. A coluna Atlas se refere a esta etapa do catálogo de componentes para interfaces de plugins.
+**Critério.** “Direta” significa construtor público utilizável sem criar uma subclasse; “via host” significa que a API é obtida por outra API pública. “UI visual” indica se a API cria ou descreve algo visível, mesmo quando depende de um host. `captured` já tem specimen no registry; `limited` foi avaliada mas não tem captura independente segura sob o contrato público; `not-applicable` não é um specimen independente para o Mapping atual. A coluna Mapping se refere a esta etapa do catálogo de componentes para interfaces de plugins.
 
 ## Controles e primitives
 
-| API (linha) | Categoria | Direta? | UI visual? | Atlas? | Observações | Status |
+| API (linha) | Categoria | Direta? | UI visual? | Mapping? | Observações | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | `ButtonComponent` (L1325) | Botão | Sim | Sim | Sim | `setDisabled`, `setCta` e `setDestructive`; normal, disabled e CTA já capturados. | captured |
 | `SearchComponent` (L5558) | Busca | Sim | Sim | Sim | Recebe `HTMLElement`; empty e filled já capturados. | captured |
@@ -26,7 +26,7 @@ Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.1
 
 ## Componentes compostos e Settings
 
-| API (linha) | Categoria | Direta? | UI visual? | Atlas? | Observações | Status |
+| API (linha) | Categoria | Direta? | UI visual? | Mapping? | Observações | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | `Setting` (L5695) | Linha de configuração | Sim | Sim | Sim | Standard, heading, disabled e erro capturados; `addText` instancia controle real. | captured |
 | `SettingGroup` (L6365) | Grupo de configurações | Sim | Sim | Sim | Grupo com linhas e variante com `addSearch`; introduzido em 1.11.0. | captured |
@@ -35,11 +35,11 @@ Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.1
 | `SettingFileControl`, `SettingFolderControl`, `SettingSliderControl`, `SettingColorControl` (L6311/L6336/L6514/L5866) | Configurações declarativas | Não, interfaces | Sim, via host | Não, isoladamente | File/folder incluem sugestões dependentes do vault; slider/color têm equivalentes concretos acima. | not-applicable |
 | `SettingDefinitionAction`, `SettingDefinitionRender`, `SettingDefinitionGroup`, `SettingDefinitionList`, `SettingDefinitionPage` (L5938/L6265/L6079/L6157/L6202) | Estrutura declarativa | Não, interfaces | Sim, via host | Não, isoladamente | Descrevem ações, renderização e hierarquia de páginas/listas, não componentes instanciáveis. | not-applicable |
 | `SettingTab` / `PluginSettingTab` / `SettingPage` (L6549/L5149/L6461) | Host de Settings | Não, abstratas | Sim, após integração | Não, isoladamente | Pontos de extensão para a área de configurações; `getSettingDefinitions()` é o caminho tipado mais novo. | not-applicable |
-| `BasesOptions` e `BasesOption*` (L891 e L662–L1084) | Configuração de Bases | Não, tipos | Sim, no menu de Bases | Não | Opções específicas de views de Bases; não são controles genéricos instanciáveis no Atlas. | not-applicable |
+| `BasesOptions` e `BasesOption*` (L891 e L662–L1084) | Configuração de Bases | Não, tipos | Sim, no menu de Bases | Não | Opções específicas de views de Bases; não são controles genéricos instanciáveis no Mapping. | not-applicable |
 
 ## Overlays e interações
 
-| API (linha) | Categoria | Direta? | UI visual? | Atlas? | Observações | Status |
+| API (linha) | Categoria | Direta? | UI visual? | Mapping? | Observações | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | `Modal` (L4477) | Dialog | Sim, com `App` | Sim | Sim | `open()` cria overlay fora da aba; capturado com abertura e fechamento explícitos. | captured |
 | `ConfirmationModal` (L1963) | Confirmação | Sim, com `App` | Sim | Sim | Introduzido em 1.13.0; `addButton`, `addCancelButton`, `addCheckbox`. | captured |
@@ -58,18 +58,18 @@ Fonte principal: `node_modules/obsidian/obsidian.d.ts` do pacote **`obsidian@1.1
 
 ## Renderização visual e APIs que não são componentes
 
-| API (linha) | Categoria | Direta? | UI visual? | Atlas? | Observações | Status |
+| API (linha) | Categoria | Direta? | UI visual? | Mapping? | Observações | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | `setIcon` (L5689) | Ícone SVG | N/A, função | Sim | Sim | Insere SVG de `settings` em um contêiner; um specimen demonstra a API, não cada ID de ícone. | captured |
 | `getIcon` / `getIconIds` / `addIcon` / `removeIcon` (L3351/L3357/L393/L5396) | Acesso/registro de ícones | N/A, funções | `getIcon` retorna SVG; demais não | Não, separadamente | Inventário e registro de ícones; `setIcon` cobre a representação visual reutilizável. | not-applicable |
-| `MarkdownRenderer.render` / `renderMarkdown` (L4121) | Conteúdo Markdown | N/A, métodos estáticos | Sim | Não neste Atlas | Renderiza conteúdo de nota; `renderMarkdown` está deprecated. Não é controle de interface de plugin. | not-applicable |
+| `MarkdownRenderer.render` / `renderMarkdown` (L4121) | Conteúdo Markdown | N/A, métodos estáticos | Sim | Não neste Mapping | Renderiza conteúdo de nota; `renderMarkdown` está deprecated. Não é controle de interface de plugin. | not-applicable |
 | `MarkdownPreviewRenderer` / `MarkdownRenderChild` (L4036/L4104) | Extensão de preview | Não como controle | Indiretamente | Não | Registro de postprocessadores e ciclo de vida de conteúdo renderizado. | not-applicable |
-| `renderMath` / `finishRenderMath` (L5423/L3193) | Conteúdo matemático | N/A, funções | Sim | Não neste Atlas | Renderizam LaTeX e carregam stylesheet; superfície de conteúdo, não controle. | not-applicable |
-| `renderMatches` / `renderResults` (L5416/L5428) | Destaque de busca | N/A, funções | Sim | Não neste Atlas | Acrescentam marcação a texto/resultados; helpers de conteúdo. | not-applicable |
+| `renderMath` / `finishRenderMath` (L5423/L3193) | Conteúdo matemático | N/A, funções | Sim | Não neste Mapping | Renderizam LaTeX e carregam stylesheet; superfície de conteúdo, não controle. | not-applicable |
+| `renderMatches` / `renderResults` (L5416/L5428) | Destaque de busca | N/A, funções | Sim | Não neste Mapping | Acrescentam marcação a texto/resultados; helpers de conteúdo. | not-applicable |
 | `Value.renderTo` / `HTMLValue` / `IconValue` / `ImageValue` (L7289/L3530/L3539/L3548) | Valores de Bases | Não como controle | Sim, via contexto | Não | Modelos de valores renderizáveis em Bases; não são controls genéricos de plugin. | not-applicable |
 | `MarkdownView`, `MarkdownPreviewView`, `MarkdownEditView` (L4188/L4060/L3906) | Views de nota | Apenas com host/leaf | Sim | Não | Dependem de arquivo, editor e workspace; não são controls isolados. | not-applicable |
-| `View` / `ItemView` / `BasesView` (L7584/L3590/L1105) | Bases de view | Não, abstratas | Sim, após subclasse | Não | Hosts/extensões de workspace ou Bases; o próprio Atlas já usa `ItemView` como contêiner. | not-applicable |
-| `Plugin.addRibbonIcon` / `addStatusBarItem` (L4938/L4947) | Chrome do aplicativo | N/A, métodos | Sim | Não neste Atlas | Inserem UI fora da aba; status bar não existe no mobile. Requerem inventário de app chrome separado. | not-applicable |
+| `View` / `ItemView` / `BasesView` (L7584/L3590/L1105) | Bases de view | Não, abstratas | Sim, após subclasse | Não | Hosts/extensões de workspace ou Bases; o próprio Mapping já usa `ItemView` como contêiner. | not-applicable |
+| `Plugin.addRibbonIcon` / `addStatusBarItem` (L4938/L4947) | Chrome do aplicativo | N/A, métodos | Sim | Não neste Mapping | Inserem UI fora da aba; status bar não existe no mobile. Requerem inventário de app chrome separado. | not-applicable |
 | `Plugin.addCommand` / `addSettingTab` / `registerView` (L4955/L4969/L4974) | Registro de integração | N/A, métodos | Indiretamente | Não | Registram ações/hosts; não são espécimes visuais. | not-applicable |
 | `Plugin.registerMarkdownPostProcessor` / `registerMarkdownCodeBlockProcessor` / `registerBasesView` / `registerEditorExtension` (L4992/L5001/L5009/L5019) | Extensões de conteúdo | N/A, métodos | Indiretamente | Não | Inserem ou modificam UI no preview, em Bases ou no editor; dependem do host e do conteúdo. | not-applicable |
 | `Component`, `Scope`, `WorkspaceLeaf`, `App`, `Vault` (L1835/L5532/L8228/L406/L7321) | Ciclo de vida/infraestrutura | Varia | Não por si | Não | Fornecem contexto, eventos, teclado, workspace ou dados. | not-applicable |

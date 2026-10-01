@@ -2,9 +2,9 @@
 node_modules/
 **/node_modules/
 .build/
-apps/obsidian-ui-atlas/main.js
-apps/obsidian-ui-atlas/*.map
-apps/obsidian-ui-atlas/data.json
+apps/obsidian-ui-mapping/main.js
+apps/obsidian-ui-mapping/*.map
+apps/obsidian-ui-mapping/data.json
 apps/obsidian-ui-system-figma/dist/
 private/
 
@@ -12,7 +12,7 @@ private/
 dev-vault/.obsidian/*
 !dev-vault/.obsidian/plugins/
 dev-vault/.obsidian/plugins/*
-!dev-vault/.obsidian/plugins/obsidian-ui-atlas
+!dev-vault/.obsidian/plugins/obsidian-ui-mapping
 
 # Local final packages and development diagnostics from the vault.
 dev-vault/obsidian-ui-exports/

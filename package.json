@@ -7,12 +7,12 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace @obsidian-ui-system/capture && npm run build --workspace @obsidian-ui-system/figma-plugin && npm run build:diff",
+    "build": "npm run build --workspace @obsidian-ui-system/mapping && npm run build --workspace @obsidian-ui-system/figma-plugin && npm run build:diff",
     "build:diff": "tsc --project scripts/snapshot-diff/tsconfig.json",
-    "dev": "npm run dev --workspace @obsidian-ui-system/capture",
-    "check": "npm run check --workspace @obsidian-ui-system/capture && npm run check --workspace @obsidian-ui-system/figma-plugin && tsc --noEmit --project scripts/snapshot-diff/tsconfig.json",
+    "dev": "npm run dev --workspace @obsidian-ui-system/mapping",
+    "check": "npm run check --workspace @obsidian-ui-system/mapping && npm run check --workspace @obsidian-ui-system/figma-plugin && tsc --noEmit --project scripts/snapshot-diff/tsconfig.json",
     "test:diff": "npm run build:diff && node --test .build/snapshot-diff/snapshot-diff.test.js",
-    "test:layout": "esbuild apps/obsidian-ui-atlas/src/layout-inference.test.ts --bundle --platform=node --format=cjs --outfile=.build/layout-inference.test.cjs && node --test .build/layout-inference.test.cjs",
+    "test:layout": "esbuild apps/obsidian-ui-mapping/src/layout-inference.test.ts --bundle --platform=node --format=cjs --outfile=.build/layout-inference.test.cjs && node --test .build/layout-inference.test.cjs",
     "diff:snapshots": "npm run build:diff && node .build/snapshot-diff/diff-snapshots.js"
   },
   "devDependencies": {

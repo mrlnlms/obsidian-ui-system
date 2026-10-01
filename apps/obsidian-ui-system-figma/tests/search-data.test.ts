@@ -14,7 +14,7 @@ function evidence(): { components: unknown[]; layout: Record<string, unknown> } 
       styles: { background: 'rgba(0, 0, 0, 0)' },
       children: [{
         tag: 'input', attributes: { type: 'search', placeholder: 'Search example' },
-        properties: { value: variant === 'empty' ? '' : 'Atlas query' },
+        properties: { value: variant === 'empty' ? '' : 'Mapping query' },
         styles: {
           padding: variant === 'empty' ? '4px 8px 4px 30px' : '4px 28px 4px 30px',
           background: 'rgb(46, 46, 46)', border: '1px solid rgb(51, 51, 51)', borderRadius: '100px',
@@ -45,7 +45,7 @@ function evidence(): { components: unknown[]; layout: Record<string, unknown> } 
           children: [{
             tag: 'input', position: 'static', attributes: { type: 'search' },
             properties: { value: variant === 'empty' ? '' :
-              context === 'baseline' ? 'Atlas query' :
+              context === 'baseline' ? 'Mapping query' :
                 context === 'short-content' ? 'OK' : 'A longer label for layout measurement' },
             relativeToParent: { x: 0, y: 0, width, height: 30 },
             styles: {
@@ -81,7 +81,7 @@ function evidence(): { components: unknown[]; layout: Record<string, unknown> } 
       mode: 'fill', confidence: 'medium', evidence: ['Input tracks parent'] } }],
     intermediateModel: { horizontalSizing: 'fill', verticalSizing: 'fixed', heightPx: 30, layoutDirection: null },
   }));
-  return { components, layout: { experimentalFormat: 'atlas-layout-probes-2',
+  return { components, layout: { experimentalFormat: 'mapping-layout-probes-2',
     environment: { platform: 'macos' }, observations, inferences } };
 }
 

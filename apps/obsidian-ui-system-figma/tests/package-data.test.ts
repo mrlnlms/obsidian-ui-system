@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { readFigmaPackage } from '../src/package-data';
+import { CURRENT_LAYOUT_MODEL, LEGACY_LAYOUT_MODEL } from '../src/layout-model';
 
 const fixture = new Uint8Array(readFileSync(join(process.cwd(), 'tests/fixtures',
   'obsidian-ui-package-2026-10-01T12-12-18-735Z.zip')));
@@ -17,7 +18,17 @@ function changed(name: string, value: unknown): Uint8Array {
 test('imports the real Obsidian package and preflights Button and Search evidence', () => {
   const result = readFigmaPackage(fixture);
   assert.deepEqual(result.summary, { obsidianVersion: '1.14.3', specimens: 59, tokens: 945 });
-  assert.equal((result.layout as { experimentalFormat: string }).experimentalFormat, 'atlas-layout-probes-2');
+  assert.equal((result.layout as { experimentalFormat: string }).experimentalFormat, LEGACY_LAYOUT_MODEL);
+});
+
+test('imports a package exported with the Mapping layout identifier', () => {
+  const files = unzipSync(fixture);
+  const packageManifest = JSON.parse(strFromU8(files['package-manifest.json']!));
+  const layout = JSON.parse(strFromU8(files['layout.json']!));
+  files['package-manifest.json'] = strToU8(JSON.stringify({ ...packageManifest, layoutModel: CURRENT_LAYOUT_MODEL }));
+  files['layout.json'] = strToU8(JSON.stringify({ ...layout, experimentalFormat: CURRENT_LAYOUT_MODEL }));
+  const result = readFigmaPackage(zipSync(files));
+  assert.equal((result.layout as { experimentalFormat: string }).experimentalFormat, CURRENT_LAYOUT_MODEL);
 });
 
 test('rejects a package with a missing required file', () => {
@@ -45,7 +56,7 @@ test('rejects mixed captures and missing supported components before generation'
   const components = JSON.parse(strFromU8(files['components.json']!)) as Array<{ id: string; variant: string }>;
   assert.throws(() => readFigmaPackage(changed('components.json',
     components.filter((item) => !(item.id === 'obsidian.search' && item.variant === 'filled')))),
-  /não está no Atlas|Search/);
+  /não está no Mapping|Search/);
 });
 
 test('rejects corrupt JSON without leaking a partial import', () => {

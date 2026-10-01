@@ -24,10 +24,10 @@ import {
 } from 'obsidian';
 import type { ComponentOrigin } from '@obsidian-ui-system/ui-schema';
 import {
-  AtlasFuzzySuggestModal,
-  AtlasInputSuggest,
-  AtlasPopoverSuggest,
-  AtlasSuggestModal,
+  MappingFuzzySuggestModal,
+  MappingInputSuggest,
+  MappingPopoverSuggest,
+  MappingSuggestModal,
 } from './suggestion-fixtures';
 
 /** Only accept a suggestion container created by this fixture's own open call. */
@@ -57,9 +57,9 @@ interface RenderedComponent {
   getState: () => string;
   /** Optional public-API content mutation used only by experimental layout probes. */
   setContentForLayoutProbe?: (text: string) => void;
-  /** Open a surface outside the Atlas before capture. */
+  /** Open a surface outside the Mapping before capture. */
   activate?: () => void;
-  /** Return the opened surface, rather than the Atlas trigger host. */
+  /** Return the opened surface, rather than the Mapping trigger host. */
   getCaptureRoot?: () => Element;
   deactivate?: () => void;
 }
@@ -95,7 +95,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       { id: 'with-content', name: 'Dialog with content', state: 'open' },
     ],
     render(mount, variant, app) {
-      const modal = new Modal(app).setTitle('Atlas modal');
+      const modal = new Modal(app).setTitle('Mapping modal');
       modal.setContent(variant.id === 'with-content' ? 'Example dialog content.' : '');
       return {
         root: mount,
@@ -143,12 +143,12 @@ export const componentRegistry: readonly ComponentDefinition[] = [
     ],
     render(mount, variant) {
       const menu = new Menu().setUseNativeMenu(false);
-      menu.addItem((item) => item.setTitle('Atlas menu action').setIcon('check').setChecked(variant.id === 'checked'));
+      menu.addItem((item) => item.setTitle('Mapping menu action').setIcon('check').setChecked(variant.id === 'checked'));
       menu.addSeparator();
       menu.addItem((item) => item.setTitle('Another example action'));
       const findMenu = (): Element => {
         const element = Array.from(mount.ownerDocument.querySelectorAll('.menu'))
-          .find((candidate) => candidate.textContent?.includes('Atlas menu action'));
+          .find((candidate) => candidate.textContent?.includes('Mapping menu action'));
         if (!element) throw new Error('Obsidian Menu DOM was not found after opening');
         return element;
       };
@@ -180,8 +180,8 @@ export const componentRegistry: readonly ComponentDefinition[] = [
         root: mount,
         activate: () => {
           notice?.hide();
-          notice = new Notice('Atlas notice', 0);
-          if (variant.id === 'updated') notice.setMessage('Atlas notice updated');
+          notice = new Notice('Mapping notice', 0);
+          if (variant.id === 'updated') notice.setMessage('Mapping notice updated');
         },
         getCaptureRoot: () => {
           if (!notice) throw new Error('Notice has not been opened');
@@ -203,7 +203,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
     implementation: 'obsidian.PopoverSuggest',
     variants: [{ id: 'empty-shell', name: 'Open popover shell', state: 'open' }],
     render(mount, _variant, app) {
-      const suggest = new AtlasPopoverSuggest(app);
+      const suggest = new MappingPopoverSuggest(app);
       let findRoot: (() => Element) | null = null;
       return {
         root: mount,
@@ -228,14 +228,14 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       { id: 'filtered', name: 'Filtered suggestions', state: 'results' },
     ],
     render(mount, variant, app) {
-      const input = new TextComponent(mount).setPlaceholder('Search Atlas examples').inputEl;
-      const suggest = new AtlasInputSuggest(app, input);
-      const query = variant.id === 'filtered' ? 'beta' : 'Atlas';
+      const input = new TextComponent(mount).setPlaceholder('Search Mapping examples').inputEl;
+      const suggest = new MappingInputSuggest(app, input);
+      const query = variant.id === 'filtered' ? 'beta' : 'Mapping';
       let findRoot: (() => Element) | null = null;
       const getRoot = (): Element => {
         if (!findRoot) throw new Error('AbstractInputSuggest has not been opened');
         const root = findRoot();
-        if (!root.textContent?.includes('Atlas beta')) throw new Error('Fixture suggestions were not rendered');
+        if (!root.textContent?.includes('Mapping beta')) throw new Error('Fixture suggestions were not rendered');
         return root;
       };
       return {
@@ -264,7 +264,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       { id: 'filtered', name: 'Filtered suggestions', state: 'results' },
     ],
     render(mount, variant, app) {
-      const modal = new AtlasSuggestModal(app);
+      const modal = new MappingSuggestModal(app);
       return {
         root: mount,
         activate: () => {
@@ -273,7 +273,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
           modal.inputEl.dispatchEvent(new Event('input', { bubbles: true }));
         },
         getCaptureRoot: () => modal.modalEl,
-        getState: () => modal.modalEl.isConnected && modal.resultContainerEl.textContent?.includes('Atlas beta')
+        getState: () => modal.modalEl.isConnected && modal.resultContainerEl.textContent?.includes('Mapping beta')
           ? 'results' : 'closed',
         deactivate: () => modal.close(),
       };
@@ -290,7 +290,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       { id: 'filtered', name: 'Filtered fuzzy suggestions', state: 'results' },
     ],
     render(mount, variant, app) {
-      const modal = new AtlasFuzzySuggestModal(app);
+      const modal = new MappingFuzzySuggestModal(app);
       return {
         root: mount,
         activate: () => {
@@ -299,7 +299,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
           modal.inputEl.dispatchEvent(new Event('input', { bubbles: true }));
         },
         getCaptureRoot: () => modal.modalEl,
-        getState: () => modal.modalEl.isConnected && modal.resultContainerEl.textContent?.includes('Atlas beta')
+        getState: () => modal.modalEl.isConnected && modal.resultContainerEl.textContent?.includes('Mapping beta')
           ? 'results' : 'closed',
         deactivate: () => modal.close(),
       };
@@ -339,10 +339,10 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       { id: 'disabled', name: 'Disabled', state: 'disabled' },
     ],
     render(mount, variant) {
-      mount.addClass('obsidian-ui-atlas-inline-host');
+      mount.addClass('obsidian-ui-mapping-inline-host');
       const button = new ExtraButtonComponent(mount)
         .setIcon('settings')
-        .setTooltip('Atlas settings');
+        .setTooltip('Mapping settings');
       if (variant.id === 'disabled') button.setDisabled(true);
       return {
         root: button.extraSettingsEl,
@@ -364,7 +364,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
     render(mount, variant) {
       const search = new SearchComponent(mount)
         .setPlaceholder('Search example')
-        .setValue(variant.id === 'filled' ? 'Atlas query' : '');
+        .setValue(variant.id === 'filled' ? 'Mapping query' : '');
       const wrapper = search.inputEl.parentElement;
       return {
         root: wrapper && mount.contains(wrapper) ? wrapper : search.inputEl,
@@ -390,7 +390,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
     render(mount, variant) {
       const text = new TextComponent(mount)
         .setPlaceholder('Enter text')
-        .setValue(variant.id === 'empty' ? '' : 'Atlas example');
+        .setValue(variant.id === 'empty' ? '' : 'Mapping example');
       if (variant.id === 'disabled') text.setDisabled(true);
       return {
         root: text.inputEl,
@@ -412,7 +412,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
     render(mount, variant) {
       const area = new TextAreaComponent(mount)
         .setPlaceholder('Enter multiple lines')
-        .setValue(variant.id === 'empty' ? '' : 'Atlas example\nSecond line');
+        .setValue(variant.id === 'empty' ? '' : 'Mapping example\nSecond line');
       if (variant.id === 'disabled') area.setDisabled(true);
       return {
         root: area.inputEl,
@@ -557,7 +557,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       { id: 'error', name: 'Validation error', state: 'error' },
     ],
     render(mount, variant) {
-      const setting = new Setting(mount).setName('Atlas setting');
+      const setting = new Setting(mount).setName('Mapping setting');
       if (variant.id === 'heading') {
         setting.setHeading();
       } else {
@@ -586,7 +586,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       { id: 'with-search', name: 'Group with search', state: 'with-search' },
     ],
     render(mount, variant) {
-      const group = new SettingGroup(mount).setHeading('Atlas group');
+      const group = new SettingGroup(mount).setHeading('Mapping group');
       if (variant.id === 'with-search') {
         group.addSearch((search) => search.setPlaceholder('Search group'));
       }
@@ -611,7 +611,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       { id: 'empty', name: 'Empty value', state: 'empty' },
     ],
     render(mount, variant) {
-      const setting = new Setting(mount).setName('Atlas display value');
+      const setting = new Setting(mount).setName('Mapping display value');
       let valueEl: HTMLElement | null = null;
       setting.addDisplayValue((display) => {
         display.setValue(variant.id === 'empty' ? null : 'Example value');
@@ -641,7 +641,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
       { id: 'unselected', name: 'No secret selected', state: 'unselected' },
     ],
     render(mount, _variant, app) {
-      const setting = new Setting(mount).setName('Atlas secret');
+      const setting = new Setting(mount).setName('Mapping secret');
       setting.addComponent((container) => new SecretComponent(app, container).setValue(''));
       return { root: setting.settingEl, getState: () => 'unselected' };
     },
@@ -674,10 +674,10 @@ export const componentRegistry: readonly ComponentDefinition[] = [
     variants: [{ id: 'registered', name: 'Registered tooltip', state: 'registered' }],
     render(mount) {
       const target = new ButtonComponent(mount).setButtonText('Hover for tooltip').buttonEl;
-      setTooltip(target, 'Atlas registered tooltip', { placement: 'top' });
+      setTooltip(target, 'Mapping registered tooltip', { placement: 'top' });
       return {
         root: target,
-        getState: () => target.getAttribute('aria-label') === 'Atlas registered tooltip' ? 'registered' : 'unregistered',
+        getState: () => target.getAttribute('aria-label') === 'Mapping registered tooltip' ? 'registered' : 'unregistered',
       };
     },
   },
@@ -691,7 +691,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
     render(mount) {
       const target = new ButtonComponent(mount).setButtonText('Tooltip target').buttonEl;
       let tooltip: HTMLElement | null = null;
-      const message = 'Atlas displayTooltip specimen';
+      const message = 'Mapping displayTooltip specimen';
       return {
         root: target,
         activate: () => {
@@ -699,7 +699,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
           displayTooltip(target, message, { placement: 'top', delay: 0 });
           const matches = Array.from(doc.querySelectorAll<HTMLElement>('.tooltip'))
             .filter((element) => element.textContent?.trim() === message);
-          if (matches.length !== 1) throw new Error(`Expected one Atlas tooltip, found ${matches.length}`);
+          if (matches.length !== 1) throw new Error(`Expected one Mapping tooltip, found ${matches.length}`);
           tooltip = matches[0]!;
         },
         getCaptureRoot: () => {
@@ -708,7 +708,7 @@ export const componentRegistry: readonly ComponentDefinition[] = [
         },
         getState: () => tooltip?.isConnected ? 'visible' : 'hidden',
         deactivate: () => {
-          // The public API has no dismiss method; remove only the Atlas-labelled tooltip.
+          // The public API has no dismiss method; remove only the Mapping-labelled tooltip.
           if (tooltip?.textContent?.trim() === message) tooltip.remove();
           tooltip = null;
         },

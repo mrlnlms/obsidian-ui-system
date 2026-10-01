@@ -23,22 +23,22 @@ export function validateFigmaPackage(input: FigmaPackageInput, expectedComponent
   const { manifest, components, tokens, layout } = input;
   if (manifest.mode === 'unknown') throw new Error('Obsidian theme mode could not be determined');
   if (JSON.stringify(layout.environment) !== JSON.stringify(manifest)) {
-    throw new Error('Atlas and Layout Lab environments differ; package was not created');
+    throw new Error('Mapping and Layout Lab environments differ; package was not created');
   }
   if (!layout.experimentalFormat || !layout.observations.length || !layout.inferences.length) {
     throw new Error('Layout Lab measurements or inference are missing');
   }
   if (!components.length || !Object.keys(tokens.values).length) {
-    throw new Error('Atlas components or tokens are missing');
+    throw new Error('Mapping components or tokens are missing');
   }
   const actual = components.map(keyOf);
   const actualSet = new Set(actual);
   if (actualSet.size !== actual.length || actualSet.size !== expectedComponents.length
     || expectedComponents.some((key) => !actualSet.has(key))) {
-    throw new Error('Atlas capture does not contain the complete canonical registry');
+    throw new Error('Mapping capture does not contain the complete canonical registry');
   }
   if (layout.observations.some((item) => !actualSet.has(keyOf(item)))) {
-    throw new Error('Layout Lab contains a specimen absent from the Atlas capture');
+    throw new Error('Layout Lab contains a specimen absent from the Mapping capture');
   }
   const measured = new Set(layout.observations.map(keyOf));
   if (layout.inferences.some((item) => !measured.has(keyOf(item)))) {

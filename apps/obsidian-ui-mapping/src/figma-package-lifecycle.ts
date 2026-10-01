@@ -1,7 +1,7 @@
 import type { DataAdapter } from 'obsidian';
 import { ensureDirectory, FIGMA_PACKAGE_ROOT, PACKAGE_FAILURE_ROOT, PACKAGE_STAGING_ROOT } from './export-paths';
 
-export type PackageStage = 'cleanup-orphans' | 'capture-atlas' | 'capture-layout' | 'validate-package' | 'publish-package';
+export type PackageStage = 'cleanup-orphans' | 'capture-mapping' | 'capture-layout' | 'validate-package' | 'publish-package';
 export type PackageCapture = (capturedAt: string, setStage: (stage: PackageStage) => void) => Promise<Uint8Array>;
 
 const OWN_STAGING_FILE = /^obsidian-ui-package-staging-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z-[a-z0-9]{8}\.zip\.partial$/;
@@ -56,7 +56,7 @@ export async function runFigmaPackageLifecycle(adapter: DataAdapter, capture: Pa
   let stage: PackageStage = 'cleanup-orphans';
   try {
     await removeOrphanedPackagePartials(adapter);
-    stage = 'capture-atlas';
+    stage = 'capture-mapping';
     const zip = await capture(capturedAt, (next) => { stage = next; });
     stage = 'publish-package';
     await ensureDirectory(adapter, PACKAGE_STAGING_ROOT);

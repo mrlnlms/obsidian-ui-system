@@ -26,8 +26,8 @@ export async function exportFigmaPackage(app: App): Promise<string> {
     doc.body.appendChild(mount);
     let specimens: RenderedSpecimen[] = [];
     try {
-      const atlas = mount.createDiv({ cls: 'obsidian-ui-atlas-content' });
-      specimens = renderCatalogSpecimens(atlas, app);
+      const mapping = mount.createDiv({ cls: 'obsidian-ui-mapping-content' });
+      specimens = renderCatalogSpecimens(mapping, app);
       const canonical = await captureCatalog(specimens, capturedAt);
       assertSameEnvironment(doc, capturedAt, initial);
 

@@ -1,6 +1,6 @@
-# Comparing Atlas snapshots
+# Comparing Mapping snapshots
 
-The CLI compares two complete Atlas export folders without using line-based JSON diffs. Run it from the repository root:
+The CLI compares two complete Mapping export folders without using line-based JSON diffs. Run it from the repository root:
 
 ```sh
 npm run diff:snapshots -- \
@@ -14,7 +14,7 @@ Each input folder must contain `manifest.json`, `tokens.json`, and `components.j
 npm run diff:snapshots -- <before-dir> <after-dir> <output-dir>
 ```
 
-Replace the two timestamp placeholders with existing Atlas export folders. Without a third argument, reports go to `dev-vault/.obsidian-ui-system/snapshot-diffs/<before-folder>__<after-folder>/`. The command writes `diff.json` and `diff.md`, replacing reports at that output path on a repeated run. Default reports and exports are ignored by Git and remain locally until the optional **Developer: Clean Obsidian UI Development Exports** command or manual removal. A custom output directory remains until manually removed and may be tracked by Git; check its location before committing. The CLI prints the output path and retention reminder. `npm run check` validates the CLI and plugin TypeScript; `npm run build` builds both; `npm run test:diff` runs focused comparison tests.
+Replace the two timestamp placeholders with existing Mapping export folders. Without a third argument, reports go to `dev-vault/.obsidian-ui-system/snapshot-diffs/<before-folder>__<after-folder>/`. The command writes `diff.json` and `diff.md`, replacing reports at that output path on a repeated run. Default reports and exports are ignored by Git and remain locally until the optional **Developer: Clean Obsidian UI Development Exports** command or manual removal. A custom output directory remains until manually removed and may be tracked by Git; check its location before committing. The CLI prints the output path and retention reminder. `npm run check` validates the CLI and plugin TypeScript; `npm run build` builds both; `npm run test:diff` runs focused comparison tests.
 
 ## Comparison rules
 

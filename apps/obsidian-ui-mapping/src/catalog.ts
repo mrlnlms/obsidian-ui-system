@@ -2,9 +2,9 @@ import { type App, ButtonComponent, ItemView, WorkspaceLeaf } from 'obsidian';
 import { componentRegistry, type RenderedSpecimen } from './component-registry';
 import { exportCatalog } from './export';
 
-export const ATLAS_VIEW_TYPE = 'obsidian-ui-atlas-view';
+export const MAPPING_VIEW_TYPE = 'obsidian-ui-mapping-view';
 
-/** Shared registry renderer for the Atlas view and one-shot package capture. */
+/** Shared registry renderer for the Mapping view and one-shot package capture. */
 export function renderCatalogSpecimens(host: HTMLElement, app: App, onActivate?: () => void): RenderedSpecimen[] {
   host.empty();
   const specimens: RenderedSpecimen[] = [];
@@ -12,16 +12,16 @@ export function renderCatalogSpecimens(host: HTMLElement, app: App, onActivate?:
   for (const definition of componentRegistry) {
     let category = categories.get(definition.category);
     if (!category) {
-      category = host.createDiv({ cls: 'obsidian-ui-atlas-category' });
+      category = host.createDiv({ cls: 'obsidian-ui-mapping-category' });
       category.createEl('h3', { text: definition.category });
       categories.set(definition.category, category);
     }
-    const component = category.createDiv({ cls: 'obsidian-ui-atlas-component' });
-    if (definition.category === 'Settings') component.addClass('obsidian-ui-atlas-composite');
+    const component = category.createDiv({ cls: 'obsidian-ui-mapping-component' });
+    if (definition.category === 'Settings') component.addClass('obsidian-ui-mapping-composite');
     component.createEl('h4', { text: definition.name });
     for (const variant of definition.variants) {
-      const specimen = component.createDiv({ cls: 'obsidian-ui-atlas-specimen' });
-      specimen.createEl('div', { cls: 'obsidian-ui-atlas-variant-name', text: variant.name });
+      const specimen = component.createDiv({ cls: 'obsidian-ui-mapping-specimen' });
+      specimen.createEl('div', { cls: 'obsidian-ui-mapping-variant-name', text: variant.name });
       const rendered = definition.render(specimen.createDiv(), variant, app);
       if (rendered.activate && onActivate) {
         new ButtonComponent(specimen)
@@ -37,7 +37,7 @@ export function renderCatalogSpecimens(host: HTMLElement, app: App, onActivate?:
   return specimens;
 }
 
-export class AtlasView extends ItemView {
+export class MappingView extends ItemView {
   private specimens: RenderedSpecimen[] = [];
   private exporting = false;
   private specimensEl: HTMLDivElement | null = null;
@@ -47,11 +47,11 @@ export class AtlasView extends ItemView {
   }
 
   getViewType(): string {
-    return ATLAS_VIEW_TYPE;
+    return MAPPING_VIEW_TYPE;
   }
 
   getDisplayText(): string {
-    return 'Obsidian UI Atlas';
+    return 'Obsidian UI Mapping';
   }
 
   getIcon(): string {
@@ -60,10 +60,10 @@ export class AtlasView extends ItemView {
 
   async onOpen(): Promise<void> {
     this.contentEl.empty();
-    this.contentEl.addClass('obsidian-ui-atlas-content');
-    this.contentEl.createEl('h2', { text: 'Obsidian UI Atlas' });
-    this.contentEl.createEl('p', { text: 'Public API components rendered in the current theme.' });
-    const actions = this.contentEl.createDiv({ cls: 'obsidian-ui-atlas-actions' });
+    this.contentEl.addClass('obsidian-ui-mapping-content');
+    this.contentEl.createEl('h2', { text: 'Obsidian UI Mapping' });
+    this.contentEl.createEl('p', { text: 'Observed Obsidian UI specimens in the current environment.' });
+    const actions = this.contentEl.createDiv({ cls: 'obsidian-ui-mapping-actions' });
     const status = this.contentEl.createEl('p');
     this.specimensEl = this.contentEl.createDiv();
     this.renderSpecimens();
@@ -93,12 +93,12 @@ export class AtlasView extends ItemView {
     this.specimens = [];
     this.specimensEl = null;
     this.contentEl.empty();
-    this.contentEl.removeClass('obsidian-ui-atlas-content');
+    this.contentEl.removeClass('obsidian-ui-mapping-content');
   }
 
   private renderSpecimens(): void {
     const host = this.specimensEl;
-    if (!host) throw new Error('Atlas specimen container is unavailable');
+    if (!host) throw new Error('Mapping specimen container is unavailable');
     this.closeSurfaces();
     host.empty();
     this.specimens = [];

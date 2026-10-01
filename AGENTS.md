@@ -6,7 +6,7 @@ Obsidian UI System builds a shared, evidence-based representation of Obsidian UI
 
 This monorepo develops three first-class product surfaces:
 
-- `apps/obsidian-ui-atlas/` — **Obsidian UI Atlas**, the Obsidian plugin that observes and captures UI evidence.
+- `apps/obsidian-ui-mapping/` — **Obsidian UI Mapping**, the Obsidian plugin that observes and maps real UI into structured evidence.
 - `apps/obsidian-ui-system-figma/` — **Obsidian UI System Figma**, the Figma plugin that turns validated package data into an editable UI Kit.
 - `apps/obsidian-ui-skill/` — **Obsidian UI Skill**, the agent-facing product that will eventually help translate structured designs into Obsidian implementations.
 
@@ -31,7 +31,7 @@ The Skill developed under `apps/obsidian-ui-skill/` is distinct from skills inst
   - observed Obsidian UI evidence;
   - inferred abstractions or layout behavior;
   - generated outputs such as the Figma UI Kit.
-- Atlas owns canonical capture evidence. Layout Lab owns experimental measurement and inference. Experimental conclusions must not silently become canonical facts.
+- Mapping owns canonical observed evidence: specimens, states, tokens, environment, and snapshots. Its Layout Lab owns experimental measurement and inference; experimental conclusions must not silently become canonical facts. Semantic comparison and Figma Package generation consume these distinct inputs.
 - Preserve uncertainty when evidence is insufficient. `unknown` is a valid result; do not force a classification to make a downstream representation easier.
 - Figma is a generated consumer of the shared representation, not the canonical source of Obsidian UI truth.
 - Keep semantic identity stable where it already exists, including specimen identity by `id + variant` and token comparison by token name, unless an intentional contract change requires otherwise.
@@ -76,14 +76,14 @@ Any new command that persists generated artifacts must have a clear destination 
 
 ## Task references
 
-For Atlas capture and registry work, use the maintained guides under:
+For Mapping capture and registry work, use the maintained guides under:
 
-- `docs/obsidian-ui-atlas/atlas/`
-- `docs/obsidian-ui-atlas/snapshot-diff/`
+- `docs/obsidian-ui-mapping/capture/`
+- `docs/obsidian-ui-mapping/snapshot-diff/`
 
 For Layout Lab measurement and inference, use:
 
-- `docs/obsidian-ui-atlas/layout-lab/`
+- `docs/obsidian-ui-mapping/layout-lab/`
 
 For Figma component generation, read:
 

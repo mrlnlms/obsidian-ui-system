@@ -4,7 +4,7 @@ import { inferLayout, type LayoutInference } from './layout-inference';
 
 export const LAYOUT_LAB_VIEW_TYPE = 'obsidian-ui-layout-lab-view';
 
-/** Experimental workspace surface; the canonical Atlas never creates these fixtures. */
+/** Experimental workspace surface; the canonical Mapping never creates these fixtures. */
 export class LayoutLabView extends ItemView {
   private fixtures: LayoutFixture[] = [];
   private fixturesEl: HTMLDivElement | null = null;

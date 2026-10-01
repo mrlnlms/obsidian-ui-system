@@ -1,0 +1,9 @@
+{
+  "id": "obsidian-ui-mapping",
+  "name": "Obsidian UI Mapping",
+  "version": "0.1.0",
+  "minAppVersion": "1.13.1",
+  "description": "Map Obsidian UI into structured, evidence-based snapshots.",
+  "author": "obsidian-ui-system",
+  "isDesktopOnly": false
+}

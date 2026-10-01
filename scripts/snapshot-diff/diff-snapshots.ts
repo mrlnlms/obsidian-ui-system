@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { compareExports, renderMarkdown, type AtlasExport, type DomNode, type Specimen } from './snapshot-diff.js';
+import { compareExports, renderMarkdown, type MappingExport, type DomNode, type Specimen } from './snapshot-diff.js';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -54,7 +54,7 @@ function isSpecimen(value: unknown): value is Specimen {
     && isDomNode(value.dom);
 }
 
-async function readExport(directory: string): Promise<AtlasExport> {
+async function readExport(directory: string): Promise<MappingExport> {
   const [manifest, tokens, components] = await Promise.all([
     readJson(directory, 'manifest.json'),
     readJson(directory, 'tokens.json'),
@@ -69,7 +69,7 @@ async function readExport(directory: string): Promise<AtlasExport> {
     throw new Error(`${directory}/tokens.json must contain a values map of CSS custom properties`);
   }
   if (!Array.isArray(components) || !components.every(isSpecimen)) {
-    throw new Error(`${directory}/components.json must contain Atlas specimens with id, variant and DOM`);
+    throw new Error(`${directory}/components.json must contain Mapping specimens with id, variant and DOM`);
   }
   return { directory, manifest, tokens: { values: tokens.values as Record<string, string> }, components };
 }

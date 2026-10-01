@@ -4,15 +4,15 @@ Start with the [project overview](../README.md) to understand the products and c
 
 ## Develop the monorepo
 
-- [Development guide](development.md): local requirements, build, dev vault, Hot Reload, Atlas and Lab exports, snapshot diff, artifacts, and verification commands.
+- [Development guide](development.md): local requirements, build, dev vault, Hot Reload, Mapping and Lab exports, snapshot diff, artifacts, and verification commands.
 
-## Obsidian UI Atlas
+## Obsidian UI Mapping
 
 | Topic | Documentation |
 | --- | --- |
-| Canonical Atlas | [Public UI inventory](obsidian-ui-atlas/atlas/public-ui-inventory.md), [component registry](obsidian-ui-atlas/atlas/component-registry.md), [snapshot format and limits](obsidian-ui-atlas/atlas/snapshot.md) |
-| Layout Probe Lab | [Lab behavior and use](obsidian-ui-atlas/layout-lab/layout-lab.md), [inference rules and limits](obsidian-ui-atlas/layout-lab/layout-inference.md) |
-| Snapshot diff | [Semantic comparison rules](obsidian-ui-atlas/snapshot-diff/snapshot-diff.md) |
+| Canonical observed evidence | [Public UI inventory](obsidian-ui-mapping/capture/public-ui-inventory.md), [component registry](obsidian-ui-mapping/capture/component-registry.md), [snapshot format and limits](obsidian-ui-mapping/capture/snapshot.md) |
+| Layout Probe Lab | [Lab behavior and use](obsidian-ui-mapping/layout-lab/layout-lab.md), [inference rules and limits](obsidian-ui-mapping/layout-lab/layout-inference.md) |
+| Snapshot diff | [Semantic comparison rules](obsidian-ui-mapping/snapshot-diff/snapshot-diff.md) |
 
 ## Obsidian UI System Figma
 
@@ -25,6 +25,6 @@ Start with the [project overview](../README.md) to understand the products and c
 
 The [Obsidian UI Skill](../apps/obsidian-ui-skill/README.md) is a future product and has no technical guide yet.
 
-Implementation plans belong in the local, Git-ignored `private/docs/plans/` directory. Completed investigations, dated validation records, and experimental JSON models belong in `private/docs/` under the matching product and topic. Public documents must remain understandable without that directory. Generated Atlas and Lab exports stay under the ignored development vault paths described in the [development guide](development.md).
+Implementation plans belong in the local, Git-ignored `private/docs/plans/` directory. Completed investigations, dated validation records, and experimental JSON models belong in `private/docs/` under the matching product and topic. Public documents must remain understandable without that directory. Generated Mapping and Lab exports stay under the ignored development vault paths described in the [development guide](development.md).
 
 Place a new public guide under its named product and closest topic, then link it here. Use `integration/` for contracts that connect product surfaces.

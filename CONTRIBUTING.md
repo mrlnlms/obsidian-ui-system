@@ -16,7 +16,7 @@ Start with:
 
 Obsidian UI System currently develops three product surfaces:
 
-- 🗺️ **Obsidian UI Atlas** — observes and captures Obsidian UI.
+- 🗺️ **Obsidian UI Mapping** — observes real Obsidian UI and maps it into structured evidence.
 - 🎨 **Obsidian UI System Figma** — turns validated package data into editable Figma components.
 - 🤖 **Obsidian UI Skill** — the future agent-facing implementation layer.
 

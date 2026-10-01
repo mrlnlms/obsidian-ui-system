@@ -1,20 +1,20 @@
-# Atlas canônico e Layout Probe Lab
+# Mapping canônico e Layout Probe Lab
 
 O plugin oferece duas abas independentes no workspace do Obsidian:
 
 | Entrada na paleta de comandos | Conteúdo | Export local |
 | --- | --- | --- |
-| **Open Obsidian UI Atlas** | Specimens e variants canônicos do `component-registry.ts`; captura pública normal | `dev-vault/.obsidian-ui-system/ui-catalog-exports/<timestamp>/` com `manifest.json`, `tokens.json`, `components.json` |
+| **Open Obsidian UI Mapping** | Specimens e variants canônicos do `component-registry.ts`; captura pública normal | `dev-vault/.obsidian-ui-system/ui-catalog-exports/<timestamp>/` com `manifest.json`, `tokens.json`, `components.json` |
 | **Open Obsidian UI Layout Lab** | Fixtures experimentais dos mesmos componentes reais em hosts e conteúdos controlados; medidas e inferências | `dev-vault/.obsidian-ui-system/layout-lab-exports/<timestamp>/layout.json` |
 
-Cada comando revela sua aba existente se já estiver aberta. O Atlas não monta fixtures nem roda probes ao abrir ou exportar o snapshot oficial. O Lab não produz o snapshot oficial. Ambos os diretórios de exportação são locais e ignorados pelo Git. Host, conteúdo e largura são contextos de medição, não variants do registry. O schema público permanece em `packages/ui-schema`; observações, inferências e `intermediateModel` do Lab permanecem experimentais.
+Cada comando revela sua aba existente se já estiver aberta. O Mapping não monta fixtures nem roda probes ao abrir ou exportar o snapshot oficial. O Lab não produz o snapshot oficial. Ambos os diretórios de exportação são locais e ignorados pelo Git. Host, conteúdo e largura são contextos de medição, não variants do registry. O schema público permanece em `packages/ui-schema`; observações, inferências e `intermediateModel` do Lab permanecem experimentais.
 
 ## Executar e conferir
 
 1. No vault `dev-vault`, abra **Open Obsidian UI Layout Lab** pela paleta. A aba apresenta os specimens do suite em hosts de 160, 240 e 480 CSS px. A lista de fixtures tem scroll próprio.
 2. Clique **Measure layout probes** para preencher as tabelas de inferências e caixas medidas, sem salvar arquivo. Expanda **Measured root boxes by host and content** para ver cada contexto.
 3. Clique **Export layout probes** para recriar fixtures, medir e gravar `layout.json`. Confira `observations`, `inferences`, `probeSuite`, `environment` e `viewport` no arquivo. O `intermediateModel` gerado fica dentro de cada inferência.
-4. Para o snapshot canônico, abra **Open Obsidian UI Atlas** e clique **Export snapshot**. Esse caminho é independente do Lab.
+4. Para o snapshot canônico, abra **Open Obsidian UI Mapping** e clique **Export snapshot**. Esse caminho é independente do Lab.
 
 O comando `npm run test:layout` testa a inferência sem abrir Obsidian; `npm run check`, `npm run build` e `npm run test:diff` validam TypeScript, plugin e comparador. Uma medição real continua necessária após mudanças em DOM, CSS, suite ou runtime do Obsidian.
 
@@ -22,7 +22,7 @@ O código fica em `layout-lab.ts` (view), `layout-probes.ts` (suite declarativa)
 
 ## Adicionar um probe
 
-Edite somente a seleção em [`layout-probes.ts`](../../../apps/obsidian-ui-atlas/src/layout-probes.ts), por exemplo:
+Edite somente a seleção em [`layout-probes.ts`](../../../apps/obsidian-ui-mapping/src/layout-probes.ts), por exemplo:
 
 ```ts
 specimens: [

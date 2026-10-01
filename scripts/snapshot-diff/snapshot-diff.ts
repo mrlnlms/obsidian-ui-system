@@ -25,7 +25,7 @@ export interface Specimen {
   dom: DomNode;
 }
 
-export interface AtlasExport {
+export interface MappingExport {
   directory: string;
   manifest: Record<string, unknown>;
   tokens: { values: Record<string, string>; scopes?: string[] };
@@ -192,7 +192,7 @@ function indexSpecimens(specimens: Specimen[], directory: string): Map<string, S
   return indexed;
 }
 
-export function compareExports(before: AtlasExport, after: AtlasExport): DiffReport {
+export function compareExports(before: MappingExport, after: MappingExport): DiffReport {
   const manifestFields = [...new Set([...manifestOrder, ...sortedUnion(before.manifest, after.manifest)])];
   const fields: ManifestField[] = manifestFields
     .filter((field) => has(before.manifest, field) || has(after.manifest, field))
@@ -267,7 +267,7 @@ function headingCount(counts: Counts): string {
 
 export function renderMarkdown(report: DiffReport): string {
   const lines = [
-    '# Atlas snapshot diff', '',
+    '# Mapping snapshot diff', '',
     `- Baseline: ${inline(report.baseline)}`,
     `- Target: ${inline(report.target)}`,
     `- Generated: ${inline(report.generatedAt)}`, '',

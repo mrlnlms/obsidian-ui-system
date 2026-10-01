@@ -10,10 +10,10 @@ The [reconstruction reference](../../docs/obsidian-ui-system-figma/components/co
 2. Open a **Figma Design** file in the **Figma Desktop** app on macOS or Windows. Local plugin development requires the desktop app.
 3. In the Figma menu, choose **Plugins → Development → Import new plugin from manifest…**. In some versions, right-click the canvas and choose **Plugins → Development → Import plugin from manifest**.
 4. Select `<repository>/apps/obsidian-ui-system-figma/manifest.json`. Select the manifest, not `dist/code.js`.
-5. In Obsidian Desktop, run **Export Obsidian UI Figma Package** from the Command Palette. Atlas and Layout Lab may remain closed. The command writes one ZIP in `dev-vault/obsidian-ui-exports/figma-packages/`.
+5. In Obsidian Desktop, run **Export Obsidian UI Figma Package** from the Command Palette. Mapping and Layout Lab may remain closed. The command writes one ZIP in `dev-vault/obsidian-ui-exports/figma-packages/`.
 6. Run **Obsidian UI System** under **Plugins → Development** (or from the Actions menu). Choose that `.zip` in **Figma Package**. After the package summary appears, click **Generate UI Kit**. The plugin checks the required font and generates both Component Sets: `Obsidian / Button` in the `Actions` section and `Obsidian / Search` in the `Inputs` section.
 
-The local export is ignored by Git; a copy of the real ZIP is committed under `tests/fixtures/` for repeatable importer tests. The ZIP must contain `package-manifest.json`, `manifest.json`, `components.json`, `tokens.json` and `layout.json`. Before enabling generation, the importer checks package format/version, schema `0.4.0`, layout model `atlas-layout-probes-2`, matching Atlas/Layout Lab environment, JSON integrity, tokens, and the evidence required by Button and Search. Invalid or incompatible packages show an error and leave the canvas untouched. `tokens.json` is validated but not yet used to assign Figma Variables; the components still use the observed computed styles. The [component reconstruction reference](../../docs/obsidian-ui-system-figma/components/component-reconstruction.md) describes mapping rules and validation limits.
+The local export is ignored by Git; a copy of a real ZIP created before the Mapping rename is committed under `tests/fixtures/` for repeatable importer tests. The ZIP must contain `package-manifest.json`, `manifest.json`, `components.json`, `tokens.json` and `layout.json`. Before enabling generation, the importer checks package format/version, schema `0.4.0`, current layout model `mapping-layout-probes-2` or historical `atlas-layout-probes-2`, matching Mapping/Layout Lab environment, JSON integrity, tokens, and the evidence required by Button and Search. Invalid or incompatible packages show an error and leave the canvas untouched. `tokens.json` is validated but not yet used to assign Figma Variables; the components still use the observed computed styles. The [component reconstruction reference](../../docs/obsidian-ui-system-figma/components/component-reconstruction.md) describes mapping rules and validation limits.
 
 Each run creates a new pair of sections to the right of the page's existing content. It does not update earlier Component Sets. Button keeps its `Label` property; Search keeps separate `Placeholder` and `Value` properties, with clear visibility driven by `State`. The Search set's 240 px initial width is only a demonstration host measured by the Lab, not an intrinsic width.
 
@@ -54,7 +54,7 @@ Run `npm run test:package --workspace @obsidian-ui-system/figma-plugin` to check
 
 - `src/code.ts`: Figma Component Set creation and font loading.
 - `src/font-resolution.ts`: deterministic CSS stack to required Figma font mapping.
-- `src/button-data.ts`: validates and maps Button evidence from Atlas and Layout Lab.
+- `src/button-data.ts`: validates and maps Button evidence from Mapping and Layout Lab.
 - `src/search-data.ts`: validates Search evidence and builds an experimental Figma-ready model.
 - `src/search-generation.ts`: creates the Search Component Set from positioned native nodes and the captured SVG masks.
 - `src/ui-kit-layout.ts`: calculates deterministic, non-overlapping section positions for each run.
