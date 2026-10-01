@@ -1,6 +1,6 @@
 # Obsidian UI System for Figma Design
 
-This local Figma Design development plugin runs a bounded ButtonComponent spike. Its Custom UI reads two local JSON files with `FileReader`; the plugin code receives their parsed contents through `postMessage` and creates one native `Obsidian / Button` Component Set with Normal, Disabled and CTA variants. It does not read the local filesystem directly or access the network.
+This local Figma Design development plugin imports the bounded ButtonComponent and SearchComponent pilots. Its Custom UI reads two local JSON files with `FileReader`; the plugin code receives their parsed contents through `postMessage` and creates native Component Sets. It does not read the local filesystem directly or access the network. The Button pilot was validated manually in Figma Desktop; Search still needs visual validation there.
 
 ## Build and install
 
@@ -8,18 +8,20 @@ This local Figma Design development plugin runs a bounded ButtonComponent spike.
 2. Open a **Figma Design** file in the **Figma Desktop** app on macOS or Windows. Local plugin development requires the desktop app.
 3. In the Figma menu, choose **Plugins → Development → Import new plugin from manifest…**. In some versions, right-click the canvas and choose **Plugins → Development → Import plugin from manifest**.
 4. Select this exact file: `/Users/mosx/Desktop/obsidian-ui-system/apps/figma-plugin/manifest.json` (or `<repository>/apps/figma-plugin/manifest.json` in another checkout). Select the manifest, not `dist/code.js`.
-5. Run **Obsidian UI System** under **Plugins → Development** (or from the Actions menu). Choose `components.json` from an Atlas export and `layout.json` from a Layout Lab export made in the same Obsidian environment. Click **Generate Button**. The plugin checks the required font automatically before creating any node. The selected Component Set should appear on the canvas.
+5. Run **Obsidian UI System** under **Plugins → Development** (or from the Actions menu). Choose `components.json` from an Atlas export and `layout.json` from a Layout Lab export made in the same Obsidian environment. Click **Generate Button** or **Generate Search**. The plugin checks the required font automatically before creating any node. The selected Component Set should appear on the canvas.
 
 For this checkout, the latest locally checked pair is:
 
 - `dev-vault/ui-catalog-exports/2026-09-30T23-41-12-506Z/components.json`
-- `dev-vault/layout-spike-exports/2026-09-30T23-42-18-726Z/layout.json`
+- `dev-vault/layout-spike-exports/2026-10-01T01-20-40-404Z/layout.json`
 
-These exports are ignored local evidence and may not exist in another checkout. `tokens.json` is not required: the Atlas already exports computed Button colors, and it does not record which token produced each color. See [the Button spike notes](../../docs/figma-button-spike.md) for the mapping and limits.
+These exports are ignored local evidence and may not exist in another checkout. Search requires a Lab export with `input::placeholder` CSSOM, present in the checked pair above; older Lab exports produce a clear error. `tokens.json` is not required: Atlas already exports computed colors, without recording which token produced each one. See [Button notes](../../docs/figma-button-spike.md) and [Search notes](../../docs/figma-search-spike.md) for mapping and limits.
+
+For Search visual validation, create an instance of `Obsidian / Search`, resize it horizontally and check that the surface/text stretch, the magnifier remains on the left and the clear icon stays on the right in Filled. Edit the `Placeholder` or `Query` TextNode to confirm that the text remains editable. Empty and Filled are static variants; changing text does not switch state. The 240 px initial width is a demonstration host measured by the Lab, not an intrinsic Search width.
 
 ## Typography prerequisite — macOS
 
-The default Obsidian UI uses the macOS system UI font stack. The Figma importer resolves this stack to **SF Pro / Regular** for the current Button. SF Pro must be available and activated in Figma Desktop before generation. This is a one-time environment setup:
+The default Obsidian UI uses the macOS system UI font stack. The Figma importer resolves this stack to **SF Pro / Regular** for the current Button and Search. SF Pro must be available and activated in Figma Desktop before generation. This is a one-time environment setup:
 
 1. Open Figma Desktop.
 2. Create or select a text layer.
@@ -46,13 +48,15 @@ npm run build --workspace @obsidian-ui-system/figma-plugin
 npm run dev --workspace @obsidian-ui-system/figma-plugin
 ```
 
-`dev` watches `src/*.ts` and recompiles `dist/code.js` when they change. After a rebuild, run the development plugin again in Figma Desktop. Each click on **Generate Button** adds another Component Set. Re-run `check` when changing TypeScript; watch mode only builds. If you change the manifest or `src/ui.html`, re-import or restart the plugin if the app does not pick up the change. A prior Component Set is not changed by rebuilding or generating a new one.
+`dev` watches `src/*.ts` and recompiles `dist/code.js` when they change. After a rebuild, run the development plugin again in Figma Desktop. Each click on a Generate button adds another Component Set. Re-run `check` when changing TypeScript; watch mode only builds. If you change the manifest or `src/ui.html`, re-import or restart the plugin if the app does not pick up the change. A prior Component Set is not changed by rebuilding or generating a new one.
 
 ## Files
 
 - `src/code.ts`: Figma Component Set creation and font loading.
 - `src/font-resolution.ts`: deterministic CSS stack to required Figma font mapping.
 - `src/button-data.ts`: validates and maps Button evidence from Atlas and Layout Lab.
+- `src/search-data.ts`: validates Search evidence and builds an experimental Figma-ready model.
+- `src/search-generation.ts`: creates the Search Component Set from positioned native nodes and the captured SVG masks.
 - `src/ui.html`: local file picker and status messages.
 - `manifest.json`: Figma Design plugin registration, pointing to `dist/code.js` and `src/ui.html`.
 - `dist/code.js`: generated locally and ignored by Git.

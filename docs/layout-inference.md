@@ -23,7 +23,7 @@ O usuário executou a exportação real `dev-vault/layout-spike-exports/2026-09-
 | Família | Raiz horizontal | Raiz vertical | Filhos / limite principal |
 | --- | --- | --- | --- |
 | Button (3 variants) | `hug/high` nas três, sem regra especial por ID | `fixed/high`, 30 px observados | Texto direto `hug/high`. Rótulo longo mede 253,83 px nos três hosts; nos hosts de 160 e 240 px ultrapassa a largura disponível, sem encolher. |
-| Search (2) | `fill/high`: 160 → 240 → 480 px | `fixed/high`, 30 px observados com textos curto/longo | Input acompanha a raiz (`fill/medium`); clear e anatomia de ícones continuam sem regra completa. |
+| Search (2) | `fill/high`: 160 → 240 → 480 px | `fixed/high`, 30 px observados com textos curto/longo | Input acompanha a raiz (`fill/medium`); offsets e máscaras SVG da lupa e do clear estão no CSSOM. Um export posterior capturou também o placeholder. |
 | Dropdown (3) | `unknown`: 129,58 px nos três hosts, mas não houve mutação pública de texto das opções | `fixed/medium`, 30 px observados | `<option>` tem caixas DOM `0 × 0`; o menu nativo não está representado por esses filhos. `max-width: 100%` computado sugere possível mudança em host ainda mais estreito, não testada. |
 | Slider (4) | Raiz `fill/high`: 160 → 240 → 480 px | `fixed/medium`, 19,5 px observados | O input/track interno permaneceu em 100 px; o mecanismo deixa sua regra em `unknown`. A imagem do Atlas confirma que ampliar a raiz não alonga a faixa visível. |
 | Setting (4) | Raiz `fill/high` em todos os estados | `unknown` em todos: altura varia com texto e/ou host | Layout composto e wrapping; em `standard`, 116,56 px nos hosts de 160/240, mas 68,48 px no de 480. Com rótulo longo, chega a 184,13 px nos hosts estreitos. No host de 160, conteúdo horizontal excede o client width (scroll width 196 px). |
@@ -41,7 +41,7 @@ Para avançar sem adivinhar, precisamos de:
 3. Identidade/visibilidade estável dos filhos e geometria de pseudo-elementos, ícones e superfícies nativas. CSSOM computado sozinho não prova se uma largura constante veio de `width` explícito, tamanho intrínseco ou regra do sistema operacional.
 4. Análise de flexibilidade e wrapping dos filhos de Setting em mais larguras; a estrutura composta precisa de decisões semânticas antes de virar camadas editáveis.
 
-**Intervenção manual ainda será necessária** para mapear a intenção de controles nativos (Dropdown), ícones/pseudo-elementos (Search), composição da faixa do Slider e estrutura/responsividade interna de Setting. Button continua apto como piloto restrito de modelo Figma-ready; Search é parcial. Esta análise precedeu o [spike Figma de Button](figma-button-spike.md).
+**Intervenção manual ainda será necessária** para mapear a intenção de controles nativos (Dropdown), composição da faixa do Slider e estrutura/responsividade interna de Setting. O [piloto Search](figma-search-spike.md) identificou SVGs e posicionamento dos pseudo-elementos; o novo export do Lab capturou `input::placeholder` e `appearance` e permitiu o modelo experimental. Esta análise precedeu o [spike Figma de Button](figma-button-spike.md).
 
 ## Limite de manutenção
 

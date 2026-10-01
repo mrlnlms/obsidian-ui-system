@@ -39,7 +39,9 @@ Sem `variants`, todas as variants canônicas da definição são usadas; sem `ho
 
 A [análise de inferência](layout-inference.md) registra a exportação de referência de 102 observações e 16 specimens: Button `hug/high` na horizontal; Search `fill/high`; Dropdown horizontal `unknown`; Slider raiz `fill/high` com faixa interna ainda `unknown`; Setting raiz `fill/high` e altura `unknown`. `fixed` vertical descreve invariância nos contextos medidos, não uma garantia universal. As regras estão em [`layout-inference.ts`](../apps/obsidian-capture/src/layout-inference.ts) e não dependem de IDs específicos.
 
-Os principais `unknown` restantes envolvem menu nativo e sizing do Dropdown, anatomia interna e ícones de Search, faixa interna do Slider e wrapping/filhos de Setting. O próximo uso planejado do Lab é reunir evidência para evoluir o **Figma-ready model** experimental. Isso não autoriza implementar o plugin do Figma nem promover campos para o schema público sem um milestone próprio.
+Os principais `unknown` restantes envolvem menu nativo e sizing do Dropdown, faixa interna do Slider e wrapping/filhos de Setting. O Lab continua reunindo evidência para modelos experimentais sem promover campos para o schema público. O milestone atual autoriza somente Search; não autoriza outros componentes.
+
+O [piloto Search](figma-search-spike.md) identificou anatomia, offsets e máscaras SVG nos exports reais. O Lab agora captura `input::placeholder` e `appearance`; a exportação `2026-10-01T01-20-40-404Z` forneceu os campos que faltavam e sustentou o [modelo Figma-ready experimental](figma-search-model.experimental.json). A validação visual do Search gerado no Figma ainda está pendente.
 
 ## Validação da separação
 

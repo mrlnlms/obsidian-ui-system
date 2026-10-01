@@ -17,6 +17,7 @@ const LAYOUT_PROPERTIES = [
   'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
   'width', 'height', 'min-width', 'max-width', 'min-height', 'max-height',
   'overflow', 'overflow-x', 'overflow-y',
+  'appearance', '-webkit-appearance',
   'position', 'top', 'right', 'bottom', 'left',
   'white-space', 'overflow-wrap', 'word-break', 'text-overflow', 'text-align',
   'font-family', 'font-size', 'font-weight', 'font-style', 'line-height', 'letter-spacing',
@@ -120,6 +121,12 @@ function pseudoOf(element: Element, view: Window): ElementNodeSnapshot['pseudo']
     if ((content && !['normal', 'none'].includes(content)) || image) {
       result[pseudo] = { content, styles: stylesOf(style) };
     }
+  }
+  // A placeholder is rendered text even though it has no DOM text node or content value.
+  // Capture its CSSOM explicitly so an importer need not guess its color or typography.
+  if (element instanceof HTMLInputElement && element.placeholder) {
+    const style = view.getComputedStyle(element, '::placeholder');
+    result['::placeholder'] = { content: element.placeholder, styles: stylesOf(style) };
   }
   return Object.keys(result).length ? result : undefined;
 }

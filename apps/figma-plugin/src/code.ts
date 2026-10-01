@@ -1,9 +1,14 @@
 import { readButtonImport } from './button-data';
 import { requiredFont, SF_PRO_SETUP_INSTRUCTIONS } from './font-resolution';
+import { generateSearch } from './search-generation';
 
 figma.showUI(__html__, { width: 380, height: 420 });
 
 figma.ui.onmessage = async (message: unknown) => {
+  if (isGenerateSearchMessage(message)) {
+    await generateSearch(message.components, message.layout);
+    return;
+  }
   if (!isGenerateMessage(message)) return;
 
   let set: ComponentSetNode | undefined;
@@ -139,6 +144,11 @@ figma.ui.onmessage = async (message: unknown) => {
     figma.ui.postMessage({ type: 'result', ok: false, text: detail });
   }
 };
+
+function isGenerateSearchMessage(value: unknown): value is { type: 'generate-search'; components: unknown; layout: unknown } {
+  return typeof value === 'object' && value !== null && 'type' in value && value.type === 'generate-search' &&
+    'components' in value && 'layout' in value;
+}
 
 function fontFailure(font: FontName, detail: string): Error {
   return new Error(font.family === 'SF Pro' ? `${detail}\n\n${SF_PRO_SETUP_INSTRUCTIONS}` : detail);
