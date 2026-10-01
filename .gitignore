@@ -6,6 +6,7 @@ apps/obsidian-ui-mapping/main.js
 apps/obsidian-ui-mapping/*.map
 apps/obsidian-ui-mapping/data.json
 apps/obsidian-ui-system-figma/dist/
+apps/obsidian-ui-system-figma/variables-pilot/dist/
 private/
 
 # Keep only the development plugin link in the vault configuration.

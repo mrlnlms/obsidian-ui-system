@@ -58,31 +58,32 @@ function sameValue(actual: VariableValue | undefined, expected: ProjectedValue, 
 }
 
 async function createPilot(source: VariablesPilotPackage, candidates: FigmaVariableCandidate[]) {
-  const collection = figma.variables.createVariableCollection(`Obsidian UI / Variables Pilot ${Date.now()}`);
+  const buildSha256 = source.manifest.technicalContext.buildSha256;
+  const collection = figma.variables.createVariableCollection(`Obsidian UI / Variables Pilot ${buildSha256.slice(0, 8)} ${Date.now()}`);
   let probe: FrameNode | undefined;
   try {
     const darkId = collection.modes[0].modeId;
     collection.renameMode(darkId, 'Dark');
     const lightId = collection.addMode('Light');
     const modeIds = { dark: darkId, light: lightId };
-    collection.setPluginData('obsidian-ui-pilot-source', JSON.stringify({
-      packageVersion: 2, schemaVersion: '0.5.0',
-      buildSha256: source.manifest.technicalContext.buildSha256,
-      assembledAt: source.manifest.assembledAt,
-    }));
     const byName = new Map<string, Variable>();
+    const descriptions = new Map<string, string>();
     for (const entry of candidates) {
       if (!entry.figmaType) throw new Error(`Tipo ausente: ${entry.cssName}`);
       const variable = figma.variables.createVariable(entry.cssName, collection, entry.figmaType);
-      variable.setPluginData('obsidian-ui-css-name', entry.cssName);
-      variable.setPluginData('obsidian-ui-projection', JSON.stringify({
-        decision: entry.decision, type: entry.figmaType, reason: entry.reason,
-        modes: entry.modes,
-        origins: {
-          dark: source.manifest.sources.dark.mapping.environment.capturedAt,
-          light: source.manifest.sources.light.mapping.environment.capturedAt,
+      const description = JSON.stringify({
+        source: { cssName: entry.cssName, packageVersion: 2, schemaVersion: '0.5.0',
+          buildSha256, assembledAt: source.manifest.assembledAt },
+        projection: { decision: entry.decision, type: entry.figmaType, reason: entry.reason },
+        modes: {
+          dark: { css: entry.modes.dark.computedCss, projected: entry.modes.dark.projected,
+            mappingCapturedAt: source.manifest.sources.dark.mapping.environment.capturedAt },
+          light: { css: entry.modes.light.computedCss, projected: entry.modes.light.projected,
+            mappingCapturedAt: source.manifest.sources.light.mapping.environment.capturedAt },
         },
-      }));
+      });
+      variable.description = description;
+      descriptions.set(entry.cssName, description);
       byName.set(entry.cssName, variable);
     }
     for (const entry of candidates) for (const mode of ['dark', 'light'] as const) {
@@ -97,8 +98,8 @@ async function createPilot(source: VariablesPilotPackage, candidates: FigmaVaria
     const report = [];
     for (const entry of candidates) {
       const variable = await figma.variables.getVariableByIdAsync(byName.get(entry.cssName)!.id);
-      if (!variable || variable.resolvedType !== entry.figmaType ||
-          variable.getPluginData('obsidian-ui-css-name') !== entry.cssName) {
+      if (!variable || variable.name !== entry.cssName || variable.resolvedType !== entry.figmaType ||
+          variable.description !== descriptions.get(entry.cssName)) {
         throw new Error(`Readback de identidade/tipo falhou: ${entry.cssName}`);
       }
       const modes = {} as Record<'dark' | 'light', unknown>;
@@ -117,10 +118,10 @@ async function createPilot(source: VariablesPilotPackage, candidates: FigmaVaria
           resolved: resolved.value, strategy: expected.strategy, modeId: modeIds[mode] };
       }
       report.push({ cssName: entry.cssName, decision: entry.decision, type: variable.resolvedType,
-        variableId: variable.id, reason: entry.reason, modes });
+        variableId: variable.id, reason: entry.reason, traceability: JSON.parse(variable.description), modes });
     }
     return { collectionId: collection.id, collectionName: collection.name,
-      buildSha256: source.manifest.technicalContext.buildSha256, tokens: report };
+      buildSha256, tokens: report };
   } catch (error) {
     collection.remove();
     throw error;

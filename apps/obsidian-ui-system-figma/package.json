@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "npm run check && esbuild src/code.ts --bundle --platform=browser --target=es2017 --outfile=dist/code.js && esbuild src/variables-pilot.ts --bundle --platform=browser --target=es2017 --outfile=dist/variables-pilot.js",
+    "build": "npm run check && esbuild src/code.ts --bundle --platform=browser --target=es2017 --outfile=dist/code.js && esbuild src/variables-pilot.ts --bundle --platform=browser --target=es2017 --outfile=variables-pilot/dist/code.js",
     "check": "tsc --noEmit",
     "test:font": "esbuild tests/font-resolution.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/font-resolution.test.cjs && node --test ../../.build/font-resolution.test.cjs",
     "test:search": "esbuild tests/search-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/search-data.test.cjs && node --test ../../.build/search-data.test.cjs",

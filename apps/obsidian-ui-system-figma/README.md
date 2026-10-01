@@ -2,7 +2,7 @@
 
 This local Figma Design development plugin imports the validated ButtonComponent and SearchComponent pilots. Its Custom UI reads one local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. The plugin validates and unpacks the ZIP locally, then creates native Component Sets. It does not read the local filesystem directly or access the network. Button and Search behavior was validated in Figma Desktop; automated importer tests also cover a real ZIP fixture.
 
-The [reconstruction reference](../../docs/obsidian-ui-system-figma/components/component-reconstruction.md) records the reusable rules demonstrated by these pilots. A separate development manifest tests three Package v2 Variables without changing this importer.
+The [reconstruction reference](../../docs/obsidian-ui-system-figma/components/component-reconstruction.md) records the reusable rules demonstrated by these pilots. A separate development plugin under `variables-pilot/` tests three Package v2 Variables without changing this importer.
 
 ## Build and install
 
@@ -34,7 +34,7 @@ The plugin checks `figma.listAvailableFontsAsync()`, loads the exact `FontName` 
 
 The checked package uses schema `0.4.0` and includes the Button's `fontStyle=normal`. Older `0.3.0` exports cannot satisfy automatic typography validation. Obsidian's `??` entries are a no-override sentinel, not a font family; Capture omits them from usable typography CSS variable values while `tokens.json` retains the literal raw CSS values. The plugin also filters sentinels during import.
 
-The manifest has no invented `id`. Figma assigns plugin IDs; its manifest documentation describes `id` as the ID used to publish updates. If Desktop requires an ID during import, use **Plugins → Development → New Plugin…** with the **Run once** template to obtain a Figma-issued ID, add that value as `"id"` in this manifest, then import this manifest. Keep `apps/obsidian-ui-system-figma/` as the source; the generated template is only for obtaining the ID. Publishing is outside this setup.
+The manifest has no invented `id`. Figma assigns plugin IDs; an ID is needed for private `pluginData` and publishing updates. The local importer and Variables pilot do not use private `pluginData`. If a future version needs it, obtain a Figma-issued ID through **Plugins → Development → New Plugin…**; do not invent one.
 
 ## Develop
 
@@ -52,9 +52,9 @@ Run `npm run test:package --workspace @obsidian-ui-system/figma-plugin` to check
 
 ### Package v2 Variables pilot
 
-The build also creates `dist/variables-pilot.js`. In a **disposable Figma Design file**, import `manifest.variables-pilot.json` as a separate development plugin and run **Obsidian UI Variables Pilot**. Select the controlled Package v2 ZIP from `dev-vault/obsidian-ui-exports/figma-packages/`, inspect the preview and the separate `--interactive-accent` CSS proof, then click **Criar e verificar 3 Variables**. The plugin creates a new collection named `Obsidian UI / Variables Pilot <timestamp>` with Dark/Light modes and three Variables. It reads back both mode values, verifies the `--modal-background` alias and mode switching, and displays the report in the UI. A successful collection remains in the disposable file; a failed attempt removes its new collection. Repeating a successful run creates another collection. No automatic cleanup is performed.
+The build also creates `variables-pilot/dist/code.js`. In a **disposable Figma Design file**, import `variables-pilot/manifest.json` as a separate development plugin and run **Obsidian UI Variables Pilot**. Figma requires the imported file to be named `manifest.json`; the root `manifest.json` remains the normal v1 importer. Select the controlled Package v2 ZIP from `dev-vault/obsidian-ui-exports/figma-packages/`, inspect the preview and the separate `--interactive-accent` CSS proof, then click **Criar e verificar 3 Variables**. The plugin creates a new collection named `Obsidian UI / Variables Pilot <build hash> <timestamp>` with Dark/Light modes and three Variables. It writes source/projection details into each Variable's description, reads back both mode values and descriptions, verifies the `--modal-background` alias and mode switching, and displays the report in the UI. This avoids private `pluginData`, which requires a Figma-issued plugin ID. A successful collection remains in the disposable file; a failed attempt removes its new collection. Repeating a successful run creates another collection. No automatic cleanup is performed.
 
-The v2 reader and projection are independent of `src/package-data.ts`; the normal importer still rejects v2. `--interactive-accent` is evaluated in the pilot UI browser and compared with the captured Button CTA, but is not created as a Variable. `TIMING`, `EASING`, and `STRING` are outside this pilot. Run `npm run test:variables --workspace @obsidian-ui-system/figma-plugin` for the pure projection and v2 reader tests. If Desktop requires a Figma-issued plugin ID, follow the ID procedure above for this separate manifest.
+The v2 reader and projection are independent of `src/package-data.ts`; the normal importer still rejects v2. `--interactive-accent` is evaluated in the pilot UI browser and compared with the captured Button CTA, but is not created as a Variable. `TIMING`, `EASING`, and `STRING` are outside this pilot. Run `npm run test:variables --workspace @obsidian-ui-system/figma-plugin` for the pure projection and v2 reader tests.
 
 ## Files
 
@@ -67,7 +67,7 @@ The v2 reader and projection are independent of `src/package-data.ts`; the norma
 - `src/package-data.ts`: ZIP decoding and input preflight before generation.
 - `src/variable-projection.ts`: pure, selective Package v2 token decisions.
 - `src/variables-pilot-package.ts`: bounded v2 reader for the separate pilot.
-- `src/variables-pilot.ts`, `src/variables-pilot.html`, `manifest.variables-pilot.json`: isolated Variable creation/readback and UI CSS color proof.
+- `src/variables-pilot.ts`, `variables-pilot/manifest.json`, `variables-pilot/ui.html`: isolated Variable creation/readback and UI CSS color proof.
 - `src/ui.html`: single ZIP picker, package summary and status messages.
 - `tests/fixtures/`: real Obsidian ZIP used by the importer tests.
 - `manifest.json`: Figma Design plugin registration, pointing to `dist/code.js` and `src/ui.html`.
