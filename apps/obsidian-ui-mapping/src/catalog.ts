@@ -1,6 +1,7 @@
 import { type App, ButtonComponent, ItemView, WorkspaceLeaf } from 'obsidian';
 import { componentRegistry, type RenderedSpecimen } from './component-registry';
 import { exportCatalog } from './export';
+import { exportBindingDiagnostic } from './binding-diagnostic-export';
 
 export const MAPPING_VIEW_TYPE = 'obsidian-ui-mapping-view';
 
@@ -40,6 +41,7 @@ export function renderCatalogSpecimens(host: HTMLElement, app: App, onActivate?:
 export class MappingView extends ItemView {
   private specimens: RenderedSpecimen[] = [];
   private exporting = false;
+  private diagnosing = false;
   private specimensEl: HTMLDivElement | null = null;
 
   constructor(leaf: WorkspaceLeaf) {
@@ -72,7 +74,7 @@ export class MappingView extends ItemView {
       .setButtonText('Export snapshot')
       .setCta()
       .onClick(async () => {
-        if (this.exporting) return;
+        if (this.exporting || this.diagnosing) return;
         this.exporting = true;
         status.setText('Exporting…');
         try {
@@ -94,6 +96,17 @@ export class MappingView extends ItemView {
     this.specimensEl = null;
     this.contentEl.empty();
     this.contentEl.removeClass('obsidian-ui-mapping-content');
+  }
+
+  async runBindingDiagnostic(): Promise<string> {
+    if (this.exporting || this.diagnosing) throw new Error('Mapping is already capturing specimens');
+    this.diagnosing = true;
+    try {
+      this.renderSpecimens();
+      return await exportBindingDiagnostic(this.app, this.specimens);
+    } finally {
+      this.diagnosing = false;
+    }
   }
 
   private renderSpecimens(): void {

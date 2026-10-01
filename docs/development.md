@@ -31,6 +31,8 @@ Each export creates `dev-vault/.obsidian-ui-system/ui-catalog-exports/<UTC times
 
 Run `npm run dev` from the repository root to rebuild `main.js` when `apps/obsidian-ui-mapping/src/` changes. The local [Hot Reload](https://github.com/pjeby/hot-reload) plugin watches the tracked `.hotreload` marker in the Mapping source. Enable Hot Reload under **Community plugins** when it is installed locally.
 
+For the narrow Button/Search binding investigation, run **Developer: Diagnose Button and Search token bindings** in each appearance mode. The command opens Mapping, recreates its specimens, and writes one ignored diagnostic JSON per run under `dev-vault/.obsidian-ui-system/binding-diagnostics/`. It inspects applicable CSSOM property declarations, temporarily overrides only the proposed custom property on each target element, reads the computed property, and restores the original inline state. Inspect `verification.restoredExactly` and `status` for each of the four cases. These diagnostics are retained until manually removed; the development export cleanup command does not remove them. They are separate from Mapping exports and all Figma Package versions.
+
 A reload can close Mapping and Layout Lab tabs because the plugin detaches its views on unload; run the matching Command Palette action to reopen them. A change to `manifest.json` may still require an Obsidian restart. For a one-time production build, use `npm run build`.
 
 Hot Reload is an ignored local dependency at `dev-vault/.obsidian/plugins/hot-reload/`. To reinstall the pinned version after cloning, run from the repository root:
@@ -109,6 +111,7 @@ npm run test:layout
 npm run test:typography --workspace @obsidian-ui-system/mapping
 npm run test:context --workspace @obsidian-ui-system/mapping
 npm run test:tokens --workspace @obsidian-ui-system/mapping
+npm run test:bindings --workspace @obsidian-ui-system/mapping
 npm run test:package --workspace @obsidian-ui-system/mapping
 npm run test:package:v2 --workspace @obsidian-ui-system/mapping
 npm run test:exports --workspace @obsidian-ui-system/mapping

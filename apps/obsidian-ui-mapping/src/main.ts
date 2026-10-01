@@ -8,6 +8,7 @@ export default class ObsidianUIMappingPlugin extends Plugin {
   private openingViews = new Map<string, Promise<void>>();
   private exportingPackage = false;
   private cleaningExports = false;
+  private diagnosingBindings = false;
 
   onload(): void {
     this.registerView(MAPPING_VIEW_TYPE, (leaf) => new MappingView(leaf));
@@ -26,6 +27,11 @@ export default class ObsidianUIMappingPlugin extends Plugin {
       id: 'export-figma-package',
       name: 'Export Obsidian UI Figma Package',
       callback: () => { void this.runPackageExport(); },
+    });
+    this.addCommand({
+      id: 'diagnose-component-token-bindings',
+      name: 'Developer: Diagnose Button and Search token bindings',
+      callback: () => { void this.runBindingDiagnostic(); },
     });
     this.addCommand({
       id: 'clean-development-exports',
@@ -77,6 +83,28 @@ export default class ObsidianUIMappingPlugin extends Plugin {
       console.error('Obsidian UI Figma Package export failed', error);
     } finally {
       this.exportingPackage = false;
+    }
+  }
+
+  private async runBindingDiagnostic(): Promise<void> {
+    if (this.diagnosingBindings) return;
+    this.diagnosingBindings = true;
+    const notice = new Notice('Diagnosing Button and Search token bindings…', 0);
+    try {
+      await this.openView(MAPPING_VIEW_TYPE);
+      const view = this.app.workspace.getLeavesOfType(MAPPING_VIEW_TYPE)[0]?.view;
+      if (!(view instanceof MappingView)) throw new Error('Mapping view is unavailable');
+      const path = await view.runBindingDiagnostic();
+      const base = this.app.vault.adapter instanceof FileSystemAdapter
+        ? this.app.vault.adapter.getBasePath() : this.app.vault.getName();
+      notice.setMessage(`Binding diagnostic saved: ${base}/${path}`);
+      setTimeout(() => notice.hide(), 10000);
+    } catch (error) {
+      notice.setMessage(`Binding diagnostic failed: ${error instanceof Error ? error.message : String(error)}`);
+      setTimeout(() => notice.hide(), 15000);
+      console.error('Binding diagnostic failed', error);
+    } finally {
+      this.diagnosingBindings = false;
     }
   }
 
