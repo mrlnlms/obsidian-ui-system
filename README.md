@@ -2,6 +2,14 @@
 
 A monorepo that captures the public Obsidian UI and imports the validated Button and Search pilots into Figma Design. The **Obsidian UI Atlas** plugin renders 26 public API families and exports canonical snapshots.
 
+The three product surfaces are:
+
+- 🗺️ **[Obsidian UI Atlas](apps/obsidian-ui-atlas/)** → observe and capture the real Obsidian UI.
+- 🎨 **[Obsidian UI System Figma](apps/obsidian-ui-system-figma/)** → turn the Figma Package into an editable UI Kit.
+- 🤖 **[Obsidian UI Skill](apps/obsidian-ui-skill/README.md)** → eventually help coding agents turn structured designs into Obsidian implementations. This product is only a placeholder today.
+
+Here, `apps/` means independently distributable products developed in this repository. Skills installed for an agent to help develop the repository use that agent's configuration, such as `.agents/skills/` or `.claude/skills/`; they are separate from the Obsidian UI Skill product.
+
 ## Current Figma workflow
 
 In Obsidian Desktop, run **Export Obsidian UI Figma Package** from the Command Palette. The Atlas and Layout Lab tabs can remain closed. This creates one ZIP in `dev-vault/obsidian-ui-exports/figma-packages/` from a consistent Atlas capture and Layout Lab run.
@@ -86,14 +94,14 @@ If a real directory occupies that path, inspect its contents before removing it;
 
 ## Project layout
 
-- `apps/obsidian-ui-atlas/`: current plugin source and build configuration.
+- `apps/obsidian-ui-atlas/`: Obsidian UI Atlas plugin source and build configuration.
 - `apps/obsidian-ui-system-figma/`: Figma Design importer for the Button and Search pilots; see its [local installation guide](apps/obsidian-ui-system-figma/README.md) and [component reconstruction reference](docs/obsidian-ui-system-figma/components/component-reconstruction.md).
-- `packages/ui-schema/`: initial shared TypeScript snapshot contract.
-- `skills/obsidian-ui/`: future agent skill placeholder.
+- `apps/obsidian-ui-skill/`: future Agent Skill product; no skill is implemented yet.
+- `packages/ui-schema/`: shared TypeScript snapshot contract for the product surfaces.
 - `dev-vault/`: isolated Obsidian test vault.
-- `docs/`: public guides grouped by named product and topic; see the [index](docs/README.md).
+- `docs/`: public guides for the products and their integration, grouped by topic; see the [index](docs/README.md).
 - `private/docs/plans/`: local, Git-ignored implementation plans; research notes and experimental models live under the matching product and topic in `private/docs/`.
-- `scripts/snapshot-diff/`: standalone semantic snapshot comparison CLI and tests. Build output under `.build/` is disposable and ignored by Git.
+- `scripts/snapshot-diff/`: monorepo tooling for semantic snapshot comparison and its tests. Build output under `.build/` is disposable and ignored by Git.
 
 ## Verification commands
 
