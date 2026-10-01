@@ -5,8 +5,7 @@ import { captureCatalog } from './export';
 import { renderLayoutFixtures, captureLayoutProbes } from './layout-capture';
 import { captureManifest } from './snapshot';
 import { buildFigmaPackageZip } from './figma-package-archive';
-
-const EXPORT_ROOT = 'figma-packages';
+import { ensureDirectory, FIGMA_PACKAGE_ROOT } from './export-paths';
 
 function assertSameEnvironment(doc: Document, capturedAt: string, expected: ReturnType<typeof captureManifest>): void {
   if (JSON.stringify(captureManifest(doc, capturedAt)) !== JSON.stringify(expected)) {
@@ -41,10 +40,10 @@ export async function exportFigmaPackage(app: App): Promise<string> {
       definition.variants.map((variant) => `${definition.id}/${variant.id}`));
     const zip = buildFigmaPackageZip({ ...canonical, layout }, expected);
     const adapter = app.vault.adapter;
-    if (!(await adapter.exists(EXPORT_ROOT))) await adapter.mkdir(EXPORT_ROOT);
+    await ensureDirectory(adapter, FIGMA_PACKAGE_ROOT);
     const base = `obsidian-ui-package-${capturedAt.replace(/[:.]/g, '-')}`;
-    let path = `${EXPORT_ROOT}/${base}.zip`;
-    for (let suffix = 2; await adapter.exists(path); suffix++) path = `${EXPORT_ROOT}/${base}-${suffix}.zip`;
+    let path = `${FIGMA_PACKAGE_ROOT}/${base}.zip`;
+    for (let suffix = 2; await adapter.exists(path); suffix++) path = `${FIGMA_PACKAGE_ROOT}/${base}-${suffix}.zip`;
     const temporary = `${path}.partial`;
     const binary = new Uint8Array(zip.length);
     binary.set(zip);

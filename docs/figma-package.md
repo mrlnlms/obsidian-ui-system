@@ -2,7 +2,7 @@
 
 ## Gerar
 
-No vault `dev-vault`, abra a Command Palette (`Cmd/Ctrl+P`) e execute **Export Obsidian UI Figma Package**. Atlas e Layout Lab podem estar fechados. O comando monta temporariamente os specimens canônicos e os probes no documento ativo, usa as mesmas rotinas de captura e inferência dos exports individuais, valida os resultados e salva `dev-vault/figma-packages/obsidian-ui-package-<timestamp UTC>.zip`. Uma notificação mostra o caminho final ou a causa da falha. Nenhum botão ou configuração foi adicionado às views.
+No vault `dev-vault`, abra a Command Palette (`Cmd/Ctrl+P`) e execute **Export Obsidian UI Figma Package**. Atlas e Layout Lab podem estar fechados. O comando monta temporariamente os specimens canônicos e os probes no documento ativo, usa as mesmas rotinas de captura e inferência dos exports individuais, valida os resultados e salva `dev-vault/obsidian-ui-exports/figma-packages/obsidian-ui-package-<timestamp UTC>.zip`. Uma notificação mostra o caminho final ou a causa da falha. Nenhum botão ou configuração foi adicionado às views.
 
 O ZIP contém, na raiz:
 
@@ -18,7 +18,7 @@ O ZIP contém, na raiz:
 
 ## Relação com os exports existentes
 
-**Obsidian UI Atlas** continua responsável pelo catálogo público e pelo export canônico em `ui-catalog-exports/`. **Obsidian UI Layout Lab** continua responsável pelos probes e inferências experimentais em `layout-spike-exports/`. O Package Builder apenas orquestra ambos numa execução e não altera o schema público nem as heurísticas. Os exports individuais permanecem disponíveis para diagnóstico.
+**Obsidian UI Atlas** continua responsável pelo catálogo público e pelo export canônico em `dev-vault/.obsidian-ui-system/ui-catalog-exports/`. **Obsidian UI Layout Lab** continua responsável pelos probes e inferências experimentais em `dev-vault/.obsidian-ui-system/layout-lab-exports/`. O Package Builder apenas orquestra ambos numa execução e não altera o schema público nem as heurísticas. Os exports individuais permanecem disponíveis para diagnóstico.
 
 O formato de transporte é `1`; o schema canônico atual é `0.4.0`, e o layout usa `atlas-layout-probes-2`. O importer Figma verifica esses três identificadores e a consistência do pacote antes de habilitar **Generate UI Kit**. Na UI do plugin, selecione apenas o ZIP em **Figma Package**; os JSONs individuais não são entradas separadas do fluxo normal.
 
@@ -26,11 +26,13 @@ Os pacotes ficam locais e ignorados por Git. O teste `npm run test:package --wor
 
 Em 2026-10-01, uma execução real gerou `obsidian-ui-package-2026-10-01T12-12-18-735Z.zip`: ZIP íntegro (CRC válido), cinco JSONs legíveis, 59 specimens, 945 tokens, 102 observações e 16 inferências. `manifest.json` e `layout.environment` coincidiram; Button manteve inferência horizontal `hug/high` e Search `fill/high`.
 
-## Artefatos locais e limpeza manual
+## Artefatos locais e limpeza
 
-`dev-vault/figma-packages/` guarda os ZIPs finais de transferência. `dev-vault/ui-catalog-exports/` e `dev-vault/layout-spike-exports/` guardam capturas individuais de desenvolvimento; `snapshot-diffs/` guarda relatórios de comparação para diagnóstico. Todos são ignorados pelo Git. O fixture ZIP versionado em `apps/figma-plugin/tests/fixtures/` é outra coisa: ele sustenta testes repetíveis e deve permanecer no repositório.
+`dev-vault/obsidian-ui-exports/figma-packages/` guarda os ZIPs finais de transferência. O usuário pode mantê-los ou apagá-los quando não forem mais necessários. `dev-vault/.obsidian-ui-system/` guarda apenas os exports técnicos do Atlas (`ui-catalog-exports/`), do Lab (`layout-lab-exports/`) e os relatórios de diff (`snapshot-diffs/`). O prefixo de ponto mantém a área técnica fora da navegação normal do vault. Ambas as áreas são ignoradas pelo Git.
 
-Na auditoria de 2026-10-01 havia 1 ZIP local (60 KB), 26 pastas do Atlas (4,4 MB), 9 pastas do Lab (7,1 MB) e 15 pastas de diff (2,6 MB). Pode-se remover manualmente exports e relatórios ignorados que já foram examinados e não serão usados como evidência ou comparação; isso não altera o código nem o fixture versionado. Preserve pelo menos o ZIP que pretende importar e qualquer export citado em uma investigação ainda em andamento. Nenhuma retenção ou limpeza automática está configurada.
+O comando **Clean Obsidian UI Development Exports**, na Command Palette, mostra as contagens por diretório e pede confirmação antes de apagar os arquivos técnicos. Ele não toca em Figma Packages. Não há retenção automática. O ZIP fixture versionado em `apps/figma-plugin/tests/fixtures/` continua no repositório para testes repetíveis.
+
+Os históricos anteriores à migração foram removidos dos locais visíveis após auditoria. As conclusões permanecem nos documentos de investigação; os caminhos timestampados desses documentos são referências históricas, não arquivos que ainda existam no vault. Para uma comparação reproduzível atual, gere dois novos exports individuais e use a CLI de diff.
 
 ## Dívida técnica para o próximo componente
 

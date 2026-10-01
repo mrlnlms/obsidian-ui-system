@@ -1,8 +1,7 @@
 import type { App } from 'obsidian';
 import { componentRegistry, type RenderedSpecimen } from './component-registry';
 import { captureComponents, captureManifest, captureTokens } from './snapshot';
-
-const EXPORT_ROOT = 'ui-catalog-exports';
+import { CATALOG_EXPORT_ROOT, ensureDirectory } from './export-paths';
 
 export async function captureCatalog(specimens: RenderedSpecimen[], capturedAt: string): Promise<{
   manifest: ReturnType<typeof captureManifest>;
@@ -28,11 +27,11 @@ export async function exportCatalog(app: App, specimens: RenderedSpecimen[]): Pr
   const { manifest, tokens, components } = await captureCatalog(specimens, capturedAt);
 
   const adapter = app.vault.adapter;
-  if (!(await adapter.exists(EXPORT_ROOT))) await adapter.mkdir(EXPORT_ROOT);
+  await ensureDirectory(adapter, CATALOG_EXPORT_ROOT);
   const baseName = capturedAt.replace(/[:.]/g, '-');
-  let folder = `${EXPORT_ROOT}/${baseName}`;
+  let folder = `${CATALOG_EXPORT_ROOT}/${baseName}`;
   for (let suffix = 2; await adapter.exists(folder); suffix++) {
-    folder = `${EXPORT_ROOT}/${baseName}-${suffix}`;
+    folder = `${CATALOG_EXPORT_ROOT}/${baseName}-${suffix}`;
   }
   await adapter.mkdir(folder);
   await adapter.write(`${folder}/manifest.json`, JSON.stringify(manifest, null, 2) + '\n');

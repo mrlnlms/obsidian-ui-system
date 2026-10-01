@@ -10,12 +10,12 @@ For the next component, follow the [reusable reconstruction reference](../../doc
 2. Open a **Figma Design** file in the **Figma Desktop** app on macOS or Windows. Local plugin development requires the desktop app.
 3. In the Figma menu, choose **Plugins → Development → Import new plugin from manifest…**. In some versions, right-click the canvas and choose **Plugins → Development → Import plugin from manifest**.
 4. Select this exact file: `/Users/mosx/Desktop/obsidian-ui-system/apps/figma-plugin/manifest.json` (or `<repository>/apps/figma-plugin/manifest.json` in another checkout). Select the manifest, not `dist/code.js`.
-5. In Obsidian Desktop, run **Export Obsidian UI Figma Package** from the Command Palette. Atlas and Layout Lab may remain closed. The command writes one ZIP in `dev-vault/figma-packages/`.
+5. In Obsidian Desktop, run **Export Obsidian UI Figma Package** from the Command Palette. Atlas and Layout Lab may remain closed. The command writes one ZIP in `dev-vault/obsidian-ui-exports/figma-packages/`.
 6. Run **Obsidian UI System** under **Plugins → Development** (or from the Actions menu). Choose that `.zip` in **Figma Package**. After the package summary appears, click **Generate UI Kit**. The plugin checks the required font and generates both Component Sets: `Obsidian / Button` in the `Actions` section and `Obsidian / Search` in the `Inputs` section.
 
 For this checkout, the package used in automated validation is:
 
-- `dev-vault/figma-packages/obsidian-ui-package-2026-10-01T12-12-18-735Z.zip`
+- `dev-vault/obsidian-ui-exports/figma-packages/obsidian-ui-package-2026-10-01T12-12-18-735Z.zip`
 
 The local export is ignored by Git; a copy of the real ZIP is committed under `tests/fixtures/` for repeatable importer tests. The ZIP must contain `package-manifest.json`, `manifest.json`, `components.json`, `tokens.json` and `layout.json`. Before enabling generation, the importer checks package format/version, schema `0.4.0`, layout model `atlas-layout-probes-2`, matching Atlas/Layout Lab environment, JSON integrity, tokens, and the evidence required by Button and Search. Invalid or incompatible packages show an error and leave the canvas untouched. `tokens.json` is validated but not yet used to assign Figma Variables; the components still use the observed computed styles. See [Button notes](../../docs/figma-button-spike.md) and [Search notes](../../docs/figma-search-spike.md) for mapping and limits.
 

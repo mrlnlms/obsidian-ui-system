@@ -1,8 +1,11 @@
 # Probes declarativos e inferência experimental de layout
 
+> Historical capture paths in this document refer to local evidence removed from the development vault during the 2026-10-01 export cleanup. The measured results remain recorded here; current exports use the hidden `.obsidian-ui-system/` area.
+
+
 Esta fase generaliza o [spike Button/Search](layout-spike.md). O [suite de probes](../apps/obsidian-capture/src/layout-probes.ts) escolhe cinco famílias do registry, hosts de **160, 240 e 480 CSS px** e amostras opcionais de texto curto/longo. Cada variant existente é renderizada pela mesma factory usada pelo catálogo e pelo snapshot público. Button usa `setButtonText`, Search usa `setPlaceholder` no estado vazio ou `setValue` no preenchido, e Setting usa `setName`; Dropdown e Slider recebem somente os três hosts. O campo `supportsLayoutContentProbe` declara a capacidade, sem codificar uma regra de inferência por componente. Host e conteúdo são contextos de medição; **não são variants**.
 
-No [Layout Probe Lab](layout-lab.md), **Measure layout probes** mostra medidas e classificações; **Export layout probes** grava `layout.json` em `dev-vault/layout-spike-exports/<timestamp>/` (local e ignorado pelo Git). O arquivo contém `probeSuite`, ambiente, viewport, observações DOM/CSS, inferências com evidência/confiança/probes e `intermediateModel` por `(id, variant)`. O [exemplo versionado do modelo](layout-spike-model.experimental.json) foi gerado da exportação real. Tudo permanece fora do `ui-schema`; `manifest.json`, `tokens.json` e `components.json` continuam iguais.
+No [Layout Probe Lab](layout-lab.md), **Measure layout probes** mostra medidas e classificações; **Export layout probes** grava `layout.json` em `dev-vault/.obsidian-ui-system/layout-lab-exports/<timestamp>/` (local e ignorado pelo Git). O arquivo contém `probeSuite`, ambiente, viewport, observações DOM/CSS, inferências com evidência/confiança/probes e `intermediateModel` por `(id, variant)`. O [exemplo versionado do modelo](layout-spike-model.experimental.json) foi gerado da exportação real. Tudo permanece fora do `ui-schema`; `manifest.json`, `tokens.json` e `components.json` continuam iguais.
 
 ## Regras atuais
 

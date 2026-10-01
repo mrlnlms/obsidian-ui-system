@@ -2,7 +2,6 @@
 node_modules/
 **/node_modules/
 .build/
-snapshot-diffs/
 apps/obsidian-capture/main.js
 apps/obsidian-capture/*.map
 apps/obsidian-capture/data.json
@@ -14,7 +13,6 @@ dev-vault/.obsidian/*
 dev-vault/.obsidian/plugins/*
 !dev-vault/.obsidian/plugins/obsidian-ui-atlas
 
-# Local catalog exports from the development vault.
-dev-vault/ui-catalog-exports/
-dev-vault/layout-spike-exports/
-dev-vault/figma-packages/
+# Local final packages and development diagnostics from the vault.
+dev-vault/obsidian-ui-exports/
+dev-vault/.obsidian-ui-system/

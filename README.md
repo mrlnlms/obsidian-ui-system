@@ -4,7 +4,7 @@ A monorepo for a structured representation of the Obsidian UI, a Figma importer 
 
 ## Current Figma workflow
 
-In Obsidian Desktop, run **Export Obsidian UI Figma Package** from the Command Palette. The Atlas and Layout Lab tabs can remain closed. This creates one ZIP in `dev-vault/figma-packages/` from a consistent Atlas capture and Layout Lab run.
+In Obsidian Desktop, run **Export Obsidian UI Figma Package** from the Command Palette. The Atlas and Layout Lab tabs can remain closed. This creates one ZIP in `dev-vault/obsidian-ui-exports/figma-packages/` from a consistent Atlas capture and Layout Lab run.
 
 In Figma Desktop, run the local **Obsidian UI System** plugin, **Choose ZIP** in **Figma Package**, then click **Generate UI Kit**. It creates the validated `Obsidian / Button` and `Obsidian / Search` Component Sets in `Actions` and `Inputs` sections. See the [Figma plugin installation guide](apps/figma-plugin/README.md) and [package format](docs/figma-package.md).
 
@@ -39,7 +39,7 @@ Run `npm run dev` at the repository root to rebuild `main.js` when `apps/obsidia
 
 In the development vault, open **Settings → Community plugins**, allow community plugins if prompted, then enable **Obsidian UI Atlas** and **Hot Reload**. Run **Open Obsidian UI Atlas** from the command palette. It opens or reveals one scrollable workspace tab containing only canonical registry specimens. The tab renders the public API families listed in the [inventory](docs/public-ui-inventory.md), grouped by category and labeled by variant. Direct overlays (`Modal`, `ConfirmationModal`, `Menu`, `Notice`) have **Open specimen** buttons; export opens and captures them one at a time. Press **Export snapshot** to recreate the declared variants and capture them. Running the command again reveals the existing tab. The plugin requires Obsidian 1.13.1 or newer for `DisplayValueComponent` support.
 
-Each export creates a timestamped folder at `dev-vault/ui-catalog-exports/<UTC timestamp>/` with `manifest.json`, `tokens.json`, and `components.json`. The manifest distinguishes the runtime Obsidian API version from the installed `obsidian` SDK package version and the snapshot schema version. These local outputs are ignored by Git. The [schema package](packages/ui-schema/README.md) describes the contract; [capture notes](docs/capture-milestone.md) explain what the export measures and its current limits. See the [registry guide](docs/component-registry.md) to add a component or variant.
+Each export creates a timestamped folder at `dev-vault/.obsidian-ui-system/ui-catalog-exports/<UTC timestamp>/` with `manifest.json`, `tokens.json`, and `components.json`. The manifest distinguishes the runtime Obsidian API version from the installed `obsidian` SDK package version and the snapshot schema version. These local outputs are ignored by Git. The [schema package](packages/ui-schema/README.md) describes the contract; [capture notes](docs/capture-milestone.md) explain what the export measures and its current limits. See the [registry guide](docs/component-registry.md) to add a component or variant.
 
 ## Compare two exports
 
@@ -49,7 +49,7 @@ Run the semantic snapshot diff from the repository root:
 npm run diff:snapshots -- <before-export-folder> <after-export-folder> [output-folder]
 ```
 
-The command writes `diff.json` and `diff.md`. Without an output argument, it uses an ignored folder under `snapshot-diffs/`. It compares specimens by `id + variant`, tokens by custom property name, and manifest fields separately. See the [comparison guide](docs/snapshot-diff.md) for an example using two real exports and an explanation of the categories.
+The command writes `diff.json` and `diff.md`. Without an output argument, it uses an ignored folder under `dev-vault/.obsidian-ui-system/snapshot-diffs/`. It compares specimens by `id + variant`, tokens by custom property name, and manifest fields separately. See the [comparison guide](docs/snapshot-diff.md) for an example using two real exports and an explanation of the categories.
 
 The [determinism check](docs/snapshot-determinism.md) records consecutive exports from the same Obsidian environment before batch 2 and classifies the observed manifest timestamp difference.
 
@@ -57,9 +57,11 @@ The [Light/Dark capture](docs/light-dark-capture.md) documents how to export the
 
 The [public API phase closure](docs/public-api-phase-complete.md) records the 26-family / 59-specimen milestone and its backlog. The [Figma readiness assessment](docs/figma-readiness.md) checks six representative specimens against the information needed for editable, responsive reconstruction. It is an analysis of the current snapshot, not a Figma importer.
 
-The [Layout Probe Lab](docs/layout-lab.md) is a separate technical workspace view. Open it with **Open Obsidian UI Layout Lab**. It measures registry definitions for Button, Search, Dropdown, Slider and Setting in controlled hosts, displays experimental sizing classifications, and saves `layout.json` under ignored `dev-vault/layout-spike-exports/<UTC timestamp>/`. The Lab has its own **Measure layout probes** and **Export layout probes** actions. Atlas **Export snapshot** does not run probes or write into the Lab export directory. The [inference analysis](docs/layout-inference.md) records current evidence and unknowns.
+The [Layout Probe Lab](docs/layout-lab.md) is a separate technical workspace view. Open it with **Open Obsidian UI Layout Lab**. It measures registry definitions for Button, Search, Dropdown, Slider and Setting in controlled hosts, displays experimental sizing classifications, and saves `layout.json` under ignored `dev-vault/.obsidian-ui-system/layout-lab-exports/<UTC timestamp>/`. The Lab has its own **Measure layout probes** and **Export layout probes** actions. Atlas **Export snapshot** does not run probes or write into the Lab export directory. The [inference analysis](docs/layout-inference.md) records current evidence and unknowns.
 
 The individual Atlas and Lab exports above remain available for development and diagnosis; the ZIP is the normal Figma transfer artifact.
+
+`dev-vault/obsidian-ui-exports/` contains final packages you may keep or delete. `dev-vault/.obsidian-ui-system/` contains hidden development captures and diff reports. Run **Clean Obsidian UI Development Exports** from the Obsidian Command Palette to review counts and confirm deletion of only the technical captures and reports. It never deletes Figma Packages. There is no automatic retention policy.
 
 The [Settings batch notes](docs/settings-batch.md) document the four Settings APIs, their runtime quirks, and the comparison with the preceding Dark snapshot.
 

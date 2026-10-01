@@ -5,8 +5,7 @@ import { layoutProbeSuite, resolveLayoutProbes } from './layout-probes';
 import { inferLayout, type LayoutInference } from './layout-inference';
 import { captureTypographyContext } from './typography-capture';
 import type { TypographyContext } from '@obsidian-ui-system/ui-schema';
-
-const EXPORT_ROOT = 'layout-spike-exports';
+import { ensureDirectory, LAYOUT_EXPORT_ROOT } from './export-paths';
 
 /** Explicit experimental CSSOM selection; this does not change ui-schema. */
 const LAYOUT_PROPERTIES = [
@@ -294,10 +293,10 @@ export async function exportLayoutProbes(app: App, fixtures: LayoutFixture[]): P
   const capturedAt = new Date().toISOString();
   const { layout, observations, inferences } = await captureLayoutProbes(fixtures, capturedAt);
   const adapter = app.vault.adapter;
-  if (!(await adapter.exists(EXPORT_ROOT))) await adapter.mkdir(EXPORT_ROOT);
+  await ensureDirectory(adapter, LAYOUT_EXPORT_ROOT);
   const baseName = capturedAt.replace(/[:.]/g, '-');
-  let folder = `${EXPORT_ROOT}/${baseName}`;
-  for (let suffix = 2; await adapter.exists(folder); suffix++) folder = `${EXPORT_ROOT}/${baseName}-${suffix}`;
+  let folder = `${LAYOUT_EXPORT_ROOT}/${baseName}`;
+  for (let suffix = 2; await adapter.exists(folder); suffix++) folder = `${LAYOUT_EXPORT_ROOT}/${baseName}-${suffix}`;
   await adapter.mkdir(folder);
   await adapter.write(`${folder}/layout.json`, JSON.stringify(layout, null, 2) + '\n');
   return { folder, observations, inferences };

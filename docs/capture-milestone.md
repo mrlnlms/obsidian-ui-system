@@ -1,6 +1,6 @@
 # Capture milestone: public API Atlas
 
-Run `npm run dev`, open the development vault in Obsidian, and use **Open Obsidian UI Atlas**. The command opens or reveals the same scrollable workspace tab. This `ItemView` instantiates 26 Obsidian public API families from the shared [component registry](component-registry.md), including the contextual APIs in [batch 6](contextual-batch.md). Press **Export snapshot** to save a timestamped folder under `dev-vault/ui-catalog-exports/`.
+Run `npm run dev`, open the development vault in Obsidian, and use **Open Obsidian UI Atlas**. The command opens or reveals the same scrollable workspace tab. This `ItemView` instantiates 26 Obsidian public API families from the shared [component registry](component-registry.md), including the contextual APIs in [batch 6](contextual-batch.md). Press **Export snapshot** to save a timestamped folder under `dev-vault/.obsidian-ui-system/ui-catalog-exports/`.
 
 ## Files
 

@@ -87,7 +87,7 @@ async function main(): Promise<void> {
   const afterDirectory = path.resolve(args[1]!);
   const outputDirectory = args[2]
     ? path.resolve(args[2])
-    : path.resolve('snapshot-diffs', `${path.basename(beforeDirectory)}__${path.basename(afterDirectory)}`);
+    : path.resolve('dev-vault/.obsidian-ui-system/snapshot-diffs', `${path.basename(beforeDirectory)}__${path.basename(afterDirectory)}`);
 
   const [before, after] = await Promise.all([readExport(beforeDirectory), readExport(afterDirectory)]);
   const report = compareExports(before, after);
