@@ -1,6 +1,6 @@
 # Obsidian UI System for Figma Design
 
-This local Figma Design development plugin imports the bounded ButtonComponent and SearchComponent pilots. Its Custom UI reads two local JSON files with `FileReader`; the plugin code receives their parsed contents through `postMessage` and creates native Component Sets. It does not read the local filesystem directly or access the network. Button was validated manually in Figma Desktop. Search layout, resizing, icons and text clipping were also validated manually; its new `Text` instance property still needs a panel check.
+This local Figma Design development plugin imports the bounded ButtonComponent and SearchComponent pilots. Its Custom UI reads two local JSON files with `FileReader`; the plugin code receives their parsed contents through `postMessage` and creates native Component Sets. It does not read the local filesystem directly or access the network. Button was validated manually in Figma Desktop. Search layout, resizing, icons and text clipping were also validated manually; its separate `Placeholder` and `Value` instance properties still need a panel check.
 
 For the next component, follow the [reusable reconstruction reference](../../docs/figma-component-reconstruction.md) and the Figma workflow in the repository's `AGENTS.md`.
 
@@ -19,7 +19,7 @@ For this checkout, the latest locally checked pair is:
 
 These exports are ignored local evidence and may not exist in another checkout. Search requires a Lab export with `input::placeholder` CSSOM, present in the checked pair above; older Lab exports produce a clear error. `tokens.json` is not required: Atlas already exports computed colors, without recording which token produced each one. See [Button notes](../../docs/figma-button-spike.md) and [Search notes](../../docs/figma-search-spike.md) for mapping and limits.
 
-For the remaining Search check, generate a new `Obsidian / Search` with this build, create an instance of each `State` variant and edit `Text` in the right panel. Confirm that the displayed text changes, then resize the instances horizontally to confirm the previously validated positioning and clipping. Empty and Filled are static variants; changing `Text` does not switch `State`. The 240 px initial width is a demonstration host measured by the Lab, not an intrinsic Search width. Existing Component Sets do not gain the new property automatically; generate a new one for this check.
+For the remaining Search check, generate a new `Obsidian / Search` with this build and create an instance. `State=Empty` should show `Placeholder=Search example` without a clear icon; `State=Filled` should show `Value=Atlas query` with the clear icon. Edit each property separately in the right panel, switch `State` in both directions and confirm that each state displays its own text and keeps its override. Resize horizontally to confirm positioning and clipping. Changing either text property does not switch `State`. The 240 px initial width is a demonstration host measured by the Lab, not an intrinsic Search width. Existing Component Sets do not gain the new properties automatically; generate a new one for this check.
 
 ## Typography prerequisite — macOS
 

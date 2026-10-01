@@ -135,33 +135,42 @@ export async function generateSearch(componentsJson: unknown, layoutJson: unknow
     if (set.children.length !== 2 || set.componentPropertyDefinitions.State?.type !== 'VARIANT') {
       throw new Error('Figma não criou as duas variants Search com State.');
     }
-    const textProperty = set.addComponentProperty('Text', 'TEXT', first.text);
+    const empty = models.find((model) => model.state === 'Empty');
+    const filled = models.find((model) => model.state === 'Filled');
+    if (!empty || !filled) throw new Error('Search: Empty ou Filled ausente no modelo.');
+    const placeholderProperty = set.addComponentProperty('Placeholder', 'TEXT', empty.text);
+    const valueProperty = set.addComponentProperty('Value', 'TEXT', filled.text);
     const textDefinitions = Object.entries(set.componentPropertyDefinitions)
       .filter(([, definition]) => definition.type === 'TEXT');
-    if (!textProperty.startsWith('Text#') || textDefinitions.length !== 1 ||
-        textDefinitions[0]![0] !== textProperty ||
-        set.componentPropertyDefinitions[textProperty]?.defaultValue !== first.text) {
-      throw new Error(`Search: Figma não registrou a propriedade TEXT retornada (${textProperty}).`);
+    if (!placeholderProperty.startsWith('Placeholder#') || !valueProperty.startsWith('Value#') ||
+        textDefinitions.length !== 2 ||
+        set.componentPropertyDefinitions[placeholderProperty]?.defaultValue !== empty.text ||
+        set.componentPropertyDefinitions[valueProperty]?.defaultValue !== filled.text) {
+      throw new Error(`Search: Figma não registrou Placeholder e Value ` +
+        `(${placeholderProperty}, ${valueProperty}).`);
     }
     for (let index = 0; index < components.length; index++) {
       const label = textNodes[index]!;
       const model = models[index]!;
-      label.componentPropertyReferences = { characters: textProperty };
-      // The set has one property ID; each variant retains its observed default text.
-      label.characters = model.text;
+      const property = model.state === 'Empty' ? placeholderProperty : valueProperty;
+      label.componentPropertyReferences = { characters: property };
       const viewport = label.parent;
-      if (label.componentPropertyReferences?.characters !== textProperty || label.characters !== model.text ||
+      if (label.componentPropertyReferences?.characters !== property || label.characters !== model.text ||
           viewport?.type !== 'FRAME' || !viewport.clipsContent ||
           components[index]!.width !== model.widthForCanvas || components[index]!.height !== model.height) {
         throw new Error(`Search ${model.state}: Text alterou binding, conteúdo, clipping ou sizing da variant.`);
       }
-      verifyInstanceText(components[index]!, model.state, model.text, textProperty);
+    }
+    // Both bindings must exist before an instance switches between variants.
+    for (let index = 0; index < components.length; index++) {
+      verifyInstanceText(components[index]!, models[index]!.state, empty, filled,
+        placeholderProperty, valueProperty);
     }
     arrangeSet(set, components);
     figma.currentPage.selection = [set];
     figma.viewport.scrollAndZoomIntoView([set]);
     figma.ui.postMessage({ type: 'result', ok: true,
-      text: 'Obsidian / Search criado com Empty e Filled. Edite Text no painel da instance e redimensione para validar no Figma.' });
+      text: 'Obsidian / Search criado com Empty e Filled. Edite Placeholder e Value na instance e alterne State para validar no Figma.' });
   } catch (error) {
     if (fontProbe && !fontProbe.removed) fontProbe.remove();
     if (set && !set.removed) set.remove();
@@ -171,23 +180,58 @@ export async function generateSearch(componentsJson: unknown, layoutJson: unknow
   }
 }
 
-function verifyInstanceText(component: ComponentNode, state: string, expected: string, property: string): void {
+function verifyInstanceText(component: ComponentNode, initialState: 'Empty' | 'Filled',
+  empty: ReturnType<typeof readSearchImport>[number], filled: ReturnType<typeof readSearchImport>[number],
+  placeholderProperty: string, valueProperty: string): void {
   const instance = component.createInstance();
   try {
-    const label = instance.findOne((node) => node.type === 'TEXT') as TextNode | null;
-    const viewport = instance.findOne((node) => node.type === 'FRAME' && node.name === 'Text viewport') as FrameNode | null;
-    const text = instance.componentProperties[property];
-    if (instance.componentProperties.State?.value !== state || text?.type !== 'TEXT' ||
-        text.value !== expected || label?.characters !== expected || !viewport?.clipsContent) {
-      throw new Error(`Search ${state}: Text da instance divergiu ` +
-        `(key=${property}, keys=${Object.keys(instance.componentProperties).join(', ')}, ` +
-        `value=${text?.value}, label=${label?.characters}, expected=${expected}).`);
-    }
-    instance.setProperties({ [property]: 'OK' });
-    const updatedLabel = instance.findOne((node) => node.type === 'TEXT') as TextNode | null;
-    if (instance.componentProperties[property]?.value !== 'OK' || updatedLabel?.characters !== 'OK' ||
-        !viewport.clipsContent || instance.width !== component.width || instance.height !== component.height) {
-      throw new Error(`Search ${state}: editar Text na instance não atualizou o TextNode.`);
+    const models = { Empty: empty, Filled: filled };
+    const otherState = initialState === 'Empty' ? 'Filled' : 'Empty';
+    const editedPlaceholder = 'Find notes';
+    const editedValue = 'Saved query';
+    assertInstance(initialState, empty.text, filled.text);
+    instance.setProperties({ [placeholderProperty]: editedPlaceholder });
+    assertInstance(initialState, editedPlaceholder, filled.text);
+    instance.setProperties({ [valueProperty]: editedValue });
+    assertInstance(initialState, editedPlaceholder, editedValue);
+    instance.setProperties({ State: otherState });
+    assertInstance(otherState, editedPlaceholder, editedValue);
+    instance.setProperties({ State: initialState });
+    assertInstance(initialState, editedPlaceholder, editedValue);
+
+    const widerWidth = component.width + 80;
+    instance.resize(widerWidth, component.height);
+    assertInstance(initialState, editedPlaceholder, editedValue, widerWidth);
+    instance.setProperties({ State: otherState });
+    assertInstance(otherState, editedPlaceholder, editedValue, widerWidth);
+
+    function assertInstance(state: 'Empty' | 'Filled', placeholder: string, value: string,
+      expectedWidth = component.width): void {
+      const properties = instance.componentProperties;
+      const label = instance.findOne((node) => node.type === 'TEXT') as TextNode | null;
+      const viewport = instance.findOne((node) => node.type === 'FRAME' && node.name === 'Text viewport') as FrameNode | null;
+      const surface = instance.findOne((node) => node.name === 'Input surface') as RectangleNode | null;
+      const search = instance.findOne((node) => node.name === 'Search icon') as FrameNode | null;
+      const clear = instance.findOne((node) => node.name === 'Clear button') as FrameNode | null;
+      const model = models[state];
+      const expectedText = state === 'Empty' ? placeholder : value;
+      const expectedClear = state === 'Filled';
+      const close = (actual: number, expected: number): boolean => Math.abs(actual - expected) < 0.5;
+      if (properties.State?.value !== state || properties[placeholderProperty]?.type !== 'TEXT' ||
+          properties[placeholderProperty]?.value !== placeholder || properties[valueProperty]?.type !== 'TEXT' ||
+          properties[valueProperty]?.value !== value || label?.characters !== expectedText ||
+          label?.componentPropertyReferences?.characters !== (state === 'Empty' ? placeholderProperty : valueProperty) ||
+          !viewport?.clipsContent || !surface || !search || !clear || clear.visible !== expectedClear ||
+          !close(instance.width, expectedWidth) || !close(instance.height, model.height) ||
+          !close(surface.width, expectedWidth) ||
+          !close(viewport.width, expectedWidth - model.input.padding.left - model.input.padding.right) ||
+          !close(search.x, model.icons.search.left) || !close(search.y, model.icons.search.top) ||
+          (expectedClear && !close(clear.x, expectedWidth - model.icons.clear.right - model.icons.clear.boxWidth))) {
+        throw new Error(`Search ${initialState} → ${state}: instance divergiu ` +
+          `(properties=${JSON.stringify(properties)}, label=${label?.characters}, ` +
+          `binding=${label?.componentPropertyReferences?.characters}, clear=${clear?.visible}, ` +
+          `width=${instance.width}, viewport=${viewport?.width}, expectedText=${expectedText}).`);
+      }
     }
   } finally {
     instance.remove();
