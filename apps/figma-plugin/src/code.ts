@@ -59,12 +59,14 @@ figma.ui.onmessage = async (message: unknown) => {
 
     set = figma.combineAsVariants(components, figma.currentPage);
     set.name = 'Obsidian / Button';
-    const fontRecord = { requestedCssStack: data[0].fontFamily,
-      requestedCssVariables: data[0].typography.cssVariables,
-      requestedDeclaration: data[0].typography.fontFamilyDeclaration,
-      usedFigmaFont: font };
-    set.setPluginData('obsidian-ui-typography', JSON.stringify(fontRecord));
-    set.description = `Typography requested (CSS): ${data[0].fontFamily}\nFigma font used: ${font.family} / ${font.style}`;
+    // Development manifests can have no Figma-issued plugin ID; private plugin data requires one.
+    // Component descriptions are native, inspectable, and work for an imported development plugin.
+    set.description = [
+      `Typography requested (CSS): ${data[0].fontFamily}`,
+      `Typography declaration: ${data[0].typography.fontFamilyDeclaration}`,
+      `Typography CSS variables: ${JSON.stringify(data[0].typography.cssVariables)}`,
+      `Figma font used: ${font.family} / ${font.style}`,
+    ].join('\n');
     if (set.children.length !== 3 || set.componentPropertyDefinitions.State?.type !== 'VARIANT') {
       throw new Error('O Figma não criou as três variants com a propriedade State.');
     }
