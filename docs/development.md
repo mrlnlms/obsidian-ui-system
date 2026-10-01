@@ -15,7 +15,7 @@ npm ci
 npm run build
 ```
 
-The build writes `apps/obsidian-ui-mapping/main.js`, `apps/obsidian-ui-system-figma/dist/code.js`, and the snapshot comparison CLI under `.build/snapshot-diff/`. These outputs are ignored by Git and can be regenerated. `npm run check` runs TypeScript checks without building.
+The build writes `apps/obsidian-ui-mapping/main.js`, `apps/obsidian-ui-system-figma/dist/code.js`, the snapshot comparison CLI under `.build/snapshot-diff/`, and the Package v2 CLI under `.build/figma-package-v2/`. These outputs are ignored by Git and can be regenerated. `npm run check` runs TypeScript checks without building.
 
 ## Obsidian development vault and Mapping
 
@@ -60,7 +60,7 @@ Inspect a real directory at that path before removing it; the command does not o
 
 Mapping **Export snapshot** does not run the Lab or write to its export directory. The two individual export commands are for development and diagnosis; the Figma Package ZIP is the normal transfer artifact. The [Lab guide](obsidian-ui-mapping/layout-lab/layout-lab.md) explains the view and measurements, and the [inference guide](obsidian-ui-mapping/layout-lab/layout-inference.md) records the current evidence and unknowns.
 
-For a controlled appearance pair, export Mapping and Layout Lab once in Dark and once in Light without rebuilding the plugin or resizing the Obsidian window. Each of the four timestamped folders contains `capture-context.json`; compare its build hash, viewport, runtime/SDK/schema versions, platform, and mode. The two Layout exports preserve raw visual observations separately. Select one Layout export as the inference source and record its mode and `environment.capturedAt`; this does not create two layout models. The current individual exports do not create a multi-mode Package. Restore the original appearance after capture. Community theme name is still `null`, so matching technical context does not prove that an unreported theme or snippet setting stayed unchanged.
+For a controlled appearance pair, export Mapping and Layout Lab once in Dark and once in Light without rebuilding the plugin or resizing the Obsidian window. Each of the four timestamped folders contains `capture-context.json`; compare its build hash, viewport, runtime/SDK/schema versions, platform, and mode. The two Layout exports preserve raw visual observations separately. Select one Layout export as the inference source and record its mode and `environment.capturedAt`; this does not create two layout models. Restore the original appearance after capture. Community theme name is still `null`, so matching technical context does not prove that an unreported theme or snippet setting stayed unchanged.
 
 ## Semantic snapshot diff
 
@@ -80,6 +80,19 @@ The CLI compares specimens by `id + variant`, tokens by CSS custom property name
 
 Run **Export Obsidian UI Figma Package** in the Obsidian Command Palette to build one consistent ZIP from Mapping and Lab without opening either view. The completed ZIP goes to `dev-vault/obsidian-ui-exports/figma-packages/`; the command reports its path. The builder removes its own staging file after a successful transfer, so package generation needs no follow-up cleanup. A handled failure writes a small diagnostic under `dev-vault/.obsidian-ui-system/package-failures/` and reports that path. The [package guide](integration/figma-package/figma-package.md) describes the format and failure behavior.
 
+To assemble a multi-mode Package v2 from four **existing** individual export folders, run from the repository root:
+
+```sh
+npm run package:v2 -- \
+  --dark-mapping dev-vault/.obsidian-ui-system/ui-catalog-exports/DARK_MAPPING_TIMESTAMP \
+  --dark-layout dev-vault/.obsidian-ui-system/layout-lab-exports/DARK_LAYOUT_TIMESTAMP \
+  --light-mapping dev-vault/.obsidian-ui-system/ui-catalog-exports/LIGHT_MAPPING_TIMESTAMP \
+  --light-layout dev-vault/.obsidian-ui-system/layout-lab-exports/LIGHT_LAYOUT_TIMESTAMP \
+  --inference-source dark
+```
+
+The CLI validates the four `capture-context.json` files and their sibling artifacts, then writes an exclusively created `obsidian-ui-package-v2-<assembly timestamp>.zip` in the same ignored package directory. Mapping and Layout Lab timestamps may differ. `--inference-source` can be `dark` or `light` and defaults to `dark`; `--output PATH` optionally chooses another destination. Source folders and final ZIPs remain until manual removal. The Figma importer still accepts only Package v1; v2 is an evidence artifact for the next implementation stage.
+
 To install, configure, and run the local Figma importer, follow the [Figma plugin guide](../apps/obsidian-ui-system-figma/README.md). On macOS, SF Pro / Regular must be available and render in Figma Desktop; the importer stops if that requirement fails. The Figma guide contains the font activation and plugin installation steps.
 
 `dev-vault/obsidian-ui-exports/` holds final ZIPs that you may keep or delete. Hidden `dev-vault/.obsidian-ui-system/` holds technical Mapping/Lab exports, diff reports, package staging, and failure diagnostics. Both areas are ignored by Git. **Developer: Clean Obsidian UI Development Exports** is optional maintenance: it shows counts, asks for confirmation, and removes individual Mapping/Lab exports and diff reports. It leaves final Figma Packages and failure diagnostics untouched. Deliberate development exports have no automatic retention policy.
@@ -97,6 +110,7 @@ npm run test:typography --workspace @obsidian-ui-system/mapping
 npm run test:context --workspace @obsidian-ui-system/mapping
 npm run test:tokens --workspace @obsidian-ui-system/mapping
 npm run test:package --workspace @obsidian-ui-system/mapping
+npm run test:package:v2 --workspace @obsidian-ui-system/mapping
 npm run test:exports --workspace @obsidian-ui-system/mapping
 npm run test:lifecycle --workspace @obsidian-ui-system/mapping
 npm run test:font --workspace @obsidian-ui-system/figma-plugin

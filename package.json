@@ -7,10 +7,12 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace @obsidian-ui-system/mapping && npm run build --workspace @obsidian-ui-system/figma-plugin && npm run build:diff",
+    "build": "npm run build --workspace @obsidian-ui-system/mapping && npm run build --workspace @obsidian-ui-system/figma-plugin && npm run build:diff && npm run build:package:v2",
     "build:diff": "tsc --project scripts/snapshot-diff/tsconfig.json",
+    "build:package:v2": "tsc --noEmit --project scripts/figma-package-v2/tsconfig.json && esbuild scripts/figma-package-v2/build.ts --bundle --platform=node --format=esm --outfile=.build/figma-package-v2/build.mjs",
+    "package:v2": "npm run build:package:v2 && node .build/figma-package-v2/build.mjs",
     "dev": "npm run dev --workspace @obsidian-ui-system/mapping",
-    "check": "npm run check --workspace @obsidian-ui-system/mapping && npm run check --workspace @obsidian-ui-system/figma-plugin && tsc --noEmit --project scripts/snapshot-diff/tsconfig.json",
+    "check": "npm run check --workspace @obsidian-ui-system/mapping && npm run check --workspace @obsidian-ui-system/figma-plugin && tsc --noEmit --project scripts/snapshot-diff/tsconfig.json && tsc --noEmit --project scripts/figma-package-v2/tsconfig.json",
     "test:diff": "npm run build:diff && node --test .build/snapshot-diff/snapshot-diff.test.js",
     "test:layout": "esbuild apps/obsidian-ui-mapping/src/layout-inference.test.ts --bundle --platform=node --format=cjs --outfile=.build/layout-inference.test.cjs && node --test .build/layout-inference.test.cjs",
     "diff:snapshots": "npm run build:diff && node .build/snapshot-diff/diff-snapshots.js"

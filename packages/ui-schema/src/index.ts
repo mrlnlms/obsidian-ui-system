@@ -137,3 +137,35 @@ export interface CaptureContext {
   };
   viewport: { widthPx: number; heightPx: number; devicePixelRatio: number };
 }
+
+/** Package v2 joins individual 0.4.0 captures; it does not change their schema. */
+export interface MultiModePackageManifest {
+  schemaVersion: '0.5.0';
+  modes: ['dark', 'light'];
+  assembledAt: string;
+  sources: {
+    dark: { mapping: CaptureContext; layout: CaptureContext };
+    light: { mapping: CaptureContext; layout: CaptureContext };
+  };
+  technicalContext: {
+    status: 'verified';
+    buildSha256: string;
+    viewport: CaptureContext['viewport'];
+    obsidianVersion: string;
+    obsidianSdkVersion: string;
+    sourceSchemaVersion: '0.4.0';
+    platform: string;
+  };
+  inferenceSource: { mode: TokenMode; layoutCapturedAt: string };
+}
+
+export interface MultiModeTokens {
+  scopes: ['html', 'body'];
+  coverage: { dark: TokenEvidenceCapture['coverage']; light: TokenEvidenceCapture['coverage'] };
+  tokens: Record<string, { dark?: TokenModeObservation; light?: TokenModeObservation }>;
+}
+
+export interface MultiModeComponents {
+  dark: ComponentSnapshot[];
+  light: ComponentSnapshot[];
+}

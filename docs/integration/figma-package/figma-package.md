@@ -1,6 +1,6 @@
 # Pacote de transferência para Figma
 
-## Gerar
+## Gerar Package v1
 
 No vault `dev-vault`, abra a Command Palette (`Cmd/Ctrl+P`) e execute **Export Obsidian UI Figma Package**. Mapping e Layout Lab podem estar fechados. O comando monta temporariamente os specimens canônicos e os probes no documento ativo, usa as mesmas rotinas de captura e inferência dos exports individuais, valida os resultados e salva `dev-vault/obsidian-ui-exports/figma-packages/obsidian-ui-package-<timestamp UTC>.zip`. Uma notificação mostra o caminho final ou a causa da falha. Nenhum botão ou configuração foi adicionado às views.
 
@@ -25,6 +25,24 @@ Em falha tratada, `.obsidian-ui-system/package-failures/<run-id>.json` guarda um
 **Obsidian UI Mapping** continua responsável pelo catálogo público e pelo export canônico em `dev-vault/.obsidian-ui-system/ui-catalog-exports/`. **Obsidian UI Layout Lab** continua responsável pelos probes e inferências experimentais em `dev-vault/.obsidian-ui-system/layout-lab-exports/`. O Package Builder apenas orquestra ambos numa execução e não altera o schema público nem as heurísticas. Os exports individuais permanecem disponíveis para diagnóstico.
 
 O formato de transporte é `1`; o schema canônico atual é `0.4.0`, e novos exports de layout usam `mapping-layout-probes-2`. O importer Figma também aceita `atlas-layout-probes-2` em pacotes exportados antes da renomeação. Ele verifica esses identificadores e a consistência do pacote antes de habilitar **Generate UI Kit**. Na UI do plugin, selecione apenas o ZIP em **Figma Package**; os JSONs individuais não são entradas separadas do fluxo normal.
+
+## Package v2 multi-mode
+
+O builder v2 é uma CLI de desenvolvimento que agrega quatro exports individuais já capturados: Mapping Dark, Layout Lab Dark, Mapping Light e Layout Lab Light. O comando completo e os destinos estão em [Desenvolvimento](../../development.md#figma-package-and-local-artifacts). O comando de Obsidian acima continua gerando v1; o importer Figma atual rejeita v2 antes de tentar gerar componentes.
+
+O ZIP v2 conserva os cinco nomes de arquivo, mas usa `obsidian-ui-figma-package` versão `2` e schema agregado `0.5.0`:
+
+| Arquivo | Contrato v2 |
+| --- | --- |
+| `package-manifest.json` | Transporte v2, schema agregado e identificadores dos modelos de token, componente e layout |
+| `manifest.json` | `modes: ["dark", "light"]`, horário de montagem, quatro `capture-context.json` de origem, contexto técnico verificado e origem da camada de inferências |
+| `tokens.json` | Uma identidade por nome CSS; observações opcionais Dark e Light, cada uma completa, com cobertura CSSOM por mode; sem `tokens.values` |
+| `components.json` | Arrays completos de snapshots em `dark` e `light` |
+| `layout.json` | Uma suite, observações brutas separadas por mode e apenas as inferências da captura de Layout Lab selecionada |
+
+O builder verifica que cada sidecar corresponde ao seu próprio artifact e que os quatro contextos compartilham hash do build, viewport/DPR, versões do Obsidian e SDK, schema individual `0.4.0` e plataforma. Exige exatamente um Dark e um Light, as mesmas identidades de specimens e probes nos dois modes, e uma suite de probes igual. Horários de Mapping e Layout Lab são preservados individualmente, sem exigência de coincidência. Um nome de community theme indisponível permanece `null`. O builder não recalcula CSS, não cria valores ausentes nem refaz as inferências de layout.
+
+Os exports individuais e o ZIP final são locais, ignorados por Git e retidos até remoção manual. O fixture versionado em `apps/obsidian-ui-mapping/tests/fixtures/` contém o par controlado usado pelos testes do builder; os diretórios originais no `dev-vault` continuam sendo a evidência de runtime. O v2 ainda não tem importer ou Variables no Figma.
 
 Os pacotes ficam locais e ignorados por Git. O teste `npm run test:package --workspace @obsidian-ui-system/mapping` verifica a estrutura ZIP e rejeições de inconsistência. A captura real depende do Obsidian Desktop e deve ser conferida após o build.
 
