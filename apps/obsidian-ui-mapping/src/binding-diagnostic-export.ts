@@ -3,7 +3,7 @@ import type { RenderedSpecimen } from './component-registry';
 import { bindingDiagnosticCases, diagnoseBinding } from './binding-diagnostic';
 import { captureManifest } from './snapshot';
 import { readCaptureContext, assertCaptureContextStable } from './capture-context';
-import { ensureDirectory } from './export-paths';
+import { ensureDirectory, FIGMA_PACKAGE_ROOT } from './export-paths';
 
 export async function exportBindingDiagnostic(app: App, specimens: RenderedSpecimen[]): Promise<string> {
   const capturedAt = new Date().toISOString();
@@ -19,11 +19,11 @@ export async function exportBindingDiagnostic(app: App, specimens: RenderedSpeci
   });
   const after = await readCaptureContext(app.vault.adapter, app.vault.configDir, doc, manifest, 'mapping');
   assertCaptureContextStable(before, after);
-  const root = '.obsidian-ui-system/binding-diagnostics';
+  const root = FIGMA_PACKAGE_ROOT;
   await ensureDirectory(app.vault.adapter, root);
   const baseName = capturedAt.replace(/[:.]/g, '-');
-  let path = `${root}/${baseName}.json`;
-  for (let suffix = 2; await app.vault.adapter.exists(path); suffix++) path = `${root}/${baseName}-${suffix}.json`;
+  let path = `${root}/binding-diagnostic-${manifest.mode}-${baseName}.json`;
+  for (let suffix = 2; await app.vault.adapter.exists(path); suffix++) path = `${root}/binding-diagnostic-${manifest.mode}-${baseName}-${suffix}.json`;
   await app.vault.adapter.write(path, JSON.stringify({ format: 'obsidian-ui-binding-diagnostic', version: 1,
     capturedAt, mode: manifest.mode, context: before, results }, null, 2) + '\n');
   return path;

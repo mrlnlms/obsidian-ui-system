@@ -2,7 +2,7 @@
 
 This local Figma Design development plugin imports the validated ButtonComponent and SearchComponent pilots. Its Custom UI reads one local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. The plugin validates and unpacks the ZIP locally, then creates native Component Sets. It does not read the local filesystem directly or access the network. Button and Search behavior was validated in Figma Desktop; automated importer tests also cover a real ZIP fixture.
 
-The [reconstruction reference](../../docs/obsidian-ui-system-figma/components/component-reconstruction.md) records the reusable rules demonstrated by these pilots. A separate development plugin under `variables-pilot/` tests three Package v2 Variables without changing this importer.
+The [reconstruction reference](../../docs/obsidian-ui-system-figma/components/component-reconstruction.md) records the reusable rules demonstrated by these pilots. A separate development plugin under `variables-pilot/` tests Package v2 Variables and a disposable Button binding probe without changing this importer.
 
 ## Build and install
 
@@ -58,6 +58,14 @@ The v2 reader and projection are independent of `src/package-data.ts`; the norma
 
 The three-Variable readback and the `--interactive-accent` UI-browser proof were confirmed in Figma Desktop on 2026-10-01 with the controlled v2 ZIP. The [package guide](../../docs/integration/figma-package/figma-package.md) records the values and limits of that proof.
 
+### Disposable Button normal binding pilot
+
+The same separate development plugin has a second action, **Criar e verificar Button com bindings**. In a disposable Figma Design file, select the existing Package v2 ZIP plus the standalone Dark and Light diagnostic JSONs from the same `dev-vault/obsidian-ui-exports/figma-packages/` folder. The action requires confirmed `obsidian.button / normal / root` diagnostics for `border-radius → --button-radius` and `background-color → --interactive-normal`. It checks the CSSOM `var(...)` reference, witness response, restoration, technical context, and values in both modes before creating anything. Package and diagnostic build hashes may differ; the report keeps both origins and timestamps. Repeated runs create additional disposable collections and frames.
+
+The JSONs are already local Obsidian diagnostic exports; they require no download. Use the same visible folder for all three file pickers. Choose `binding-diagnostic-dark-*.json` in **Diagnóstico Dark** and `binding-diagnostic-light-*.json` in **Diagnóstico Light**.
+
+The **Criar e verificar 3 Variables** button and its three-candidate preview belong to the earlier Variables experiment; this Button pilot uses only **Criar e verificar Button com bindings**. The action creates exactly two Variables in a new Dark/Light collection and one frame named `Button normal binding probe`. It binds the frame radius and solid paint color, then reports binding IDs and resolved Variable values after Dark → Light → Dark. The frame remains selected for inspection; on a handled failure, the new frame and collection are removed. A user-operated Figma Desktop run confirmed all four radius corner binding IDs, the paint and node fill binding ID, and mode-specific Variable resolution of radius `8` and background `#333333 → #e4e4e4 → #333333`. Screenshots and the operator's mode-switching check confirmed the frame's visible Dark and Light fills and radius 8. The plugin's final state is Dark.
+
 ## Files
 
 - `src/code.ts`: Figma Component Set creation and font loading.
@@ -69,6 +77,8 @@ The three-Variable readback and the `--interactive-accent` UI-browser proof were
 - `src/package-data.ts`: ZIP decoding and input preflight before generation.
 - `src/variable-projection.ts`: pure, selective Package v2 token decisions.
 - `src/variables-pilot-package.ts`: bounded v2 reader for the separate pilot.
+- `src/binding-pilot-evidence.ts`: pure diagnostic preflight and separate provenance mapping.
+- `src/binding-pilot-figma.ts`: disposable bound frame creation and API readback.
 - `src/variables-pilot.ts`, `variables-pilot/manifest.json`, `variables-pilot/ui.html`: isolated Variable creation/readback and UI CSS color proof.
 - `src/ui.html`: single ZIP picker, package summary and status messages.
 - `tests/fixtures/`: real Obsidian ZIP used by the importer tests.

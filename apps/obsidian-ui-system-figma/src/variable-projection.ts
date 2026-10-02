@@ -22,6 +22,7 @@ export interface FigmaVariableCandidate {
 
 const MODES = ['dark', 'light'] as const;
 const PILOT = ['--background-primary', '--modal-background', '--button-radius'] as const;
+const BINDING_PILOT = ['--button-radius', '--interactive-normal'] as const;
 
 function wholeFunction(value: string, name: string): boolean {
   if (!value.startsWith(`${name}(`)) return false;
@@ -87,7 +88,7 @@ function candidate(name: string, tokens: MultiModeTokens['tokens']): FigmaVariab
     result.reason = 'Color expression needs typed CSS evaluation and visual verification';
     return result;
   }
-  if (!(PILOT as readonly string[]).includes(name)) return result;
+  if (!(PILOT as readonly string[]).includes(name) && !(BINDING_PILOT as readonly string[]).includes(name)) return result;
 
   if (name === '--button-radius') {
     const values = {} as Record<TokenMode, number>;
@@ -98,7 +99,7 @@ function candidate(name: string, tokens: MultiModeTokens['tokens']): FigmaVariab
     }
     for (const mode of MODES) modes[mode].projected = { strategy: 'literal', value: values[mode] };
     result.figmaType = 'FLOAT';
-  } else if (name === '--background-primary') {
+  } else if (name === '--background-primary' || name === '--interactive-normal') {
     const values = {} as Record<TokenMode, { r: number; g: number; b: number }>;
     for (const mode of MODES) {
       const value = hexRgb(modes[mode].computedCss!);
@@ -139,6 +140,14 @@ export function pilotCandidates(candidates: FigmaVariableCandidate[]): FigmaVari
   return PILOT.map((name) => {
     const entry = candidates.find((item) => item.cssName === name);
     if (!entry || entry.decision !== 'direct') throw new Error(`Pilot token is not directly projectable: ${name}`);
+    return entry;
+  });
+}
+
+export function bindingPilotCandidates(candidates: FigmaVariableCandidate[]): FigmaVariableCandidate[] {
+  return BINDING_PILOT.map((name) => {
+    const entry = candidates.find((item) => item.cssName === name);
+    if (!entry || entry.decision !== 'direct') throw new Error(`Binding pilot token is not directly projectable: ${name}`);
     return entry;
   });
 }

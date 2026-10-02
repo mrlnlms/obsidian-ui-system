@@ -1,10 +1,12 @@
-import { projectFigmaVariableCandidates, pilotCandidates, type FigmaVariableCandidate,
+import { projectFigmaVariableCandidates, pilotCandidates, bindingPilotCandidates, type FigmaVariableCandidate,
   type ProjectedValue } from './variable-projection';
 import { readVariablesPilotPackage, type VariablesPilotPackage } from './variables-pilot-package';
+import { deriveBindingPilotEvidence, type DiagnosticInput } from './binding-pilot-evidence';
+import { createBoundButtonPilot } from './binding-pilot-figma';
 
-figma.showUI(__html__, { width: 460, height: 580 });
+figma.showUI(__html__, { width: 460, height: 700 });
 
-let selected: { source: VariablesPilotPackage; candidates: FigmaVariableCandidate[] } | undefined;
+let selected: { source: VariablesPilotPackage; candidates: FigmaVariableCandidate[]; filename: string } | undefined;
 
 figma.ui.onmessage = async (message: unknown) => {
   if (!message || typeof message !== 'object' || !('type' in message)) return;
@@ -17,7 +19,8 @@ figma.ui.onmessage = async (message: unknown) => {
       const source = readVariablesPilotPackage(bytes);
       const candidates = projectFigmaVariableCandidates(source.tokens);
       pilotCandidates(candidates);
-      selected = { source, candidates };
+      const filename = 'filename' in message && typeof message.filename === 'string' ? message.filename : 'Package v2 ZIP';
+      selected = { source, candidates, filename };
       const counts = { direct: 0, 'needs-evaluation': 0, deferred: 0, omit: 0 };
       for (const entry of candidates) counts[entry.decision]++;
       const accent = candidates.find((entry) => entry.cssName === '--interactive-accent');
@@ -41,6 +44,22 @@ figma.ui.onmessage = async (message: unknown) => {
       figma.ui.postMessage({ type: 'pilot-done', report });
     } catch (error) {
       figma.ui.postMessage({ type: 'pilot-error', text: error instanceof Error ? error.message : String(error) });
+    }
+  }
+  if (message.type === 'create-bound-button') {
+    if (!selected) {
+      figma.ui.postMessage({ type: 'binding-error', text: 'Selecione um Package v2 válido.' });
+      return;
+    }
+    try {
+      const inputs = 'diagnostics' in message && Array.isArray(message.diagnostics)
+        ? message.diagnostics as DiagnosticInput[] : [];
+      const evidence = deriveBindingPilotEvidence(selected.source, inputs);
+      const report = await createBoundButtonPilot(
+        bindingPilotCandidates(selected.candidates), evidence, selected.filename);
+      figma.ui.postMessage({ type: 'binding-done', report });
+    } catch (error) {
+      figma.ui.postMessage({ type: 'binding-error', text: error instanceof Error ? error.message : String(error) });
     }
   }
 };

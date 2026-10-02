@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import type { MultiModeTokens, TokenEvidenceCapture } from '@obsidian-ui-system/ui-schema';
-import { pilotCandidates, projectFigmaVariableCandidates } from '../src/variable-projection';
+import { pilotCandidates, bindingPilotCandidates, projectFigmaVariableCandidates } from '../src/variable-projection';
 import { readVariablesPilotPackage } from '../src/variables-pilot-package';
 import { readFigmaPackage } from '../src/package-data';
 
@@ -30,9 +30,11 @@ test('classifies every real identity with a narrow pilot and preserves source ev
   const counts = Object.fromEntries(['direct', 'needs-evaluation', 'deferred', 'omit']
     .map((decision) => [decision, all.filter((entry) => entry.decision === decision).length]));
   assert.equal(all.length, 1181);
-  assert.deepEqual(counts, { direct: 3, 'needs-evaluation': 65, deferred: 10, omit: 1103 });
+  assert.deepEqual(counts, { direct: 4, 'needs-evaluation': 65, deferred: 10, omit: 1102 });
   assert.deepEqual(pilotCandidates(all).map((entry) => entry.cssName),
     ['--background-primary', '--modal-background', '--button-radius']);
+  assert.deepEqual(bindingPilotCandidates(all).map((entry) => entry.cssName),
+    ['--button-radius', '--interactive-normal']);
   assert.equal(JSON.stringify(tokens), before);
 });
 
@@ -54,11 +56,25 @@ test('projects exact Dark/Light values and only the proven pure alias', () => {
   assert.equal(radius.figmaType, 'FLOAT');
   assert.equal(radius.modes.dark.computedCss, '8px');
   assert.deepEqual(radius.modes.light.projected, { strategy: 'literal', value: 8 });
+  const normal = byName.get('--interactive-normal')!;
+  assert.equal(normal.figmaType, 'COLOR');
+  assert.deepEqual(normal.modes.dark.projected, { strategy: 'literal',
+    value: { r: 51 / 255, g: 51 / 255, b: 51 / 255 } });
+  assert.deepEqual(normal.modes.light.projected, { strategy: 'literal',
+    value: { r: 228 / 255, g: 228 / 255, b: 228 / 255 } });
   assert.equal(byName.get('--interactive-accent')?.decision, 'needs-evaluation');
   assert.equal(byName.get('--anim-duration-fast')?.decision, 'deferred');
   assert.equal(byName.get('--anim-motion-smooth')?.decision, 'deferred');
   assert.equal(byName.get('--shadow-xs')?.decision, 'omit');
   assert.equal(byName.get('--color-secondary-2')?.decision, 'omit');
+});
+
+test('binding color requires direct colors in both modes', () => {
+  const tokens = realTokens();
+  tokens.tokens['--interactive-normal']!.light!.computed.selected = 'color-mix(in srgb, white, black)';
+  const all = projectFigmaVariableCandidates(tokens);
+  assert.equal(all.find((entry) => entry.cssName === '--interactive-normal')?.decision, 'needs-evaluation');
+  assert.throws(() => bindingPilotCandidates(all), /not directly projectable/);
 });
 
 test('rejects an uncertain or fallback alias without synthesizing another mode', () => {

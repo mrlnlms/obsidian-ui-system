@@ -74,6 +74,22 @@ Any new command that persists generated artifacts must have a clear destination 
 - Update maintained documentation when a durable path, contract, workflow, or architectural rule changes.
 - Avoid duplicating the same project rule across multiple documents. Keep the canonical explanation in the most appropriate place and link to it when needed.
 
+## Proveniência: relevância antes de cautela
+
+Use proveniência para detectar diferenças que possam alterar materialmente a evidência ou o resultado. Não trate diferenças técnicas conhecidas como problemas por padrão.
+
+- Registre hashes, timestamps, versões e origens quando forem úteis para rastreabilidade.
+- Uma diferença de hash, timestamp ou origem **não é incompatibilidade por si só**.
+- Só bloqueie, recapture, remonte artefatos ou proponha trabalho adicional quando houver um mecanismo concreto pelo qual a diferença possa afetar a evidência relevante.
+- Se a causa da diferença já é conhecida e não altera o objeto investigado — por exemplo, um novo build criado apenas para adicionar um comando diagnóstico — registre a origem e siga.
+- Não exija simultaneidade perfeita entre capturas independentes.
+- Não repita caveats de proveniência que já foram registrados e resolvidos, a menos que apareça nova evidência que mude sua relevância.
+- Não reabra decisões já validadas apenas por excesso de precaução.
+- Igualdade de valores nunca substitui evidência causal quando ela é necessária, mas também não repita esse alerta quando o vínculo já foi comprovado por um método causal.
+- Prefira `unknown` quando realmente faltar evidência; não crie trabalho preventivo para eliminar incertezas que não afetam a decisão atual.
+
+Princípio: **rastreabilidade deve preservar contexto, não criar burocracia.**
+
 ## Task references
 
 For Mapping capture and registry work, use the maintained guides under:
