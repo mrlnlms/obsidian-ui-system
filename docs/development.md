@@ -38,6 +38,8 @@ For the Button normal binding evidence, run **Developer: Diagnose Button and Sea
 
 The validated first File Explorer row probe remains available as **Developer: Probe internal File Explorer row** (`vault=dev-vault command id=obsidian-ui-mapping:probe-internal-file-explorer-row`). It writes a standalone `internal-observed-probe-<UTC timestamp>.json` next to the ZIPs, outside the public API catalog and Figma Package. Probe files are ignored by Git and kept until manually removed. See [internal UI scope and inventory](obsidian-ui-mapping/capture/internal-observed.md) before extending this work.
 
+The same probe includes visible Dark folder rows at observed depths 0–2 in `folderRows`. In the Figma plugin, use this probe JSON with **Generate folder rows (Dark, Depth 0–2)**; it does not use a Package ZIP. `npm run test:folder-row --workspace @obsidian-ui-system/figma-plugin` checks the specific folder reader.
+
 A reload can close Mapping and Layout Lab tabs because the plugin detaches its views on unload; run the matching Command Palette action to reopen them. A change to `manifest.json` may still require an Obsidian restart. For a one-time production build, use `npm run build`.
 
 Hot Reload is an ignored local dependency at `dev-vault/.obsidian/plugins/hot-reload/`. To reinstall the pinned version after cloning, run from the repository root:

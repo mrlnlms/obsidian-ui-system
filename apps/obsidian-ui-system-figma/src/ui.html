@@ -32,10 +32,11 @@
     <button id="bind" type="button" disabled>Generate Button normal</button>
   </div>
   <div id="file-explorer-row">
-    <p>File Explorer rows Dark: selecione um internal-observed-probe-*.json recente. A ação com tags requer o probe com amostras JSON e ZIP. Nenhuma destas ações usa o ZIP do Package ou o relatório horizontal.</p>
+    <p>File Explorer Dark: selecione um internal-observed-probe-*.json. Tags exigem amostras JSON/ZIP; Folder row exige o probe com folderRows. Estas ações não usam o ZIP do Package.</p>
     <label>Probe JSON <input id="row-probe" type="file" accept=".json,application/json"></label>
     <button id="generate-row" type="button" disabled>Generate File Explorer row</button>
     <button id="generate-tagged-rows" type="button" disabled>Generate tagged rows (JSON + ZIP)</button>
+    <button id="generate-folder-rows" type="button" disabled>Generate folder rows (Dark, Depth 0–2)</button>
   </div>
   <div id="typography" role="status" aria-live="polite"></div>
   <div id="status" role="status" aria-live="polite"></div>
@@ -50,6 +51,7 @@
     const rowProbe = document.getElementById('row-probe');
     const generateRow = document.getElementById('generate-row');
     const generateTaggedRows = document.getElementById('generate-tagged-rows');
+    const generateFolderRows = document.getElementById('generate-folder-rows');
     const summary = document.getElementById('summary');
     const typography = document.getElementById('typography');
     const status = document.getElementById('status');
@@ -65,6 +67,7 @@
       bind.disabled = readyVersion !== 2 || generating || !darkInput.files[0] || !lightInput.files[0];
       generateRow.disabled = generating || !rowProbe.files[0];
       generateTaggedRows.disabled = generating || !rowProbe.files[0];
+      generateFolderRows.disabled = generating || !rowProbe.files[0];
     }
     darkInput.onchange = updateActions;
     lightInput.onchange = updateActions;
@@ -173,6 +176,7 @@
     }
     generateRow.onclick = () => generateFileExplorer('generate-file-explorer-row');
     generateTaggedRows.onclick = () => generateFileExplorer('generate-file-explorer-tagged-rows');
+    generateFolderRows.onclick = () => generateFileExplorer('generate-folder-rows');
 
     onmessage = (event) => {
       const message = event.data.pluginMessage;

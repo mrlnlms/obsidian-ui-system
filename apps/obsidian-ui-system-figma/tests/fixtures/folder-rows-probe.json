@@ -1,0 +1,883 @@
+{
+  "format": "obsidian-ui-internal-observed-probe",
+  "version": 1,
+  "context": {
+    "environment": {
+      "schemaVersion": "0.4.0",
+      "obsidianVersion": "1.14.4",
+      "obsidianSdkVersion": "1.13.1",
+      "capturedAt": "2026-10-02T13:12:58.393Z",
+      "platform": "macos",
+      "theme": null,
+      "mode": "dark"
+    }
+  },
+  "folderRows": [
+    {
+      "depth": 0,
+      "state": "collapsed",
+      "specimen": {
+        "id": "obsidian.file-explorer-folder-row",
+        "name": "File Explorer folder row",
+        "category": "Navigation",
+        "origin": "internal-observed",
+        "implementation": "Obsidian core DOM: .nav-folder-title",
+        "variant": "collapsed",
+        "dom": {
+          "tag": "div",
+          "classes": [
+            "tree-item-self",
+            "nav-folder-title",
+            "is-clickable",
+            "mod-collapsible"
+          ],
+          "sizePx": {
+            "width": 350.359375,
+            "height": 24.890625
+          },
+          "styles": {
+            "width": "350.359px",
+            "height": "24.8906px",
+            "display": "flex",
+            "position": "relative",
+            "padding": "4px 8px 4px 24px",
+            "margin": "0px 0px 2px",
+            "gap": "normal",
+            "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+            "fontSize": "13px",
+            "fontWeight": "400",
+            "fontStyle": "normal",
+            "lineHeight": "16.9px",
+            "letterSpacing": "normal",
+            "color": "rgb(179, 179, 179)",
+            "background": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgb(179, 179, 179)",
+            "borderRadius": "8px",
+            "opacity": "1"
+          },
+          "children": [
+            {
+              "tag": "div",
+              "classes": [
+                "tree-item-icon",
+                "collapse-icon",
+                "is-collapsed"
+              ],
+              "sizePx": {
+                "width": 16,
+                "height": 16.890625
+              },
+              "styles": {
+                "width": "16px",
+                "height": "16.8906px",
+                "display": "flex",
+                "position": "absolute",
+                "padding": "0px",
+                "margin": "0px 0px 0px -20px",
+                "gap": "normal",
+                "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                "fontSize": "13px",
+                "fontWeight": "400",
+                "fontStyle": "normal",
+                "lineHeight": "16.9px",
+                "letterSpacing": "normal",
+                "color": "rgb(179, 179, 179)",
+                "background": "rgba(0, 0, 0, 0)",
+                "border": "0px none rgb(179, 179, 179)",
+                "borderRadius": "0px",
+                "opacity": "0.85"
+              },
+              "children": [
+                {
+                  "tag": "svg",
+                  "classes": [
+                    "svg-icon",
+                    "right-triangle"
+                  ],
+                  "sizePx": {
+                    "width": 10,
+                    "height": 10
+                  },
+                  "styles": {
+                    "width": "10px",
+                    "height": "10px",
+                    "display": "block",
+                    "position": "static",
+                    "padding": "0px",
+                    "margin": "0px",
+                    "gap": "normal",
+                    "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                    "fontSize": "13px",
+                    "fontWeight": "400",
+                    "fontStyle": "normal",
+                    "lineHeight": "16.9px",
+                    "letterSpacing": "normal",
+                    "color": "rgb(102, 102, 102)",
+                    "background": "rgba(0, 0, 0, 0)",
+                    "border": "0px none rgb(102, 102, 102)",
+                    "borderRadius": "0px",
+                    "opacity": "1"
+                  },
+                  "children": [
+                    {
+                      "tag": "path",
+                      "classes": [],
+                      "sizePx": {
+                        "width": 3.75,
+                        "height": 7.5
+                      },
+                      "styles": {
+                        "width": "auto",
+                        "height": "auto",
+                        "display": "inline",
+                        "position": "static",
+                        "padding": "0px",
+                        "margin": "0px",
+                        "gap": "normal",
+                        "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                        "fontSize": "13px",
+                        "fontWeight": "400",
+                        "fontStyle": "normal",
+                        "lineHeight": "16.9px",
+                        "letterSpacing": "normal",
+                        "color": "rgb(102, 102, 102)",
+                        "background": "rgba(0, 0, 0, 0)",
+                        "border": "0px none rgb(102, 102, 102)",
+                        "borderRadius": "0px",
+                        "opacity": "1"
+                      },
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "classes": [
+                "tree-item-inner",
+                "nav-folder-title-content"
+              ],
+              "text": "internal-observed-fixtures",
+              "sizePx": {
+                "width": 159.15625,
+                "height": 16.890625
+              },
+              "styles": {
+                "width": "159.156px",
+                "height": "16.8906px",
+                "display": "block",
+                "position": "static",
+                "padding": "0px",
+                "margin": "0px",
+                "gap": "normal",
+                "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                "fontSize": "13px",
+                "fontWeight": "400",
+                "fontStyle": "normal",
+                "lineHeight": "16.9px",
+                "letterSpacing": "normal",
+                "color": "rgb(179, 179, 179)",
+                "background": "rgba(0, 0, 0, 0)",
+                "border": "0px none rgb(179, 179, 179)",
+                "borderRadius": "0px",
+                "opacity": "1"
+              },
+              "typography": {
+                "cssVariables": {
+                  "--font-interface": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-default": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-ui-small": "13px",
+                  "--font-weight": "400"
+                },
+                "fontFamilyDeclaration": {
+                  "source": "unresolved"
+                }
+              },
+              "children": []
+            }
+          ]
+        }
+      },
+      "geometry": {
+        "disclosureOffsetPx": {
+          "x": 4,
+          "y": 4
+        },
+        "labelOffsetPx": {
+          "x": 24,
+          "y": 4
+        },
+        "svgOffsetPx": {
+          "x": 7,
+          "y": 7.4375
+        }
+      },
+      "horizontalCss": {
+        "flexShrink": "1",
+        "whiteSpace": "pre",
+        "overflow": "hidden",
+        "textOverflow": "ellipsis"
+      },
+      "disclosure": {
+        "transform": "matrix(0, -1, 1, 0, 0, 0)",
+        "colorCss": "rgb(102, 102, 102)",
+        "viewBox": "0 0 24 24",
+        "path": "M3 8L12 17L21 8",
+        "stroke": "currentColor",
+        "strokeWidth": "2",
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      }
+    },
+    {
+      "depth": 0,
+      "state": "expanded",
+      "specimen": {
+        "id": "obsidian.file-explorer-folder-row",
+        "name": "File Explorer folder row",
+        "category": "Navigation",
+        "origin": "internal-observed",
+        "implementation": "Obsidian core DOM: .nav-folder-title",
+        "variant": "expanded",
+        "dom": {
+          "tag": "div",
+          "classes": [
+            "tree-item-self",
+            "nav-folder-title",
+            "is-clickable",
+            "mod-collapsible"
+          ],
+          "sizePx": {
+            "width": 350.359375,
+            "height": 24.890625
+          },
+          "styles": {
+            "width": "350.359px",
+            "height": "24.8906px",
+            "display": "flex",
+            "position": "relative",
+            "padding": "4px 8px 4px 24px",
+            "margin": "0px 0px 2px",
+            "gap": "normal",
+            "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+            "fontSize": "13px",
+            "fontWeight": "400",
+            "fontStyle": "normal",
+            "lineHeight": "16.9px",
+            "letterSpacing": "normal",
+            "color": "rgb(179, 179, 179)",
+            "background": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgb(179, 179, 179)",
+            "borderRadius": "8px",
+            "opacity": "1"
+          },
+          "children": [
+            {
+              "tag": "div",
+              "classes": [
+                "tree-item-icon",
+                "collapse-icon"
+              ],
+              "sizePx": {
+                "width": 16,
+                "height": 16.890625
+              },
+              "styles": {
+                "width": "16px",
+                "height": "16.8906px",
+                "display": "flex",
+                "position": "absolute",
+                "padding": "0px",
+                "margin": "0px 0px 0px -20px",
+                "gap": "normal",
+                "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                "fontSize": "13px",
+                "fontWeight": "400",
+                "fontStyle": "normal",
+                "lineHeight": "16.9px",
+                "letterSpacing": "normal",
+                "color": "rgb(179, 179, 179)",
+                "background": "rgba(0, 0, 0, 0)",
+                "border": "0px none rgb(179, 179, 179)",
+                "borderRadius": "0px",
+                "opacity": "0.85"
+              },
+              "children": [
+                {
+                  "tag": "svg",
+                  "classes": [
+                    "svg-icon",
+                    "right-triangle"
+                  ],
+                  "sizePx": {
+                    "width": 10,
+                    "height": 10
+                  },
+                  "styles": {
+                    "width": "10px",
+                    "height": "10px",
+                    "display": "block",
+                    "position": "static",
+                    "padding": "0px",
+                    "margin": "0px",
+                    "gap": "normal",
+                    "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                    "fontSize": "13px",
+                    "fontWeight": "400",
+                    "fontStyle": "normal",
+                    "lineHeight": "16.9px",
+                    "letterSpacing": "normal",
+                    "color": "rgb(102, 102, 102)",
+                    "background": "rgba(0, 0, 0, 0)",
+                    "border": "0px none rgb(102, 102, 102)",
+                    "borderRadius": "0px",
+                    "opacity": "1"
+                  },
+                  "children": [
+                    {
+                      "tag": "path",
+                      "classes": [],
+                      "sizePx": {
+                        "width": 7.5,
+                        "height": 3.75
+                      },
+                      "styles": {
+                        "width": "auto",
+                        "height": "auto",
+                        "display": "inline",
+                        "position": "static",
+                        "padding": "0px",
+                        "margin": "0px",
+                        "gap": "normal",
+                        "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                        "fontSize": "13px",
+                        "fontWeight": "400",
+                        "fontStyle": "normal",
+                        "lineHeight": "16.9px",
+                        "letterSpacing": "normal",
+                        "color": "rgb(102, 102, 102)",
+                        "background": "rgba(0, 0, 0, 0)",
+                        "border": "0px none rgb(102, 102, 102)",
+                        "borderRadius": "0px",
+                        "opacity": "1"
+                      },
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "classes": [
+                "tree-item-inner",
+                "nav-folder-title-content"
+              ],
+              "text": "obsidian-ui-exports",
+              "sizePx": {
+                "width": 119.34375,
+                "height": 16.890625
+              },
+              "styles": {
+                "width": "119.344px",
+                "height": "16.8906px",
+                "display": "block",
+                "position": "static",
+                "padding": "0px",
+                "margin": "0px",
+                "gap": "normal",
+                "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                "fontSize": "13px",
+                "fontWeight": "400",
+                "fontStyle": "normal",
+                "lineHeight": "16.9px",
+                "letterSpacing": "normal",
+                "color": "rgb(179, 179, 179)",
+                "background": "rgba(0, 0, 0, 0)",
+                "border": "0px none rgb(179, 179, 179)",
+                "borderRadius": "0px",
+                "opacity": "1"
+              },
+              "typography": {
+                "cssVariables": {
+                  "--font-interface": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-default": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-ui-small": "13px",
+                  "--font-weight": "400"
+                },
+                "fontFamilyDeclaration": {
+                  "source": "unresolved"
+                }
+              },
+              "children": []
+            }
+          ]
+        }
+      },
+      "geometry": {
+        "disclosureOffsetPx": {
+          "x": 4,
+          "y": 4
+        },
+        "labelOffsetPx": {
+          "x": 24,
+          "y": 4
+        },
+        "svgOffsetPx": {
+          "x": 7,
+          "y": 7.4375
+        }
+      },
+      "horizontalCss": {
+        "flexShrink": "1",
+        "whiteSpace": "pre",
+        "overflow": "hidden",
+        "textOverflow": "ellipsis"
+      },
+      "disclosure": {
+        "transform": "none",
+        "colorCss": "rgb(102, 102, 102)",
+        "viewBox": "0 0 24 24",
+        "path": "M3 8L12 17L21 8",
+        "stroke": "currentColor",
+        "strokeWidth": "2",
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      }
+    },
+    {
+      "depth": 1,
+      "state": "expanded",
+      "specimen": {
+        "id": "obsidian.file-explorer-folder-row",
+        "name": "File Explorer folder row",
+        "category": "Navigation",
+        "origin": "internal-observed",
+        "implementation": "Obsidian core DOM: .nav-folder-title",
+        "variant": "expanded",
+        "dom": {
+          "tag": "div",
+          "classes": [
+            "tree-item-self",
+            "nav-folder-title",
+            "is-clickable",
+            "mod-collapsible"
+          ],
+          "sizePx": {
+            "width": 350.359375,
+            "height": 24.890625
+          },
+          "styles": {
+            "width": "350.359px",
+            "height": "24.8906px",
+            "display": "flex",
+            "position": "relative",
+            "padding": "4px 8px 4px 41px",
+            "margin": "0px 0px 2px -17px",
+            "gap": "normal",
+            "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+            "fontSize": "13px",
+            "fontWeight": "400",
+            "fontStyle": "normal",
+            "lineHeight": "16.9px",
+            "letterSpacing": "normal",
+            "color": "rgb(179, 179, 179)",
+            "background": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgb(179, 179, 179)",
+            "borderRadius": "8px",
+            "opacity": "1"
+          },
+          "children": [
+            {
+              "tag": "div",
+              "classes": [
+                "tree-item-icon",
+                "collapse-icon"
+              ],
+              "sizePx": {
+                "width": 16,
+                "height": 16.890625
+              },
+              "styles": {
+                "width": "16px",
+                "height": "16.8906px",
+                "display": "flex",
+                "position": "absolute",
+                "padding": "0px",
+                "margin": "0px 0px 0px -20px",
+                "gap": "normal",
+                "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                "fontSize": "13px",
+                "fontWeight": "400",
+                "fontStyle": "normal",
+                "lineHeight": "16.9px",
+                "letterSpacing": "normal",
+                "color": "rgb(179, 179, 179)",
+                "background": "rgba(0, 0, 0, 0)",
+                "border": "0px none rgb(179, 179, 179)",
+                "borderRadius": "0px",
+                "opacity": "0.85"
+              },
+              "children": [
+                {
+                  "tag": "svg",
+                  "classes": [
+                    "svg-icon",
+                    "right-triangle"
+                  ],
+                  "sizePx": {
+                    "width": 10,
+                    "height": 10
+                  },
+                  "styles": {
+                    "width": "10px",
+                    "height": "10px",
+                    "display": "block",
+                    "position": "static",
+                    "padding": "0px",
+                    "margin": "0px",
+                    "gap": "normal",
+                    "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                    "fontSize": "13px",
+                    "fontWeight": "400",
+                    "fontStyle": "normal",
+                    "lineHeight": "16.9px",
+                    "letterSpacing": "normal",
+                    "color": "rgb(102, 102, 102)",
+                    "background": "rgba(0, 0, 0, 0)",
+                    "border": "0px none rgb(102, 102, 102)",
+                    "borderRadius": "0px",
+                    "opacity": "1"
+                  },
+                  "children": [
+                    {
+                      "tag": "path",
+                      "classes": [],
+                      "sizePx": {
+                        "width": 7.5,
+                        "height": 3.75
+                      },
+                      "styles": {
+                        "width": "auto",
+                        "height": "auto",
+                        "display": "inline",
+                        "position": "static",
+                        "padding": "0px",
+                        "margin": "0px",
+                        "gap": "normal",
+                        "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                        "fontSize": "13px",
+                        "fontWeight": "400",
+                        "fontStyle": "normal",
+                        "lineHeight": "16.9px",
+                        "letterSpacing": "normal",
+                        "color": "rgb(102, 102, 102)",
+                        "background": "rgba(0, 0, 0, 0)",
+                        "border": "0px none rgb(102, 102, 102)",
+                        "borderRadius": "0px",
+                        "opacity": "1"
+                      },
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "classes": [
+                "tree-item-inner",
+                "nav-folder-title-content"
+              ],
+              "text": "figma-packages",
+              "sizePx": {
+                "width": 97.96875,
+                "height": 16.890625
+              },
+              "styles": {
+                "width": "97.9688px",
+                "height": "16.8906px",
+                "display": "block",
+                "position": "static",
+                "padding": "0px",
+                "margin": "0px",
+                "gap": "normal",
+                "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                "fontSize": "13px",
+                "fontWeight": "400",
+                "fontStyle": "normal",
+                "lineHeight": "16.9px",
+                "letterSpacing": "normal",
+                "color": "rgb(179, 179, 179)",
+                "background": "rgba(0, 0, 0, 0)",
+                "border": "0px none rgb(179, 179, 179)",
+                "borderRadius": "0px",
+                "opacity": "1"
+              },
+              "typography": {
+                "cssVariables": {
+                  "--font-interface": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-default": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-ui-small": "13px",
+                  "--font-weight": "400"
+                },
+                "fontFamilyDeclaration": {
+                  "source": "unresolved"
+                }
+              },
+              "children": []
+            }
+          ]
+        }
+      },
+      "geometry": {
+        "disclosureOffsetPx": {
+          "x": 21,
+          "y": 4
+        },
+        "labelOffsetPx": {
+          "x": 41,
+          "y": 4
+        },
+        "svgOffsetPx": {
+          "x": 24,
+          "y": 7.4375
+        }
+      },
+      "horizontalCss": {
+        "flexShrink": "1",
+        "whiteSpace": "pre",
+        "overflow": "hidden",
+        "textOverflow": "ellipsis"
+      },
+      "disclosure": {
+        "transform": "none",
+        "colorCss": "rgb(102, 102, 102)",
+        "viewBox": "0 0 24 24",
+        "path": "M3 8L12 17L21 8",
+        "stroke": "currentColor",
+        "strokeWidth": "2",
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      }
+    },
+    {
+      "depth": 2,
+      "state": "collapsed",
+      "specimen": {
+        "id": "obsidian.file-explorer-folder-row",
+        "name": "File Explorer folder row",
+        "category": "Navigation",
+        "origin": "internal-observed",
+        "implementation": "Obsidian core DOM: .nav-folder-title",
+        "variant": "collapsed",
+        "dom": {
+          "tag": "div",
+          "classes": [
+            "tree-item-self",
+            "nav-folder-title",
+            "is-clickable",
+            "mod-collapsible"
+          ],
+          "sizePx": {
+            "width": 350.359375,
+            "height": 24.890625
+          },
+          "styles": {
+            "width": "350.359px",
+            "height": "24.8906px",
+            "display": "flex",
+            "position": "relative",
+            "padding": "4px 8px 4px 58px",
+            "margin": "0px 0px 2px -34px",
+            "gap": "normal",
+            "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+            "fontSize": "13px",
+            "fontWeight": "400",
+            "fontStyle": "normal",
+            "lineHeight": "16.9px",
+            "letterSpacing": "normal",
+            "color": "rgb(179, 179, 179)",
+            "background": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgb(179, 179, 179)",
+            "borderRadius": "8px",
+            "opacity": "1"
+          },
+          "children": [
+            {
+              "tag": "div",
+              "classes": [
+                "tree-item-icon",
+                "collapse-icon",
+                "is-collapsed"
+              ],
+              "sizePx": {
+                "width": 16,
+                "height": 16.890625
+              },
+              "styles": {
+                "width": "16px",
+                "height": "16.8906px",
+                "display": "flex",
+                "position": "absolute",
+                "padding": "0px",
+                "margin": "0px 0px 0px -20px",
+                "gap": "normal",
+                "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                "fontSize": "13px",
+                "fontWeight": "400",
+                "fontStyle": "normal",
+                "lineHeight": "16.9px",
+                "letterSpacing": "normal",
+                "color": "rgb(179, 179, 179)",
+                "background": "rgba(0, 0, 0, 0)",
+                "border": "0px none rgb(179, 179, 179)",
+                "borderRadius": "0px",
+                "opacity": "0.85"
+              },
+              "children": [
+                {
+                  "tag": "svg",
+                  "classes": [
+                    "svg-icon",
+                    "right-triangle"
+                  ],
+                  "sizePx": {
+                    "width": 10,
+                    "height": 10
+                  },
+                  "styles": {
+                    "width": "10px",
+                    "height": "10px",
+                    "display": "block",
+                    "position": "static",
+                    "padding": "0px",
+                    "margin": "0px",
+                    "gap": "normal",
+                    "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                    "fontSize": "13px",
+                    "fontWeight": "400",
+                    "fontStyle": "normal",
+                    "lineHeight": "16.9px",
+                    "letterSpacing": "normal",
+                    "color": "rgb(102, 102, 102)",
+                    "background": "rgba(0, 0, 0, 0)",
+                    "border": "0px none rgb(102, 102, 102)",
+                    "borderRadius": "0px",
+                    "opacity": "1"
+                  },
+                  "children": [
+                    {
+                      "tag": "path",
+                      "classes": [],
+                      "sizePx": {
+                        "width": 3.75,
+                        "height": 7.5
+                      },
+                      "styles": {
+                        "width": "auto",
+                        "height": "auto",
+                        "display": "inline",
+                        "position": "static",
+                        "padding": "0px",
+                        "margin": "0px",
+                        "gap": "normal",
+                        "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                        "fontSize": "13px",
+                        "fontWeight": "400",
+                        "fontStyle": "normal",
+                        "lineHeight": "16.9px",
+                        "letterSpacing": "normal",
+                        "color": "rgb(102, 102, 102)",
+                        "background": "rgba(0, 0, 0, 0)",
+                        "border": "0px none rgb(102, 102, 102)",
+                        "borderRadius": "0px",
+                        "opacity": "1"
+                      },
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "classes": [
+                "tree-item-inner",
+                "nav-folder-title-content"
+              ],
+              "text": "pasta fechada",
+              "sizePx": {
+                "width": 85.515625,
+                "height": 16.890625
+              },
+              "styles": {
+                "width": "85.5156px",
+                "height": "16.8906px",
+                "display": "block",
+                "position": "static",
+                "padding": "0px",
+                "margin": "0px",
+                "gap": "normal",
+                "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                "fontSize": "13px",
+                "fontWeight": "400",
+                "fontStyle": "normal",
+                "lineHeight": "16.9px",
+                "letterSpacing": "normal",
+                "color": "rgb(179, 179, 179)",
+                "background": "rgba(0, 0, 0, 0)",
+                "border": "0px none rgb(179, 179, 179)",
+                "borderRadius": "0px",
+                "opacity": "1"
+              },
+              "typography": {
+                "cssVariables": {
+                  "--font-interface": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-default": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-ui-small": "13px",
+                  "--font-weight": "400"
+                },
+                "fontFamilyDeclaration": {
+                  "source": "unresolved"
+                }
+              },
+              "children": []
+            }
+          ]
+        }
+      },
+      "geometry": {
+        "disclosureOffsetPx": {
+          "x": 38,
+          "y": 4
+        },
+        "labelOffsetPx": {
+          "x": 58,
+          "y": 4
+        },
+        "svgOffsetPx": {
+          "x": 41,
+          "y": 7.4375
+        }
+      },
+      "horizontalCss": {
+        "flexShrink": "1",
+        "whiteSpace": "pre",
+        "overflow": "hidden",
+        "textOverflow": "ellipsis"
+      },
+      "disclosure": {
+        "transform": "matrix(0, -1, 1, 0, 0, 0)",
+        "colorCss": "rgb(102, 102, 102)",
+        "viewBox": "0 0 24 24",
+        "path": "M3 8L12 17L21 8",
+        "stroke": "currentColor",
+        "strokeWidth": "2",
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      }
+    }
+  ]
+}

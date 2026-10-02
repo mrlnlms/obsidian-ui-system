@@ -35,7 +35,7 @@ function shape(element: Element) {
   };
 }
 
-/** One live-DOM inventory and one read-only File Explorer row specimen. */
+/** Live-DOM inventory and standalone File Explorer row specimens. */
 export async function exportInternalObservedProbe(app: App): Promise<string> {
   const doc = activeWindow.document;
   const capturedAt = new Date().toISOString();
@@ -94,6 +94,38 @@ export async function exportInternalObservedProbe(app: App): Promise<string> {
       },
     }];
   });
+  const folderRows = Array.from(doc.querySelectorAll('.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title'))
+    .flatMap((folder) => {
+      const depth = (folder.getAttribute('data-path')?.split('/').length ?? 0) - 1;
+      if (!visible(folder) || depth < 0 || depth > 2) return [];
+      const icon = folder.querySelector(':scope > .collapse-icon');
+      const svg = icon?.querySelector(':scope > svg.right-triangle');
+      const path = svg?.querySelector(':scope > path');
+      const content = folder.querySelector(':scope > .nav-folder-title-content');
+      if (!icon || !svg || !path || !content) throw new Error('File Explorer folder sem disclosure ou label observado.');
+      const state = folder.parentElement?.classList.contains('is-collapsed') ? 'collapsed' : 'expanded';
+      const rootRect = folder.getBoundingClientRect();
+      const offset = (element: Element) => {
+        const rect = element.getBoundingClientRect();
+        return { x: rect.left - rootRect.left, y: rect.top - rootRect.top };
+      };
+      const labelStyle = doc.defaultView!.getComputedStyle(content);
+      const svgStyle = doc.defaultView!.getComputedStyle(svg);
+      const specimen: ComponentSnapshot = {
+        id: 'obsidian.file-explorer-folder-row', name: 'File Explorer folder row', category: 'Navigation',
+        origin: 'internal-observed', implementation: 'Obsidian core DOM: .nav-folder-title',
+        variant: state, dom: captureElement(folder),
+      };
+      return [{ depth, state, specimen,
+        geometry: { disclosureOffsetPx: offset(icon), labelOffsetPx: offset(content), svgOffsetPx: offset(svg) },
+        horizontalCss: { flexShrink: labelStyle.flexShrink, whiteSpace: labelStyle.whiteSpace,
+          overflow: labelStyle.overflow, textOverflow: labelStyle.textOverflow },
+        disclosure: { transform: svgStyle.transform, colorCss: svgStyle.color,
+          viewBox: svg.getAttribute('viewBox'), path: path.getAttribute('d'),
+          stroke: svg.getAttribute('stroke'), strokeWidth: svg.getAttribute('stroke-width'),
+          strokeLinecap: svg.getAttribute('stroke-linecap'), strokeLinejoin: svg.getAttribute('stroke-linejoin') },
+      }];
+    });
   const workspaceViewTypes = [...new Set(Array.from(doc.querySelectorAll('.workspace-leaf-content[data-type]'))
     .map((element) => element.getAttribute('data-type')).filter((value): value is string => !!value))].sort();
   const after = await readCaptureContext(app.vault.adapter, app.vault.configDir, doc, manifest, 'mapping');
@@ -112,6 +144,7 @@ export async function exportInternalObservedProbe(app: App): Promise<string> {
     labelOffsetPx,
     specimen,
     taggedRows,
+    folderRows,
   }, null, 2) + '\n');
   return path;
 }

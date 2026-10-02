@@ -7,16 +7,28 @@ import type { DiagnosticInput } from './button-binding-evidence';
 import { generateSearch } from './search-generation';
 import { generateFileExplorerRow } from './file-explorer-row-generation';
 import { generateFileExplorerTaggedRows } from './file-explorer-row-tag-generation';
+import { generateFolderRows } from './folder-row-generation';
 import { planUiKitPlacement } from './ui-kit-layout';
 import { readFigmaPackage, type ImportedPackage } from './package-data';
 
-figma.showUI(__html__, { width: 400, height: 600 });
+figma.showUI(__html__, { width: 400, height: 640 });
 
 let importedPackage: ImportedPackage | undefined;
 let importedButtonV2: ButtonV2Package | undefined;
 let currentRequest = 0;
 
 figma.ui.onmessage = async (message: unknown) => {
+  if (isGenerateFolderRowsMessage(message)) {
+    try {
+      const components = await generateFolderRows(message.probe);
+      figma.ui.postMessage({ type: 'result', ok: true,
+        text: `Folder rows Dark criadas: ${components.length} Components (Expanded/Collapsed × Depth 0–2).` });
+    } catch (error) {
+      figma.ui.postMessage({ type: 'result', ok: false,
+        text: error instanceof Error ? error.message : String(error) });
+    }
+    return;
+  }
   if (isGenerateFileExplorerTaggedRowsMessage(message)) {
     try {
       const result = await generateFileExplorerTaggedRows(message.probe);
@@ -115,6 +127,11 @@ function isGenerateFileExplorerRowMessage(value: unknown): value is { type: 'gen
 function isGenerateFileExplorerTaggedRowsMessage(value: unknown): value is { type: 'generate-file-explorer-tagged-rows'; probe: unknown } {
   return typeof value === 'object' && value !== null && 'type' in value &&
     value.type === 'generate-file-explorer-tagged-rows' && 'probe' in value;
+}
+
+function isGenerateFolderRowsMessage(value: unknown): value is { type: 'generate-folder-rows'; probe: unknown } {
+  return typeof value === 'object' && value !== null && 'type' in value &&
+    value.type === 'generate-folder-rows' && 'probe' in value;
 }
 
 async function generateButton(componentsJson: unknown, layoutJson: unknown): Promise<ComponentSetNode> {
