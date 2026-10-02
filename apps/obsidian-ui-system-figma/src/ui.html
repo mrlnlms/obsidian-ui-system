@@ -15,6 +15,8 @@
     #status { margin-top: 14px; min-height: 36px; white-space: pre-wrap; }
     #status.error { color: #b42318; }
     #status.success { color: #067647; }
+    #report { max-height: 150px; overflow: auto; white-space: pre-wrap; font-size: 11px; }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
@@ -23,17 +25,38 @@
   <label>Figma Package <input id="package" type="file" accept=".zip,application/zip"></label>
   <div id="summary" role="status" aria-live="polite"></div>
   <button id="generate" type="button" disabled>Generate UI Kit</button>
+  <div id="v2" hidden>
+    <p>Button normal com Variables. Selecione os diagnósticos confirmados Dark e Light do Mapping.</p>
+    <label>Diagnóstico Dark <input id="dark" type="file" accept=".json,application/json"></label>
+    <label>Diagnóstico Light <input id="light" type="file" accept=".json,application/json"></label>
+    <button id="bind" type="button" disabled>Generate Button normal</button>
+  </div>
   <div id="typography" role="status" aria-live="polite"></div>
   <div id="status" role="status" aria-live="polite"></div>
+  <pre id="report"></pre>
   <script>
     const packageInput = document.getElementById('package');
     const generate = document.getElementById('generate');
+    const v2 = document.getElementById('v2');
+    const darkInput = document.getElementById('dark');
+    const lightInput = document.getElementById('light');
+    const bind = document.getElementById('bind');
     const summary = document.getElementById('summary');
     const typography = document.getElementById('typography');
     const status = document.getElementById('status');
+    const report = document.getElementById('report');
     let requestId = 0;
-    let ready = false;
+    let readyVersion = 0;
     let generating = false;
+
+    function updateActions() {
+      generate.hidden = readyVersion === 2;
+      generate.disabled = readyVersion !== 1 || generating;
+      v2.hidden = readyVersion !== 2;
+      bind.disabled = readyVersion !== 2 || generating || !darkInput.files[0] || !lightInput.files[0];
+    }
+    darkInput.onchange = updateActions;
+    lightInput.onchange = updateActions;
 
     function show(text, kind = '') {
       status.textContent = text;
@@ -51,10 +74,11 @@
 
     packageInput.onchange = async () => {
       const id = ++requestId;
-      ready = false;
-      generate.disabled = true;
+      readyVersion = 0;
+      updateActions();
       summary.textContent = '';
       typography.textContent = '';
+      report.textContent = '';
       parent.postMessage({ pluginMessage: { type: 'clear-package', requestId: id } }, '*');
       const file = packageInput.files[0];
       if (!file) { show('Selecione um Figma Package .zip.'); return; }
@@ -73,37 +97,67 @@
     };
 
     generate.onclick = () => {
-      if (!ready || generating) return;
+      if (readyVersion !== 1 || generating) return;
       generating = true;
-      generate.disabled = true;
+      updateActions();
       packageInput.disabled = true;
       typography.textContent = '';
+      report.textContent = '';
       show('Verificando tipografia e gerando UI Kit…');
       parent.postMessage({ pluginMessage: { type: 'generate-ui-kit' } }, '*');
+    };
+
+    bind.onclick = async () => {
+      if (readyVersion !== 2 || generating) return;
+      generating = true;
+      updateActions();
+      packageInput.disabled = true;
+      darkInput.disabled = true;
+      lightInput.disabled = true;
+      typography.textContent = '';
+      report.textContent = '';
+      show('Validando bindings e gerando Button normal…');
+      try {
+        const diagnostics = await Promise.all([darkInput.files[0], lightInput.files[0]].map(async (file) => {
+          if (!file || file.size > 2 * 1024 * 1024) throw new Error('Diagnóstico ausente ou maior que 2 MB.');
+          return { filename: file.name, data: JSON.parse(await file.text()) };
+        }));
+        parent.postMessage({ pluginMessage: { type: 'generate-bound-button', diagnostics } }, '*');
+      } catch (error) {
+        generating = false;
+        packageInput.disabled = false;
+        darkInput.disabled = false;
+        lightInput.disabled = false;
+        updateActions();
+        show(error.message || String(error), 'error');
+      }
     };
 
     onmessage = (event) => {
       const message = event.data.pluginMessage;
       if (message?.type === 'package-ready' && message.requestId === requestId) {
-        ready = true;
-        summary.textContent = `Obsidian ${message.summary.obsidianVersion}\n` +
-          `${message.summary.specimens} specimens · ${message.summary.tokens} tokens\nLayout model ready`;
+        readyVersion = message.version;
+        summary.textContent = `Package v${message.version} · Obsidian ${message.summary.obsidianVersion}\n` +
+          `${message.summary.specimens} specimens · ${message.summary.tokens} tokens`;
         summary.style.whiteSpace = 'pre-line';
-        generate.disabled = generating;
+        updateActions();
         show('Pacote pronto.');
       }
       if (message?.type === 'package-error' && message.requestId === requestId) {
-        ready = false;
-        generate.disabled = true;
+        readyVersion = 0;
+        updateActions();
         show(message.text, 'error');
       }
       if (message?.type === 'typography') typography.textContent = message.text;
       if (message?.type === 'result') {
         if (!message.ok) typography.textContent = '';
         show(message.text, message.ok ? 'success' : 'error');
+        report.textContent = message.ok && message.report ? JSON.stringify(message.report, null, 2) : '';
         generating = false;
         packageInput.disabled = false;
-        generate.disabled = !ready;
+        darkInput.disabled = false;
+        lightInput.disabled = false;
+        updateActions();
       }
     };
   </script>

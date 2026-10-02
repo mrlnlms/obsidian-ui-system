@@ -62,8 +62,11 @@ function technicalContext(input: DiagnosticInput) {
   return { input, diagnostic, mode, capturedAt, environment, buildSha256, buildPath, viewport };
 }
 
-/** Accepts causal diagnostic evidence; matching CSS values alone cannot establish a binding. */
-export function deriveBindingPilotEvidence(source: VariablesPilotPackage, inputs: DiagnosticInput[]) {
+/** The real generator reuses confirmed identities without requiring capture-specific computed values. */
+export function deriveBindingPilotEvidence(
+  source: Pick<VariablesPilotPackage, 'manifest' | 'tokens'>, inputs: DiagnosticInput[],
+  validation: 'pilot-consistency' | 'structural' = 'pilot-consistency',
+) {
   if (inputs.length !== 2) throw new Error('Selecione exatamente os diagnósticos Dark e Light');
   const diagnostics = inputs.map(technicalContext);
   const byMode = Object.fromEntries(diagnostics.map((item) => [item.mode, item])) as
@@ -80,12 +83,16 @@ export function deriveBindingPilotEvidence(source: VariablesPilotPackage, inputs
     for (let index = 0; index < keys.length; index++) {
       const value = current.environment[keys[index]!];
       if (value === undefined || value !== byMode.dark.environment[keys[index]!] ||
-          value !== packageContext[packageKeys[index]!]) throw new Error(`${mode}: contexto técnico difere do Package v2`);
+          (validation === 'pilot-consistency' && value !== packageContext[packageKeys[index]!])) {
+        throw new Error(`${mode}: contexto técnico difere do Package v2`);
+      }
     }
     for (const key of viewportKeys) {
       const value = current.viewport[key];
       if (typeof value !== 'number' || value !== byMode.dark.viewport[key] ||
-          value !== packageContext.viewport[key]) throw new Error(`${mode}: viewport/DPR difere do Package v2`);
+          (validation === 'pilot-consistency' && value !== packageContext.viewport[key])) {
+        throw new Error(`${mode}: viewport/DPR difere do Package v2`);
+      }
     }
     if (current.buildSha256 !== byMode.dark.buildSha256 || current.buildPath !== byMode.dark.buildPath) {
       throw new Error('Diagnósticos usam builds diferentes');
@@ -106,6 +113,7 @@ export function deriveBindingPilotEvidence(source: VariablesPilotPackage, inputs
       const result = object(matches[0], `${mode}/${property}`);
       const verification = object(result.verification, `${mode}/${property}.verification`);
       if (result.status !== 'confirmed' || result.tokenCandidate !== token ||
+          typeof result.originalComputed !== 'string' || !result.originalComputed ||
           verification.matchedWitness !== true || verification.restoredExactly !== true ||
           verification.original !== result.originalComputed || verification.restored !== result.originalComputed ||
           verification.inlineRestored !== true) throw new Error(`${mode}/${property}: testemunha ou restauração não confirmada`);
@@ -128,10 +136,12 @@ export function deriveBindingPilotEvidence(source: VariablesPilotPackage, inputs
             object(item.references[0], 'reference').fallback === null)) {
         throw new Error(`${mode}/${property}: referência CSSOM direta ausente ou ambígua`);
       }
-      const packageCss = source.tokens.tokens[token]?.[mode]?.computed.selected;
-      if (typeof packageCss !== 'string' || typeof result.originalComputed !== 'string' ||
-          !sameComputed(property, result.originalComputed, packageCss)) {
-        throw new Error(`${mode}/${property}: valor diagnóstico difere do Package v2`);
+      if (validation === 'pilot-consistency') {
+        const packageCss = source.tokens.tokens[token]?.[mode]?.computed.selected;
+        if (typeof packageCss !== 'string' || typeof result.originalComputed !== 'string' ||
+            !sameComputed(property, result.originalComputed, packageCss)) {
+          throw new Error(`${mode}/${property}: valor diagnóstico difere do Package v2`);
+        }
       }
       mappings.push({ specimen: 'obsidian.button', variant: 'normal', element: 'root',
         property, mode, token, status: 'confirmed', diagnosticOrigin: input.filename });

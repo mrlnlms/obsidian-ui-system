@@ -20,7 +20,7 @@ The v0.1.0 scope demonstrates an end-to-end path from Obsidian capture to a Figm
 
 - Mapping renders 59 specimens across 26 public API families and exports canonical observed evidence: specimens, states, tokens, environment, and snapshots. Its Layout Lab measures experimental sizing behavior and keeps inference separate.
 - **Export Obsidian UI Figma Package** creates one validated ZIP from a consistent Mapping capture and Lab run.
-- A development CLI can aggregate controlled Dark/Light Mapping and Layout Lab exports into Package v2 with separate per-mode evidence. The Figma plugin still imports Package v1 only.
+- A development CLI can aggregate controlled Dark/Light Mapping and Layout Lab exports into Package v2 with separate per-mode evidence. The Figma plugin accepts v2 for a bounded Button normal action with two Variable bindings; its full UI Kit action still uses v1.
 - The Figma plugin imports that ZIP and generates native, editable Button and Search Component Sets. Those two components are the validated pilots; the broader library remains future work.
 - Obsidian UI Skill has a product location and purpose, but no implemented skill yet.
 

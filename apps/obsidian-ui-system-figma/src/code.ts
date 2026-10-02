@@ -1,12 +1,17 @@
 import { readButtonImport } from './button-data';
-import { fontFailure, requiredFont } from './font-resolution';
+import { createButtonComponent, loadButtonFont } from './button-component';
+import { readPackageVersion, readButtonV2Package, type ButtonV2Package } from './button-v2-package';
+import { prepareButtonNormalBinding } from './button-normal-binding';
+import { generateBoundButtonNormal } from './button-normal-generation';
+import type { DiagnosticInput } from './binding-pilot-evidence';
 import { generateSearch } from './search-generation';
 import { planUiKitPlacement } from './ui-kit-layout';
 import { readFigmaPackage, type ImportedPackage } from './package-data';
 
-figma.showUI(__html__, { width: 380, height: 420 });
+figma.showUI(__html__, { width: 400, height: 560 });
 
 let importedPackage: ImportedPackage | undefined;
+let importedButtonV2: ButtonV2Package | undefined;
 let currentRequest = 0;
 
 figma.ui.onmessage = async (message: unknown) => {
@@ -14,6 +19,7 @@ figma.ui.onmessage = async (message: unknown) => {
     if (message.requestId >= currentRequest) {
       currentRequest = message.requestId;
       importedPackage = undefined;
+      importedButtonV2 = undefined;
     }
     return;
   }
@@ -21,15 +27,35 @@ figma.ui.onmessage = async (message: unknown) => {
     if (message.requestId < currentRequest) return;
     currentRequest = message.requestId;
     importedPackage = undefined;
+    importedButtonV2 = undefined;
     try {
       const bytes = message.bytes instanceof Uint8Array ? message.bytes :
         message.bytes instanceof ArrayBuffer ? new Uint8Array(message.bytes) : null;
       if (!bytes) throw new Error('Figma Package inválido: dados do ZIP ausentes.');
-      importedPackage = readFigmaPackage(bytes);
+      const version = readPackageVersion(bytes);
+      if (version === 1) importedPackage = readFigmaPackage(bytes);
+      else importedButtonV2 = readButtonV2Package(bytes);
       figma.ui.postMessage({ type: 'package-ready', requestId: currentRequest,
-        summary: importedPackage.summary });
+        version, summary: (importedPackage ?? importedButtonV2)!.summary });
     } catch (error) {
       figma.ui.postMessage({ type: 'package-error', requestId: currentRequest,
+        text: error instanceof Error ? error.message : String(error) });
+    }
+    return;
+  }
+  if (isGenerateBoundButtonMessage(message)) {
+    if (!importedButtonV2) {
+      figma.ui.postMessage({ type: 'result', ok: false, text: 'Selecione um Figma Package v2 válido.' });
+      return;
+    }
+    try {
+      const prepared = prepareButtonNormalBinding(importedButtonV2, message.diagnostics);
+      const report = await generateBoundButtonNormal(prepared);
+      figma.ui.postMessage({ type: 'result', ok: true,
+        text: `Button normal criado com Variables vinculadas. Component ${report.componentId}; collection ${report.collectionId}.`,
+        report });
+    } catch (error) {
+      figma.ui.postMessage({ type: 'result', ok: false,
         text: error instanceof Error ? error.message : String(error) });
     }
     return;
@@ -59,84 +85,18 @@ figma.ui.onmessage = async (message: unknown) => {
 
 async function generateButton(componentsJson: unknown, layoutJson: unknown): Promise<ComponentSetNode> {
   let set: ComponentSetNode | undefined;
-  let fontProbe: TextNode | undefined;
   const components: ComponentNode[] = [];
   const textNodes: TextNode[] = [];
   try {
     const data = readButtonImport(componentsJson, layoutJson);
     validateSharedTypography(data);
-    const available = await figma.listAvailableFontsAsync();
-    const font = requiredFont({ cssStack: data[0].fontFamily, platform: data[0].platform,
-      weight: data[0].fontWeight, style: data[0].fontStyle },
-    available.map((item) => item.fontName));
-    try {
-      await figma.loadFontAsync(font);
-    } catch {
-      throw fontFailure(font, `Required font could not be loaded: ${font.family} / ${font.style}.`);
-    }
-    fontProbe = figma.createText();
-    fontProbe.fontName = font;
-    fontProbe.fontSize = data[0].fontSize;
-    fontProbe.textAutoResize = 'WIDTH_AND_HEIGHT';
-    fontProbe.characters = data[0].text;
-    if (fontProbe.hasMissingFont) {
-      throw fontFailure(font, `Required font unusable: ${font.family} / ${font.style}. ` +
-        'Figma lists this font, but the TextNode reports it missing.');
-    }
-    if (fontProbe.width <= 0 || fontProbe.height <= 0) {
-      throw fontFailure(font, `Required font did not render: ${font.family} / ${font.style} ` +
-        `(width=${fontProbe.width}, height=${fontProbe.height}, chars=${fontProbe.characters.length}).`);
-    }
-    fontProbe.remove();
-    fontProbe = undefined;
+    const font = await loadButtonFont(data[0]);
     figma.ui.postMessage({ type: 'typography', text: `Typography: ${font.family} / ${font.style} ✓` });
 
     for (const button of data) {
-      const component = figma.createComponent();
+      const { component, label } = createButtonComponent(button, font);
       components.push(component);
-      component.name = `State=${button.state}`;
-      component.resize(component.width, button.height);
-      component.layoutMode = 'HORIZONTAL';
-      component.layoutWrap = 'NO_WRAP';
-      component.primaryAxisSizingMode = 'AUTO';
-      component.counterAxisSizingMode = 'FIXED';
-      component.primaryAxisAlignItems = button.justifyContent;
-      component.counterAxisAlignItems = button.alignItems;
-      component.paddingTop = button.padding.top;
-      component.paddingRight = button.padding.right;
-      component.paddingBottom = button.padding.bottom;
-      component.paddingLeft = button.padding.left;
-      component.cornerRadius = button.radius;
-      component.clipsContent = false;
-      component.fills = [{ type: 'SOLID', color: button.background }];
-      component.strokes = button.border ? [{ type: 'SOLID', color: button.border.color }] : [];
-      if (button.border) {
-        component.strokeWeight = button.border.width;
-        component.strokeAlign = 'INSIDE';
-      }
-      component.opacity = button.opacity;
-
-      const label = figma.createText();
       textNodes.push(label);
-      label.name = 'Label';
-      label.fontName = font;
-      label.fontSize = button.fontSize;
-      label.lineHeight = { unit: 'PIXELS', value: button.textHeight };
-      label.textAutoResize = 'WIDTH_AND_HEIGHT';
-      label.textAlignHorizontal = button.textAlign;
-      label.fills = [{ type: 'SOLID', color: button.color }];
-      label.characters = button.text;
-      // Measure populated text before adding it to the hugging component.
-      if (label.width <= 0 || label.height <= 0) {
-        throw new Error(`Button ${button.state}: TextNode não mediu o label ` +
-          `(width=${label.width}, height=${label.height}, chars=${label.characters.length}, missingFont=${label.hasMissingFont}); geração cancelada.`);
-      }
-      component.appendChild(label);
-      label.layoutSizingHorizontal = 'HUG';
-      label.layoutSizingVertical = 'HUG';
-      if (component.width < label.width + button.padding.left + button.padding.right - 0.5) {
-        throw new Error(`Button ${button.state}: largura Hug colapsou após inserir o label; geração cancelada.`);
-      }
     }
 
     set = figma.combineAsVariants(components, figma.currentPage);
@@ -171,7 +131,6 @@ async function generateButton(componentsJson: unknown, layoutJson: unknown): Pro
 
     return set;
   } catch (error) {
-    if (fontProbe && !fontProbe.removed) fontProbe.remove();
     if (set && !set.removed) set.remove();
     else for (const component of components) if (!component.removed) component.remove();
     for (const label of textNodes) if (!label.removed) label.remove();
@@ -206,6 +165,13 @@ function organizeUiKit(button: ComponentSetNode, search: ComponentSetNode, secti
 
 function isGenerateUiKitMessage(value: unknown): value is { type: 'generate-ui-kit' } {
   return typeof value === 'object' && value !== null && 'type' in value && value.type === 'generate-ui-kit';
+}
+
+function isGenerateBoundButtonMessage(value: unknown): value is {
+  type: 'generate-bound-button'; diagnostics: DiagnosticInput[];
+} {
+  return typeof value === 'object' && value !== null && 'type' in value &&
+    value.type === 'generate-bound-button' && 'diagnostics' in value && Array.isArray(value.diagnostics);
 }
 
 function isClearPackageMessage(value: unknown): value is { type: 'clear-package'; requestId: number } {

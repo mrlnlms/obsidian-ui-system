@@ -28,7 +28,7 @@ Para texto de uma linha, preserve o comportamento de overflow medido. Um viewpor
 - Compartilhe uma propriedade `TEXT` entre variants somente quando ela representar o mesmo campo semântico. O Figma preserva overrides na troca de `State`: placeholder e valor de busca precisam de propriedades distintas para que um texto não substitua o outro. A visibilidade de elementos que pertencem ao estado, como o clear do Search, deve vir da variant, sem propriedade manual redundante.
 - `addComponentProperty()` retorna uma chave opaca com sufixo `#...`: use a chave inteira em `componentPropertyReferences.characters` e em `instance.componentProperties`. Crie as propriedades no Component Set após `combineAsVariants` e vincule cada TextNode à chave do campo que representa. Não presuma que propriedades homônimas criadas antes em ComponentNodes diferentes compartilharão o mesmo ID após a combinação. Confira os defaults, overrides independentes e trocas de estado em instances temporárias; confirme também o painel no Figma Desktop.
 - Ao combinar variants, confira a propriedade `State`, o número de variants e os valores padrão. Posicione as variants dentro do set depois de `combineAsVariants`; o arranjo do set é apenas organização do canvas.
-- Light/Dark são contextos futuros de Variables/Modes. Não duplique Component Sets por tema para resolver um piloto local.
+- Light/Dark já são modes de Variables na ação v2 limitada ao Button normal. Não duplique Component Sets por tema.
 
 ## Padrões já demonstrados
 
@@ -38,6 +38,8 @@ Para texto de uma linha, preserve o comportamento de overflow medido. Um viewpor
 | `Obsidian / Search` | Raiz Fill horizontal e altura Fixed; interior com posicionamento relativo/absoluto, superfície e viewport textual que esticam, lupa à esquerda e clear à direita; SVGs das máscaras capturadas; clipping sem ellipsis; `State=Empty/Filled`; `Placeholder` e `Value` separados. | Layout, resize, altura, ícones, corte simples e edição de texto por estado foram validados manualmente. |
 
 Os SVGs Search vêm do CSSOM observado. O Button não tem ícones nesse specimen. Medidas de um componente específico não devem ser copiadas como regras gerais.
+
+A ação v2 cria somente um ComponentNode de Button normal com `cornerRadius` e paint sólido vinculados às Variables confirmadas. O pré-check consulta a identidade causal do diagnóstico e a projeção dos tokens; a comparação de estilos resolvidos entre capturas não define o vínculo. Consulte o [contrato do Package](../../integration/figma-package/figma-package.md#button-normal-real-com-bindings) para o escopo. A geração real ainda aguarda inspeção manual no Figma Desktop.
 
 ## Cuidados da Plugin API
 

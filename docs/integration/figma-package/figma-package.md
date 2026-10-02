@@ -28,7 +28,7 @@ O formato de transporte é `1`; o schema canônico atual é `0.4.0`, e novos exp
 
 ## Package v2 multi-mode
 
-O builder v2 é uma CLI de desenvolvimento que agrega quatro exports individuais já capturados: Mapping Dark, Layout Lab Dark, Mapping Light e Layout Lab Light. O comando completo e os destinos estão em [Desenvolvimento](../../development.md#figma-package-and-local-artifacts). O comando de Obsidian acima continua gerando v1; o importer Figma atual rejeita v2 antes de tentar gerar componentes.
+O builder v2 é uma CLI de desenvolvimento que agrega quatro exports individuais já capturados: Mapping Dark, Layout Lab Dark, Mapping Light e Layout Lab Light. O comando completo e os destinos estão em [Desenvolvimento](../../development.md#figma-package-and-local-artifacts). O comando de Obsidian acima continua gerando v1. O plugin Figma principal aceita v2 somente na ação restrita de Button normal com Variables; **Generate UI Kit** continua usando v1.
 
 O ZIP v2 conserva os cinco nomes de arquivo, mas usa `obsidian-ui-figma-package` versão `2` e schema agregado `0.5.0`:
 
@@ -42,13 +42,13 @@ O ZIP v2 conserva os cinco nomes de arquivo, mas usa `obsidian-ui-figma-package`
 
 O builder verifica que cada sidecar corresponde ao seu próprio artifact e que os quatro contextos compartilham hash do build, viewport/DPR, versões do Obsidian e SDK, schema individual `0.4.0` e plataforma. Exige exatamente um Dark e um Light, as mesmas identidades de specimens e probes nos dois modes, e uma suite de probes igual. Horários de Mapping e Layout Lab são preservados individualmente, sem exigência de coincidência. Um nome de community theme indisponível permanece `null`. O builder não recalcula CSS, não cria valores ausentes nem refaz as inferências de layout.
 
-Os exports individuais e o ZIP final são locais, ignorados por Git e retidos até remoção manual. O fixture versionado em `apps/obsidian-ui-mapping/tests/fixtures/` contém o par controlado usado pelos testes do builder; os diretórios originais no `dev-vault` continuam sendo a evidência de runtime. O importer de produção ainda não aceita v2; há somente um leitor separado para o piloto de Variables descrito abaixo.
+Os exports individuais e o ZIP final são locais, ignorados por Git e retidos até remoção manual. O fixture versionado em `apps/obsidian-ui-mapping/tests/fixtures/` contém o par controlado usado pelos testes do builder; os diretórios originais no `dev-vault` continuam sendo a evidência de runtime. O leitor v2 do plugin principal extrai apenas o Button normal e os tokens necessários à sua ação. O plugin de desenvolvimento separado continua disponível para os pilotos descritos abaixo.
 
 Os pacotes ficam locais e ignorados por Git. O teste `npm run test:package --workspace @obsidian-ui-system/mapping` verifica a estrutura ZIP e rejeições de inconsistência. A captura real depende do Obsidian Desktop e deve ser conferida após o build.
 
 ## Projeção experimental de tokens para Figma Variables
 
-A fonte canônica continua sendo `tokens.json` do Package v2. O módulo puro `apps/obsidian-ui-system-figma/src/variable-projection.ts` registra uma decisão para cada identidade sem alterar o package. Um plugin de desenvolvimento separado usa três dessas decisões em um arquivo Figma descartável; o importer v1 e a geração de Button/Search continuam aceitando apenas v1 e não criam Variables.
+A fonte canônica continua sendo `tokens.json` do Package v2. O módulo puro `apps/obsidian-ui-system-figma/src/variable-projection.ts` registra uma decisão para cada identidade sem alterar o package. Um plugin de desenvolvimento separado usa três dessas decisões em um arquivo Figma descartável; a ação principal **Generate UI Kit** continua usando v1 e não cria Variables. A ação v2 restrita usa somente `--button-radius` e `--interactive-normal` no Button normal.
 
 A análise usou o ZIP local `dev-vault/obsidian-ui-exports/figma-packages/obsidian-ui-package-v2-2026-10-01T21-31-26-285Z.zip` (SHA-256 `718ba4062b001be12d0284263b2de565f05b25b0ff2f5a62651ed1df9d9450a3`). Das 1.181 identidades, 940 resolvem em ambos os modes, 5 somente no Dark, 3 somente no Light e 233 em nenhum. Esses 233 permanecem evidência válida e podem ganhar contexto em capturas futuras.
 
@@ -70,6 +70,12 @@ Prova de browser, sem alteração de código: em Chrome 154 headless isolado, as
 **Piloto descartável de binding:** os diagnósticos Dark/Light de 2026-10-01 confirmaram a referência CSSOM direta e a resposta a uma alteração temporária de `--button-radius` e `--interactive-normal` no Button normal, com restauração exata. O consumidor separado aceitou esses JSONs junto com o Package v2 existente: comparou viewport/DPR, versões, schema, plataforma e valores normalizados. O relatório preservou o build `c42d26fb…` do Package montado às `21:31:26.285Z` e o build `73df41c3…` dos diagnósticos capturados às `23:22:34.033Z` e `23:23:02.517Z` como origens distintas.
 
 **Validação no Figma Desktop (2026-10-01):** o operador executou somente a nova ação num arquivo descartável. O frame criado tinha `VariableID:15:4` nos quatro cantos e `VariableID:15:5` no paint sólido e no fill do nó. Após Dark → Light → Dark, `resolvedVariableModes` retornou os IDs de modo esperados; `resolveForConsumer` retornou raio `8` em todas as etapas e cor `#333333 → #e4e4e4 → #333333` (com arredondamento de canais no Figma). Os IDs de binding permaneceram iguais. Capturas de tela mostraram o frame escuro em Dark e claro em Light, ambos com raio 8; o operador confirmou que a alternância funcionou. Isso confirma o readback da API e a aparência visível deste frame descartável.
+
+## Button normal real com bindings
+
+O plugin Figma principal tem uma ação v2 limitada a `obsidian.button / normal / root`. Ela lê o Package v2 e os dois JSONs independentes de diagnóstico Dark/Light, exige `confirmed` com referência CSSOM direta, resposta ao estímulo e restauração, e consulta a relação `specimen + variant + element + property + mode → token`. O pré-check exige que `--button-radius` e `--interactive-normal` existam em `tokens.json` e projetem valores `FLOAT` e `COLOR` nos dois modes. **Não exige igualdade** entre valores resolvidos do diagnóstico, tokens e estilos dos snapshots para aceitar o vínculo. A evidência causal estabelece a identidade; os valores do Package escolhido alimentam as Variables.
+
+A ação cria um `ComponentNode` editável de Button normal, com `Label`, raio vinculado a `--button-radius` e paint sólido vinculado a `--interactive-normal`. A collection tem somente essas duas Variables e modes Dark/Light. O mode inicial corresponde à fonte de inferência de layout do Package. A geração confere IDs de binding e resolução das Variables em Dark → Light → Dark, volta ao mode inicial e remove seus nodes/collection em falha tratada. Não gera CTA, Search nem um Component Set v2. O ZIP v2 não muda; os diagnósticos permanecem arquivos separados e ignorados por Git. O código e o pré-check passaram em TypeScript, build e testes automatizados; a execução do Component real no Figma Desktop ainda requer validação manual.
 
 ## Artefatos locais e limpeza
 
