@@ -11,6 +11,7 @@ Start with the [project overview](../README.md) to understand the products and c
 | Topic | Documentation |
 | --- | --- |
 | Canonical observed evidence | [Public UI inventory](obsidian-ui-mapping/capture/public-ui-inventory.md), [component registry](obsidian-ui-mapping/capture/component-registry.md), [snapshot format and limits](obsidian-ui-mapping/capture/snapshot.md) |
+| Internal UI candidates | [Scope, revised inventory, and existing probes](obsidian-ui-mapping/capture/internal-observed.md) |
 | Layout Probe Lab | [Lab behavior and use](obsidian-ui-mapping/layout-lab/layout-lab.md), [inference rules and limits](obsidian-ui-mapping/layout-lab/layout-inference.md) |
 | Snapshot diff | [Semantic comparison rules](obsidian-ui-mapping/snapshot-diff/snapshot-diff.md) |
 

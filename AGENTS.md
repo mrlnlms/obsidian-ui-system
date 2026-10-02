@@ -92,13 +92,17 @@ Ao continuar de um handoff:
 
 Prefira registrar uma limitação conhecida e seguir a transformar incertezas irrelevantes em trabalho preventivo.
 
-## Fixtures para estados observáveis
+## Internal-observed: escopo e fixtures
+
+Capture apenas padrões reutilizáveis da interface do aplicativo que não estejam cobertos pela API pública e façam sentido no UI Kit: navegação, panes, tabs, headers, barras, resultados, Properties e controles semelhantes. DOM do CodeMirror, texto da nota, Markdown e estrutura interna do editor ficam fora desta frente.
 
 Em investigação `internal-observed`, ausência na UI atual não significa ausência ou impossibilidade de captura.
 
 Quando um padrão depende de conteúdo, hierarquia ou estado comum do Obsidian, crie no `dev-vault` o menor fixture necessário para fazê-lo aparecer e então observe o DOM real.
 
 Exemplos: frontmatter/YAML para Properties, notas em subpastas para estados hierárquicos, conteúdo conhecido para Search.
+
+O conteúdo específico de notas, YAML, arquivos, pastas e buscas é sample content e evidência da cena; não define o componente reutilizável.
 
 Não invente estrutura ou estados que o Obsidian não produz. Mas também não reporte como lacuna algo que pode ser exposto criando um estado normal e controlado do app.
 
