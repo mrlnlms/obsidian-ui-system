@@ -1,6 +1,6 @@
 # Obsidian UI System for Figma Design
 
-This local Figma Design development plugin imports the validated Button and Search Component Sets from Package v1. Its Custom UI reads a local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. A restricted Package v2 action also generates one native Button normal Component with three bound Variables. Separate development actions read standalone internal-observed probes for File Explorer rows and the first View Header. The plugin does not read the local filesystem directly or access the network. The v1 Button and Search behavior, the three v2 Button normal bindings, and the File Explorer rows were validated in Figma Desktop. The first View Header was reviewed and accepted with the narrow-width difference documented below.
+This local Figma Design development plugin imports the validated Button and Search Component Sets from Package v1. Its Custom UI reads a local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. A restricted Package v2 action also generates one native Button normal Component with three bound Variables. Separate development actions read standalone internal-observed probes for File Explorer rows, View Header, and Workspace Tab. The plugin does not read the local filesystem directly or access the network. The v1 Button and Search behavior, the three v2 Button normal bindings, and the File Explorer rows were validated in Figma Desktop. The first View Header was reviewed and accepted with the narrow-width difference documented below. The first Workspace Tab was user-validated in Figma Desktop for the bounded Dark sample.
 
 The [reconstruction reference](../../docs/obsidian-ui-system-figma/components/component-reconstruction.md) records the reusable rules demonstrated by the generated components.
 
@@ -86,6 +86,14 @@ The probe also records that the Bookmarks view has the same three header areas b
 
 Figma Desktop screenshots from 2026-10-02 confirm that the generated View Header renders and resizes, including the narrow button-group clipping. They also show a remaining difference in the middle of the resize sequence: Figma keeps ellipses in the ancestor segments after Obsidian has begun dropping their visible content, and Figma shortens the current title while some ancestor remnants remain. Obsidian keeps the current title readable until the breadcrumb has nearly vanished. The user accepted this bounded Figma Design approximation and closed the View Header front on 2026-10-02. The nested property panel was not shown in those screenshots; the generation action verifies property overrides in a temporary instance.
 
+### Workspace Tab, first Dark desktop version
+
+In the Figma plugin, select `dev-vault/obsidian-ui-exports/figma-packages/workspace-tab-probe-2026-10-02.json` in **Workspace Tab probe JSON** and click **Generate Workspace Tab**. The tracked copy at `tests/fixtures/workspace-tab-probe.json` has the same content. **No Package ZIP is needed.** Rebuild the plugin before running this new action; earlier Figma nodes do not update automatically.
+
+The action creates one native `Obsidian / Workspace Tab` Component Set with `Context = Main | Sidedock` and `State = Active | Inactive`, plus two swappable Files icon Components and a Dark resize preview. Main tabs are 34 px high, share available width when placed in horizontal Auto Layout, keep an editable `Title`, and use a one-line ending ellipsis. The active main tab shows its observed close control. The Auto Layout preview applies the observed 320 px maximum to each Main instance; a later tab-group host must apply that same maximum to its instances. Sidedock tabs are 28 × 25 px and show a 16 px icon. The `Icon / Active` and `Icon / Inactive` instance-swap properties let the matching state use another View glyph; the two defaults preserve their observed state paints. The icon components use the observed Files SVG with active/inactive paints measured from the sidedock; labels and icons are content slots, not new states. The preview shows four equally sized Main tabs, one active, and two Sidedock tabs with 3 px spacing.
+
+On 2026-10-02, the user confirmed the first Desktop result as correct after checking the four variants, editable `Title`, Main resize and ellipsis, the matching Sidedock icon property, and Dark appearance. This closes the first Workspace Tab version; a WorkspaceTabs/tab-group host is a separate composition.
+
 ## Files
 
 - `src/code.ts`: Figma Component Set creation and font loading.
@@ -97,6 +105,7 @@ Figma Desktop screenshots from 2026-10-02 confirm that the generated View Header
 - `src/file-explorer-row-tag-data.ts`, `src/file-explorer-row-tag-generation.ts`: read the two observed tagged rows and generate their separate Dark Components.
 - `src/folder-row-data.ts`, `src/folder-row-generation.ts`: read the observed folder anatomy, states and depths and generate six separate Dark Components.
 - `src/view-header-data.ts`, `src/view-header-generation.ts`: read the bounded View Header probe and generate the first native Dark Component.
+- `src/workspace-tab-data.ts`, `src/workspace-tab-generation.ts`: read the four observed Dark Workspace Tab appearances and generate the Component Set and resize preview.
 - `src/ui-kit-layout.ts`: calculates deterministic, non-overlapping section positions for each run.
 - `src/package-data.ts`: ZIP decoding and input preflight before generation.
 - `src/button-v2-package.ts`, `src/button-normal-binding.ts`: bounded v2 reader and structural confirmed-binding preflight.

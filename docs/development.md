@@ -42,6 +42,8 @@ The same probe includes visible Dark folder rows at observed depths 0–2 in `fo
 
 The one-scene `view-header-probe-2026-10-02.json` is retained next to the ZIPs; a tracked copy in the Figma plugin's `tests/fixtures/` supports the bounded View Header reader test. Select this JSON in **View Header probe JSON** and click **Generate View Header** in the Figma plugin. It does not use a Package ZIP. The probe is development evidence retained until manual removal, not a public catalog or Package export.
 
+The targeted `workspace-tab-probe-2026-10-02.json` is retained in the same ignored export directory; its tracked copy in the Figma plugin's `tests/fixtures/` supports the Workspace Tab reader test. Select it in **Workspace Tab probe JSON** and click **Generate Workspace Tab**. No Package ZIP is needed. The broader raw CLI diagnostic remains beside it for traceability. Both local files are retained until manual removal; neither belongs to the public catalog or Package export. Run `npm run test:workspace-tab --workspace @obsidian-ui-system/figma-plugin` for the reader check.
+
 A reload can close Mapping and Layout Lab tabs because the plugin detaches its views on unload; run the matching Command Palette action to reopen them. A change to `manifest.json` may still require an Obsidian restart. For a one-time production build, use `npm run build`.
 
 Hot Reload is an ignored local dependency at `dev-vault/.obsidian/plugins/hot-reload/`. To reinstall the pinned version after cloning, run from the repository root:

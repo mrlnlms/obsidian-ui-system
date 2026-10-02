@@ -163,7 +163,7 @@ Current state:
 
 | Building block | State |
 | --- | --- |
-| Workspace Tab | located; still needs Figma componentization |
+| Workspace Tab | **Figma-validated for the bounded Dark desktop Main/Sidedock sample** |
 | View Header | **figma-validated for the bounded Markdown Dark sample** |
 | Breadcrumb Segment | **native Figma Component**, editable `Label` |
 | Breadcrumb Trail | **native Figma Component**, uses Segment instances + current title |
@@ -257,7 +257,7 @@ semantic architecture ESTABLISHED
 File Explorer         STRUCTURALLY SUFFICIENT
 View Header           FIGMA-VALIDATED (bounded sample)
 Breadcrumb            BUILT as nested Components
-Workspace Tab         NEXT host primitive
+Workspace Tab         FIGMA-VALIDATED (bounded Dark desktop)
 Side Panel/Sidedock   NEXT composition target
 
 VIEW CONTENT
@@ -275,10 +275,9 @@ The next work should optimize for **usable screen composition**, not evidence vo
 
 ### Phase A — finish the host skeleton
 
-1. **Workspace Tab / tab group behavior**
-   - build the reusable Figma tab component/composition;
-   - use API/code semantics as the component boundary;
-   - inspect DOM/CSS only if the Figma behavior cannot be matched from observation.
+1. **Workspace Tab — completed for the bounded Dark desktop sample**
+   - the reusable Figma Component Set covers Main/Sidedock and Active/Inactive;
+   - the tab group remains a host composition to assemble from this component.
 2. **Side Panel / WorkspaceSidedock composition**
    - resizable host;
    - tab area / top control region;

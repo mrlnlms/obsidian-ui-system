@@ -43,6 +43,11 @@
     <label>View Header probe JSON <input id="header-probe" type="file" accept=".json,application/json"></label>
     <button id="generate-header" type="button" disabled>Generate View Header</button>
   </div>
+  <div id="workspace-tab">
+    <p>Workspace Tab Dark: selecione workspace-tab-probe-2026-10-02.json. Esta ação não usa o Package ZIP.</p>
+    <label>Workspace Tab probe JSON <input id="tab-probe" type="file" accept=".json,application/json"></label>
+    <button id="generate-tab" type="button" disabled>Generate Workspace Tab</button>
+  </div>
   <div id="typography" role="status" aria-live="polite"></div>
   <div id="status" role="status" aria-live="polite"></div>
   <pre id="report"></pre>
@@ -59,6 +64,8 @@
     const generateFolderRows = document.getElementById('generate-folder-rows');
     const headerProbe = document.getElementById('header-probe');
     const generateHeader = document.getElementById('generate-header');
+    const tabProbe = document.getElementById('tab-probe');
+    const generateTab = document.getElementById('generate-tab');
     const summary = document.getElementById('summary');
     const typography = document.getElementById('typography');
     const status = document.getElementById('status');
@@ -76,11 +83,13 @@
       generateTaggedRows.disabled = generating || !rowProbe.files[0];
       generateFolderRows.disabled = generating || !rowProbe.files[0];
       generateHeader.disabled = generating || !headerProbe.files[0];
+      generateTab.disabled = generating || !tabProbe.files[0];
     }
     darkInput.onchange = updateActions;
     lightInput.onchange = updateActions;
     rowProbe.onchange = updateActions;
     headerProbe.onchange = updateActions;
+    tabProbe.onchange = updateActions;
 
     function show(text, kind = '') {
       status.textContent = text;
@@ -207,6 +216,27 @@
       }
     };
 
+    generateTab.onclick = async () => {
+      if (generating || !tabProbe.files[0]) return;
+      generating = true;
+      updateActions();
+      tabProbe.disabled = true;
+      show('Lendo probe e gerando Workspace Tab…');
+      try {
+        const file = tabProbe.files[0];
+        if (!file.name.toLowerCase().endsWith('.json') || file.size > 2 * 1024 * 1024) {
+          throw new Error('Selecione um Workspace Tab probe .json de até 2 MB.');
+        }
+        parent.postMessage({ pluginMessage: { type: 'generate-workspace-tab',
+          probe: JSON.parse(await file.text()) } }, '*');
+      } catch (error) {
+        generating = false;
+        tabProbe.disabled = false;
+        updateActions();
+        show(error.message || String(error), 'error');
+      }
+    };
+
     onmessage = (event) => {
       const message = event.data.pluginMessage;
       if (message?.type === 'package-ready' && message.requestId === requestId) {
@@ -233,6 +263,7 @@
         lightInput.disabled = false;
         rowProbe.disabled = false;
         headerProbe.disabled = false;
+        tabProbe.disabled = false;
         updateActions();
       }
     };

@@ -12,7 +12,7 @@ This inventory describes only UI patterns already located in the running app. Fi
 | --- | --- | --- |
 | File Explorer file row | `.nav-file-title` with `.nav-file-title-content`; one supported, active row captured with structure, dimensions, and computed styles. | Concrete candidate for the observed active file row; filename is a content slot. |
 | File Explorer folder row | `.nav-folder-title`, disclosure icon, states and depths 0–2 in the standalone probe. | Generated and validated in Figma for this phase; no functional tree is implied. |
-| Workspace tab | `.workspace-tab-header` and inner container; active classes observed. | Located; needs detailed capture before promotion. |
+| Workspace tab | `WorkspaceTabs`/`WorkspaceLeaf` semantics from the public API; four Dark tab appearances measured in the main group and sidedock, with active/inactive states. | First Component Set validated in Figma Desktop for this bounded sample. |
 | Pane/view header | Visible Dark Markdown header captured with navigation, title/breadcrumb area, actions, and horizontal geometry; a Bookmarks header has the same three areas but is hidden in its sidebar. | View Header, Breadcrumb Trail, and Breadcrumb Segment were reviewed and accepted in Figma for this phase; the middle resize transition remains approximate. |
 | Property row | `.metadata-property` with key and value areas; text and checkbox controls captured inside `.metadata-container` under the Markdown View's editor. | Note/editor UI, outside the current application/view chrome front; it is not a row of the separate `all-properties` view. |
 | Breadcrumb segment | `.view-header-breadcrumb` in a note header captured with dimensions and styles; horizontal priority checked at two widths. | Part of the View Header; its Figma instances are reusable, with a documented narrow-width transition difference. |
@@ -22,6 +22,17 @@ This inventory describes only UI patterns already located in the running app. Fi
 | Status bar item | Repeated `.status-bar-item`, including a clickable modifier, observed. | Located; needs detailed capture before promotion. |
 
 Sidebars and overlays are relevant UI contexts, but the current evidence does not define a reusable sidebar or internal overlay component. The public API catalog already covers its own modal specimens; this inventory does not relabel them as internal.
+
+## Workspace Tab, Dark desktop
+
+The public API establishes `WorkspaceTabs` as the desktop parent of `WorkspaceLeaf`; runtime measurements below concern only the tab header's appearance and sizing. A targeted Obsidian CLI `eval` on 2026-10-02 measured visible main and sidedock tabs without changing the app. The full raw diagnostic and the focused `workspace-tab-probe-2026-10-02.json` are ignored local evidence next to the Figma Package ZIPs; the Figma plugin tracks a copy of the focused probe in `tests/fixtures/`.
+
+| Context | Active | Inactive | Sizing and content |
+| --- | --- | --- | --- |
+| Main tab group | 34 px high, `#1c1c1c` background, 10 px top corners, visible 20 px close control | 34 px high, transparent, close control hidden | Tabs use `flex: 1 1 0px`, `min-width: 0`, `max-width: 320px`; title is 13 px / 400 / 16.9 px, one line with ending ellipsis. The measured four-tab scene gave each tab about 99 px. |
+| Sidedock tab group | 28 × 25 px, white at 0.067 opacity over `#282828`, 8 px radius, 16 px icon | 28 × 25 px, transparent, 16 px icon | Icon only; titles and close controls are hidden. Visible icons have 3 px between tabs. |
+
+The active main sample used a long Markdown note title; the inactive sample used `New tab`. Sidedock active and inactive samples were Bookmarks and Files. These labels and glyph identities are scene content. The Figma translation uses one editable title slot and a swappable nested icon; the same Files glyph is used in both sidedock states with their separately observed colors and opacities. This does not add a new Obsidian state. The initial Main width is sample geometry; equal sharing and the 320 px maximum come from the observed flex behavior. Light and hover appearances were not measured.
 
 The View Header probe is a separate, single-scene `view-header-probe-2026-10-02.json` next to the Package ZIPs. Its tracked test copy is under the Figma plugin's `tests/fixtures/`. The observed Markdown title, breadcrumb labels, and action icons are content of that view; the three-area header structure is the reusable chrome. The hidden Bookmarks header is structural comparison only, not a second visual sample. See the [Figma plugin guide](../../../apps/obsidian-ui-system-figma/README.md#first-view-header-from-a-standalone-probe) for the bounded generation action.
 

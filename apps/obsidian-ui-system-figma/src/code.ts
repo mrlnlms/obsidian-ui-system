@@ -9,6 +9,7 @@ import { generateFileExplorerRow } from './file-explorer-row-generation';
 import { generateFileExplorerTaggedRows } from './file-explorer-row-tag-generation';
 import { generateFolderRows } from './folder-row-generation';
 import { generateViewHeader } from './view-header-generation';
+import { generateWorkspaceTab } from './workspace-tab-generation';
 import { planUiKitPlacement } from './ui-kit-layout';
 import { readFigmaPackage, type ImportedPackage } from './package-data';
 
@@ -19,6 +20,18 @@ let importedButtonV2: ButtonV2Package | undefined;
 let currentRequest = 0;
 
 figma.ui.onmessage = async (message: unknown) => {
+  if (isGenerateWorkspaceTabMessage(message)) {
+    try {
+      const result = await generateWorkspaceTab(message.probe);
+      figma.ui.postMessage({ type: 'result', ok: true,
+        text: `Workspace Tab Dark criado: 4 variants em ${result.set.name} (${result.set.id}), ` +
+          `2 ícones Files substituíveis e preview de resize.` });
+    } catch (error) {
+      figma.ui.postMessage({ type: 'result', ok: false,
+        text: error instanceof Error ? error.message : String(error) });
+    }
+    return;
+  }
   if (isGenerateViewHeaderMessage(message)) {
     try {
       const result = await generateViewHeader(message.probe);
@@ -150,6 +163,11 @@ function isGenerateFolderRowsMessage(value: unknown): value is { type: 'generate
 function isGenerateViewHeaderMessage(value: unknown): value is { type: 'generate-view-header'; probe: unknown } {
   return typeof value === 'object' && value !== null && 'type' in value &&
     value.type === 'generate-view-header' && 'probe' in value;
+}
+
+function isGenerateWorkspaceTabMessage(value: unknown): value is { type: 'generate-workspace-tab'; probe: unknown } {
+  return typeof value === 'object' && value !== null && 'type' in value &&
+    value.type === 'generate-workspace-tab' && 'probe' in value;
 }
 
 async function generateButton(componentsJson: unknown, layoutJson: unknown): Promise<ComponentSetNode> {
