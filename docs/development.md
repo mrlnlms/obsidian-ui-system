@@ -40,6 +40,8 @@ The validated first File Explorer row probe remains available as **Developer: Pr
 
 The same probe includes visible Dark folder rows at observed depths 0–2 in `folderRows`. In the Figma plugin, use this probe JSON with **Generate folder rows (Dark, Depth 0–2)**; it does not use a Package ZIP. `npm run test:folder-row --workspace @obsidian-ui-system/figma-plugin` checks the specific folder reader.
 
+The one-scene `view-header-probe-2026-10-02.json` is retained next to the ZIPs; a tracked copy in the Figma plugin's `tests/fixtures/` supports the bounded View Header reader test. Select this JSON in **View Header probe JSON** and click **Generate View Header** in the Figma plugin. It does not use a Package ZIP. The probe is development evidence retained until manual removal, not a public catalog or Package export.
+
 A reload can close Mapping and Layout Lab tabs because the plugin detaches its views on unload; run the matching Command Palette action to reopen them. A change to `manifest.json` may still require an Obsidian restart. For a one-time production build, use `npm run build`.
 
 Hot Reload is an ignored local dependency at `dev-vault/.obsidian/plugins/hot-reload/`. To reinstall the pinned version after cloning, run from the repository root:
@@ -126,6 +128,7 @@ npm run test:lifecycle --workspace @obsidian-ui-system/mapping
 npm run test:font --workspace @obsidian-ui-system/figma-plugin
 npm run test:search --workspace @obsidian-ui-system/figma-plugin
 npm run test:file-explorer-row --workspace @obsidian-ui-system/figma-plugin
+npm run test:view-header --workspace @obsidian-ui-system/figma-plugin
 npm run test:ui-kit --workspace @obsidian-ui-system/figma-plugin
 npm run test:package --workspace @obsidian-ui-system/figma-plugin
 npm run test:variables --workspace @obsidian-ui-system/figma-plugin

@@ -8,6 +8,7 @@ import { generateSearch } from './search-generation';
 import { generateFileExplorerRow } from './file-explorer-row-generation';
 import { generateFileExplorerTaggedRows } from './file-explorer-row-tag-generation';
 import { generateFolderRows } from './folder-row-generation';
+import { generateViewHeader } from './view-header-generation';
 import { planUiKitPlacement } from './ui-kit-layout';
 import { readFigmaPackage, type ImportedPackage } from './package-data';
 
@@ -18,6 +19,18 @@ let importedButtonV2: ButtonV2Package | undefined;
 let currentRequest = 0;
 
 figma.ui.onmessage = async (message: unknown) => {
+  if (isGenerateViewHeaderMessage(message)) {
+    try {
+      const result = await generateViewHeader(message.probe);
+      figma.ui.postMessage({ type: 'result', ok: true,
+        text: `3 Components criados: ${result.segment.name}, ${result.trail.name} e ` +
+          `${result.component.name} (${result.component.id}); título ${result.title}.` });
+    } catch (error) {
+      figma.ui.postMessage({ type: 'result', ok: false,
+        text: error instanceof Error ? error.message : String(error) });
+    }
+    return;
+  }
   if (isGenerateFolderRowsMessage(message)) {
     try {
       const components = await generateFolderRows(message.probe);
@@ -132,6 +145,11 @@ function isGenerateFileExplorerTaggedRowsMessage(value: unknown): value is { typ
 function isGenerateFolderRowsMessage(value: unknown): value is { type: 'generate-folder-rows'; probe: unknown } {
   return typeof value === 'object' && value !== null && 'type' in value &&
     value.type === 'generate-folder-rows' && 'probe' in value;
+}
+
+function isGenerateViewHeaderMessage(value: unknown): value is { type: 'generate-view-header'; probe: unknown } {
+  return typeof value === 'object' && value !== null && 'type' in value &&
+    value.type === 'generate-view-header' && 'probe' in value;
 }
 
 async function generateButton(componentsJson: unknown, layoutJson: unknown): Promise<ComponentSetNode> {

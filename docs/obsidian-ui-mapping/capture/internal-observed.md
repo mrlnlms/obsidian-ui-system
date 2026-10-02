@@ -1,27 +1,42 @@
 # Internal UI observed in Obsidian
 
-`internal-observed` covers reusable application UI not represented by the public API catalog. The target is Obsidian chrome such as navigation, tabs, pane headers, bars, results, Properties, and related controls. Note/editor content, Markdown, and CodeMirror DOM are outside this scope. `origin: internal-observed` remains distinct from `origin: public-api`.
+`internal-observed` covers reusable application and view chrome not represented by the public API catalog. The target includes navigation, tabs, pane headers, bars, and results. Note/editor content, Markdown, and CodeMirror DOM are outside this front. `origin: internal-observed` remains distinct from `origin: public-api`.
 
 Fixtures expose real UI states. The note with YAML under `dev-vault/internal-observed-fixtures/` exposed Property rows and a breadcrumb; its keys, values, note text, and folder name are sample content and raw evidence, not component definitions. The same applies to file names and search results used to expose other patterns.
 
 ## Revised inventory
 
-This inventory describes only UI patterns already located in the running app. The File Explorer file row has a Mapping `ComponentSnapshot`; Property rows and the breadcrumb have a separate structural DOM/CSSOM diagnostic. Other rows below have only shallow inventory evidence. All three detailed examples were observed in Dark; no Light appearance or additional states are implied.
+This inventory describes only UI patterns already located in the running app. File Explorer rows have standalone Mapping probes; Property rows and the breadcrumb have a separate structural DOM/CSSOM diagnostic. Evidence for the remaining patterns varies as noted below. The detailed samples are Dark; no Light appearance is implied.
 
 | Pattern | Existing evidence | UI Kit status |
 | --- | --- | --- |
 | File Explorer file row | `.nav-file-title` with `.nav-file-title-content`; one supported, active row captured with structure, dimensions, and computed styles. | Concrete candidate for the observed active file row; filename is a content slot. |
-| File Explorer folder row | `.nav-folder-title`, disclosure icon, and `mod-collapsible` observed. | Located; needs detailed capture before promotion. |
+| File Explorer folder row | `.nav-folder-title`, disclosure icon, states and depths 0–2 in the standalone probe. | Generated and validated in Figma for this phase; no functional tree is implied. |
 | Workspace tab | `.workspace-tab-header` and inner container; active classes observed. | Located; needs detailed capture before promotion. |
-| Pane/view header | Title container and action area observed. | Located; needs detailed capture before promotion. |
-| Property row | `.metadata-property` with key and value areas; text and checkbox controls captured. | Concrete candidate with key/value slots and the two observed control forms. |
-| Breadcrumb segment | `.view-header-breadcrumb` in a note header captured with dimensions and styles. | Concrete candidate for one segment with a label slot; a full trail is not yet defined. |
-| Search result row | Match inside result/file grouping, with highlighted text observed. | Located; needs detailed capture before promotion. |
+| Pane/view header | Visible Dark Markdown header captured with navigation, title/breadcrumb area, actions, and horizontal geometry; a Bookmarks header has the same three areas but is hidden in its sidebar. | View Header, Breadcrumb Trail, and Breadcrumb Segment were reviewed and accepted in Figma for this phase; the middle resize transition remains approximate. |
+| Property row | `.metadata-property` with key and value areas; text and checkbox controls captured inside `.metadata-container` under the Markdown View's editor. | Note/editor UI, outside the current application/view chrome front; it is not a row of the separate `all-properties` view. |
+| Breadcrumb segment | `.view-header-breadcrumb` in a note header captured with dimensions and styles; horizontal priority checked at two widths. | Part of the View Header; its Figma instances are reusable, with a documented narrow-width transition difference. |
+| Search result match | `.search-result-file-match` inside `.search-result-file-matches` under a file-grouped `.search-result`. | Part of a grouped Search result, not the complete Search result component. |
 | Command palette row | `.suggestion-item` with title, auxiliary area, and one selected class observed. | Located; needs detailed capture before promotion. |
 | Ribbon action | Repeated `.side-dock-ribbon-action` with SVG observed. | Located; needs detailed capture before promotion. |
 | Status bar item | Repeated `.status-bar-item`, including a clickable modifier, observed. | Located; needs detailed capture before promotion. |
 
 Sidebars and overlays are relevant UI contexts, but the current evidence does not define a reusable sidebar or internal overlay component. The public API catalog already covers its own modal specimens; this inventory does not relabel them as internal.
+
+The View Header probe is a separate, single-scene `view-header-probe-2026-10-02.json` next to the Package ZIPs. Its tracked test copy is under the Figma plugin's `tests/fixtures/`. The observed Markdown title, breadcrumb labels, and action icons are content of that view; the three-area header structure is the reusable chrome. The hidden Bookmarks header is structural comparison only, not a second visual sample. See the [Figma plugin guide](../../../apps/obsidian-ui-system-figma/README.md#first-view-header-from-a-standalone-probe) for the bounded generation action.
+
+### View Header breadcrumb width priority
+
+The same visible Markdown header was measured with a temporary inline header width, restored immediately after each measurement. The active note then had the title `teste grave`; its ancestor labels matched the earlier probe. These are layout measurements, not new component states.
+
+| Header width | Title area | Ancestor trail | Current title | Ancestor widths | Separator widths |
+| --- | --- | --- | --- | --- | --- |
+| 300 px | 148 px | 76.3125 px | 67.6875 px, full | 21.65625 / 19.203125 / 17.78125 px | 5.890625 px each |
+| 650 px | 498 px | 344.5 px | 67.6875 px, full | 127.34375 / 105.96875 / 93.515625 px | 5.890625 px each |
+
+The `.view-header-title-container` is the immediate flex parent (`flex: 1 1 auto`, `min-width: 0`, `overflow: hidden`). Its `.view-header-title-parent` trail uses `flex: 0 100 auto`, `overflow: hidden`, `white-space: nowrap`; the current `.view-header-title` uses `flex: 0 0 auto`, `max-width: 100%`, `overflow: hidden`, `white-space: pre`, and ellipsis. Ancestor `.view-header-breadcrumb` elements use `flex: 0 1 auto` and ellipsis. Separators also compute to `flex: 0 1 auto`, but their intrinsic minimum plus `overflow: visible` keeps their measured width fixed. Navigation and actions remain 56 px each. The trail therefore absorbs the shortage before the current title; when there is room, the ancestors return to their natural widths.
+
+The bounded Figma translation uses a Breadcrumb Segment Component for each ancestor, a Breadcrumb Trail Component composed of three Segment instances plus separator and current-title layers, and a Trail instance inside the View Header Component. Horizontal Auto Layout makes the ancestor group fill only the remaining width up to its natural text width; Segment instances fill and truncate inside that group; separators keep their natural widths. The current-title text can narrow and show an ending ellipsis once space is restricted. The View Header uses fixed-width Navigation and Actions groups and clips their overflow at the extreme narrow limit. Desktop screenshots confirm the overall resize but show that Figma retains ancestor ellipses longer and truncates the title earlier than Obsidian in the middle of the sequence. The user accepted this scoped approximation on 2026-10-02; no additional View Header investigation is part of this closed phase.
 
 ## Evidence boundary and next step
 

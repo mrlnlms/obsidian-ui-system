@@ -38,6 +38,11 @@
     <button id="generate-tagged-rows" type="button" disabled>Generate tagged rows (JSON + ZIP)</button>
     <button id="generate-folder-rows" type="button" disabled>Generate folder rows (Dark, Depth 0–2)</button>
   </div>
+  <div id="view-header">
+    <p>View Header Dark: selecione o view-header-probe-2026-10-02.json da Markdown View. Esta ação não usa o Package ZIP.</p>
+    <label>View Header probe JSON <input id="header-probe" type="file" accept=".json,application/json"></label>
+    <button id="generate-header" type="button" disabled>Generate View Header</button>
+  </div>
   <div id="typography" role="status" aria-live="polite"></div>
   <div id="status" role="status" aria-live="polite"></div>
   <pre id="report"></pre>
@@ -52,6 +57,8 @@
     const generateRow = document.getElementById('generate-row');
     const generateTaggedRows = document.getElementById('generate-tagged-rows');
     const generateFolderRows = document.getElementById('generate-folder-rows');
+    const headerProbe = document.getElementById('header-probe');
+    const generateHeader = document.getElementById('generate-header');
     const summary = document.getElementById('summary');
     const typography = document.getElementById('typography');
     const status = document.getElementById('status');
@@ -68,10 +75,12 @@
       generateRow.disabled = generating || !rowProbe.files[0];
       generateTaggedRows.disabled = generating || !rowProbe.files[0];
       generateFolderRows.disabled = generating || !rowProbe.files[0];
+      generateHeader.disabled = generating || !headerProbe.files[0];
     }
     darkInput.onchange = updateActions;
     lightInput.onchange = updateActions;
     rowProbe.onchange = updateActions;
+    headerProbe.onchange = updateActions;
 
     function show(text, kind = '') {
       status.textContent = text;
@@ -178,6 +187,26 @@
     generateTaggedRows.onclick = () => generateFileExplorer('generate-file-explorer-tagged-rows');
     generateFolderRows.onclick = () => generateFileExplorer('generate-folder-rows');
 
+    generateHeader.onclick = async () => {
+      if (generating || !headerProbe.files[0]) return;
+      generating = true;
+      updateActions();
+      headerProbe.disabled = true;
+      show('Lendo probe e gerando View Header…');
+      try {
+        const file = headerProbe.files[0];
+        if (!file.name.toLowerCase().endsWith('.json') || file.size > 2 * 1024 * 1024) {
+          throw new Error('Selecione um View Header probe .json de até 2 MB.');
+        }
+        parent.postMessage({ pluginMessage: { type: 'generate-view-header', probe: JSON.parse(await file.text()) } }, '*');
+      } catch (error) {
+        generating = false;
+        headerProbe.disabled = false;
+        updateActions();
+        show(error.message || String(error), 'error');
+      }
+    };
+
     onmessage = (event) => {
       const message = event.data.pluginMessage;
       if (message?.type === 'package-ready' && message.requestId === requestId) {
@@ -203,6 +232,7 @@
         darkInput.disabled = false;
         lightInput.disabled = false;
         rowProbe.disabled = false;
+        headerProbe.disabled = false;
         updateActions();
       }
     };
