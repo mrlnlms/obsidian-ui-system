@@ -10,6 +10,8 @@ import { generateFileExplorerTaggedRows } from './file-explorer-row-tag-generati
 import { generateFolderRows } from './folder-row-generation';
 import { generateViewHeader } from './view-header-generation';
 import { generateWorkspaceTab } from './workspace-tab-generation';
+import { generateSidePanel } from './side-panel-generation';
+import sidePanelProbe from '../tests/fixtures/side-panel-probe.json';
 import { planUiKitPlacement } from './ui-kit-layout';
 import { readFigmaPackage, type ImportedPackage } from './package-data';
 
@@ -20,6 +22,18 @@ let importedButtonV2: ButtonV2Package | undefined;
 let currentRequest = 0;
 
 figma.ui.onmessage = async (message: unknown) => {
+  if (isGenerateSidePanelMessage(message)) {
+    try {
+      const result = await generateSidePanel(sidePanelProbe);
+      figma.ui.postMessage({ type: 'result', ok: true,
+        text: `Side Panel Left Dark criado: ${result.panel.name} (${result.panel.id}), ` +
+          `Tab Group com Active=Files|Search|Bookmarks e preview de resize.` });
+    } catch (error) {
+      figma.ui.postMessage({ type: 'result', ok: false,
+        text: error instanceof Error ? error.message : String(error) });
+    }
+    return;
+  }
   if (isGenerateWorkspaceTabMessage(message)) {
     try {
       const result = await generateWorkspaceTab(message.probe);
@@ -168,6 +182,11 @@ function isGenerateViewHeaderMessage(value: unknown): value is { type: 'generate
 function isGenerateWorkspaceTabMessage(value: unknown): value is { type: 'generate-workspace-tab'; probe: unknown } {
   return typeof value === 'object' && value !== null && 'type' in value &&
     value.type === 'generate-workspace-tab' && 'probe' in value;
+}
+
+function isGenerateSidePanelMessage(value: unknown): value is { type: 'generate-side-panel' } {
+  return typeof value === 'object' && value !== null && 'type' in value &&
+    value.type === 'generate-side-panel';
 }
 
 async function generateButton(componentsJson: unknown, layoutJson: unknown): Promise<ComponentSetNode> {

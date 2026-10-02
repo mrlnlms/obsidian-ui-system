@@ -139,11 +139,14 @@ A Figma **Side Panel / Sidedock composition** should represent the reusable host
 ```text
 Side Panel / Sidedock
 ├─ Tabs / tab header area
-├─ View-specific controls / toolbar when present
-└─ View Content slot
+└─ Hosted View slot
+   ├─ View-specific controls / toolbar when present
+   └─ View Content
 ```
 
 The exact controls inside the panel belong to the hosted View. The panel should be resizable and allow its content to adapt.
+
+For the observed **Dark left Sidedock**, keep the three-tab group at its left inset and the collapse control at its right inset. Extra width belongs to the space between them. At the observed 200 px expanded width, that space is still 30 px; dragging the Obsidian panel narrower collapses it instead of squeezing the controls together. The Figma expanded component uses 200 px as its minimum width. Collapse is an application action, not another width of this expanded component. See the [focused observation](obsidian-ui-mapping/capture/internal-observed.md#side-panel--left-workspacesidedock-dark-desktop).
 
 ### 4.2 Workspace / View chrome
 
@@ -164,6 +167,8 @@ Current state:
 | Building block | State |
 | --- | --- |
 | Workspace Tab | **Dark desktop Main/Sidedock Figma-validated**; Light appearance has not been captured or implemented |
+| WorkspaceTabs / Sidedock | **Figma-validated for three observed Dark left tabs** (`Active = Files | Search | Bookmarks`) in the first Desktop composition |
+| Side Panel / WorkspaceSidedock | **Figma-validated for the bounded Dark left host**, including the 16 px collapse glyph and 200 px expanded minimum width. View contents remain a separate composition. |
 | View Header | **figma-validated for the bounded Markdown Dark sample** |
 | Breadcrumb Segment | **native Figma Component**, editable `Label` |
 | Breadcrumb Trail | **native Figma Component**, uses Segment instances + current title |
@@ -258,9 +263,11 @@ File Explorer         STRUCTURALLY SUFFICIENT
 View Header           FIGMA-VALIDATED (bounded sample)
 Breadcrumb            BUILT as nested Components
 Workspace Tab         FIGMA-VALIDATED (Dark only; Light pending)
-Side Panel/Sidedock   NEXT composition target
+WorkspaceTabs         FIGMA-VALIDATED (three Dark left tabs)
+Side Panel/Sidedock   FIGMA-VALIDATED (bounded Dark left host)
 
 VIEW CONTENT
+File Explorer View     NEXT composition target
 Search                 partial evidence
 Outline                exploratory evidence
 All Properties         shallow evidence
@@ -278,12 +285,12 @@ The next work should optimize for **usable screen composition**, not evidence vo
 1. **Workspace Tab — completed only for the bounded Dark desktop sample**
    - the reusable Figma Component Set covers Main/Sidedock and Active/Inactive in Dark;
    - Light still needs its own appearance evidence and Figma projection in the theme phase;
-   - the tab group remains a host composition to assemble from this component.
+   - the three-tab left Sidedock group now composes instances of this Component Set.
 2. **Side Panel / WorkspaceSidedock composition**
-   - resizable host;
-   - tab area / top control region;
-   - View Content slot;
-   - compose it from existing/new host primitives rather than capturing another isolated screenshot.
+   - the first Dark left host and three-tab Sidedock group reuse the validated Workspace Tab set;
+   - the panel resizes around a 40 px tab area and a replaceable hosted-View slot;
+   - Files and Bookmarks have their own 40 px `nav-header`; Search places its controls directly in its View. The host therefore does not impose a toolbar height;
+   - the user compared the corrected composition side by side with Obsidian in Figma Desktop and confirmed the 16 px collapse glyph, spacing at the 200 px expanded minimum, and wider alignment. Right sidedock and Light appearance are outside this first projection.
 3. **Use the existing View Header** as the main-view chrome composition and keep its flexible action/breadcrumb contract useful for design.
 
 At the end of Phase A, the Figma library should be able to draw a recognizable Obsidian shell with tabs, a main View Header and a hosted side panel.

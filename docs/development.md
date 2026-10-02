@@ -131,6 +131,8 @@ npm run test:font --workspace @obsidian-ui-system/figma-plugin
 npm run test:search --workspace @obsidian-ui-system/figma-plugin
 npm run test:file-explorer-row --workspace @obsidian-ui-system/figma-plugin
 npm run test:view-header --workspace @obsidian-ui-system/figma-plugin
+npm run test:workspace-tab --workspace @obsidian-ui-system/figma-plugin
+npm run test:side-panel --workspace @obsidian-ui-system/figma-plugin
 npm run test:ui-kit --workspace @obsidian-ui-system/figma-plugin
 npm run test:package --workspace @obsidian-ui-system/figma-plugin
 npm run test:variables --workspace @obsidian-ui-system/figma-plugin

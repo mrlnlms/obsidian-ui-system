@@ -94,6 +94,14 @@ The action creates one native `Obsidian / Workspace Tab` Component Set with `Con
 
 On 2026-10-02, the user confirmed the first Desktop result as correct after checking the four variants, editable `Title`, Main resize and ellipsis, the matching Sidedock icon property, and Dark appearance. This closes the first Workspace Tab version; a WorkspaceTabs/tab-group host is a separate composition.
 
+### Side Panel / WorkspaceSidedock, first Dark left composition
+
+Run **Generate Workspace Tab** first in the same Figma page if its validated Component Set is not already there. Then click **Generate Side Panel**. The action bundles the tracked `tests/fixtures/side-panel-probe.json` observation at build time; its ignored runtime source is `dev-vault/obsidian-ui-exports/figma-packages/side-panel-probe-2026-10-02.json`. **No JSON selection or Package ZIP is needed for this action.** The action reuses the rightmost `Obsidian / Workspace Tab` set on the current page; it stops without changing the canvas if that set is missing or incompatible.
+
+The action creates `Obsidian / WorkspaceTabs / Sidedock`, a three-variant Tab Group (`Active = Files | Search | Bookmarks`) from nested Workspace Tab instances and the observed Search/Bookmarks glyphs. It also creates `Obsidian / Side Panel / Left / Dark`, with the 40 px tab bar, observed collapse control and a flexible `Hosted View` instance-swap slot. The separate slot is visually empty on purpose: controls and content come from the hosted View. Files and Bookmarks have a 40 px View-owned header; Search does not. The panel's initial width and height are sample geometry, while the two-instance preview exercises widths 242 and 200 px at 480 px height. The expanded panel has a 200 px Figma minimum; in Obsidian, dragging narrower collapses the sidedock instead of crowding the three tabs into the right control. The collapse button's hit area is 28 × 39 px, but its SVG is 16 × 16 px with the observed muted paint. The `Tab group` property swaps the active-tab group variant; `Hosted View` accepts a later View Component. Right-sidedock and Light appearances are not represented by this first component.
+
+The plugin build and `test:side-panel` cover input preflight and TypeScript structure. On 2026-10-02, the user compared the corrected composition side by side with Obsidian in Figma Desktop and confirmed the result. The 16 px collapse glyph matches the observed button, and the narrow preview keeps space between the three tabs and the right-anchored control. The expanded panel uses the observed 200 px minimum. The generation action checks the `Tab group` and `Hosted View` instance-swap property references and the preview resize readback. A real View content swap belongs to the later View-composition phase.
+
 ## Files
 
 - `src/code.ts`: Figma Component Set creation and font loading.
@@ -106,6 +114,7 @@ On 2026-10-02, the user confirmed the first Desktop result as correct after chec
 - `src/folder-row-data.ts`, `src/folder-row-generation.ts`: read the observed folder anatomy, states and depths and generate six separate Dark Components.
 - `src/view-header-data.ts`, `src/view-header-generation.ts`: read the bounded View Header probe and generate the first native Dark Component.
 - `src/workspace-tab-data.ts`, `src/workspace-tab-generation.ts`: read the four observed Dark Workspace Tab appearances and generate the Component Set and resize preview.
+- `src/side-panel-data.ts`, `src/side-panel-generation.ts`: read the Dark left host sample and compose a three-state Sidedock Tab Group and resizable Side Panel.
 - `src/ui-kit-layout.ts`: calculates deterministic, non-overlapping section positions for each run.
 - `src/package-data.ts`: ZIP decoding and input preflight before generation.
 - `src/button-v2-package.ts`, `src/button-normal-binding.ts`: bounded v2 reader and structural confirmed-binding preflight.

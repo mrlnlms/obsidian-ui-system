@@ -48,6 +48,10 @@
     <label>Workspace Tab probe JSON <input id="tab-probe" type="file" accept=".json,application/json"></label>
     <button id="generate-tab" type="button" disabled>Generate Workspace Tab</button>
   </div>
+  <div id="side-panel">
+    <p>Side Panel Left Dark: usa o Workspace Tab já gerado nesta página e o probe observado embutido no plugin. Não precisa selecionar JSON nem Package ZIP.</p>
+    <button id="generate-panel" type="button">Generate Side Panel</button>
+  </div>
   <div id="typography" role="status" aria-live="polite"></div>
   <div id="status" role="status" aria-live="polite"></div>
   <pre id="report"></pre>
@@ -66,6 +70,7 @@
     const generateHeader = document.getElementById('generate-header');
     const tabProbe = document.getElementById('tab-probe');
     const generateTab = document.getElementById('generate-tab');
+    const generatePanel = document.getElementById('generate-panel');
     const summary = document.getElementById('summary');
     const typography = document.getElementById('typography');
     const status = document.getElementById('status');
@@ -84,6 +89,7 @@
       generateFolderRows.disabled = generating || !rowProbe.files[0];
       generateHeader.disabled = generating || !headerProbe.files[0];
       generateTab.disabled = generating || !tabProbe.files[0];
+      generatePanel.disabled = generating;
     }
     darkInput.onchange = updateActions;
     lightInput.onchange = updateActions;
@@ -235,6 +241,14 @@
         updateActions();
         show(error.message || String(error), 'error');
       }
+    };
+
+    generatePanel.onclick = () => {
+      if (generating) return;
+      generating = true;
+      updateActions();
+      show('Compondo Side Panel a partir do probe embutido…');
+      parent.postMessage({ pluginMessage: { type: 'generate-side-panel' } }, '*');
     };
 
     onmessage = (event) => {
