@@ -6,16 +6,28 @@ import { generateBoundButtonNormal } from './button-normal-generation';
 import type { DiagnosticInput } from './button-binding-evidence';
 import { generateSearch } from './search-generation';
 import { generateFileExplorerRow } from './file-explorer-row-generation';
+import { generateFileExplorerTaggedRows } from './file-explorer-row-tag-generation';
 import { planUiKitPlacement } from './ui-kit-layout';
 import { readFigmaPackage, type ImportedPackage } from './package-data';
 
-figma.showUI(__html__, { width: 400, height: 560 });
+figma.showUI(__html__, { width: 400, height: 600 });
 
 let importedPackage: ImportedPackage | undefined;
 let importedButtonV2: ButtonV2Package | undefined;
 let currentRequest = 0;
 
 figma.ui.onmessage = async (message: unknown) => {
+  if (isGenerateFileExplorerTaggedRowsMessage(message)) {
+    try {
+      const result = await generateFileExplorerTaggedRows(message.probe);
+      figma.ui.postMessage({ type: 'result', ok: true,
+        text: `File Explorer tagged Dark criado: ${result.components.map((node) => node.name).join(', ')}. Larguras Figma: JSON ${result.tagWidthsPx.JSON} px; ZIP ${result.tagWidthsPx.ZIP} px.` });
+    } catch (error) {
+      figma.ui.postMessage({ type: 'result', ok: false,
+        text: error instanceof Error ? error.message : String(error) });
+    }
+    return;
+  }
   if (isGenerateFileExplorerRowMessage(message)) {
     try {
       const { component, labelWidthPx } = await generateFileExplorerRow(message.probe);
@@ -98,6 +110,11 @@ figma.ui.onmessage = async (message: unknown) => {
 function isGenerateFileExplorerRowMessage(value: unknown): value is { type: 'generate-file-explorer-row'; probe: unknown } {
   return typeof value === 'object' && value !== null && 'type' in value &&
     value.type === 'generate-file-explorer-row' && 'probe' in value;
+}
+
+function isGenerateFileExplorerTaggedRowsMessage(value: unknown): value is { type: 'generate-file-explorer-tagged-rows'; probe: unknown } {
+  return typeof value === 'object' && value !== null && 'type' in value &&
+    value.type === 'generate-file-explorer-tagged-rows' && 'probe' in value;
 }
 
 async function generateButton(componentsJson: unknown, layoutJson: unknown): Promise<ComponentSetNode> {

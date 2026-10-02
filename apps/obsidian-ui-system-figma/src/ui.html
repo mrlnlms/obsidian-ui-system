@@ -32,9 +32,10 @@
     <button id="bind" type="button" disabled>Generate Button normal</button>
   </div>
   <div id="file-explorer-row">
-    <p>File Explorer row Active Dark: selecione um internal-observed-probe-*.json. Esta ação não usa o ZIP nem o relatório file-explorer-row-horizontal.</p>
+    <p>File Explorer rows Dark: selecione um internal-observed-probe-*.json recente. A ação com tags requer o probe com amostras JSON e ZIP. Nenhuma destas ações usa o ZIP do Package ou o relatório horizontal.</p>
     <label>Probe JSON <input id="row-probe" type="file" accept=".json,application/json"></label>
     <button id="generate-row" type="button" disabled>Generate File Explorer row</button>
+    <button id="generate-tagged-rows" type="button" disabled>Generate tagged rows (JSON + ZIP)</button>
   </div>
   <div id="typography" role="status" aria-live="polite"></div>
   <div id="status" role="status" aria-live="polite"></div>
@@ -48,6 +49,7 @@
     const bind = document.getElementById('bind');
     const rowProbe = document.getElementById('row-probe');
     const generateRow = document.getElementById('generate-row');
+    const generateTaggedRows = document.getElementById('generate-tagged-rows');
     const summary = document.getElementById('summary');
     const typography = document.getElementById('typography');
     const status = document.getElementById('status');
@@ -62,6 +64,7 @@
       v2.hidden = readyVersion !== 2;
       bind.disabled = readyVersion !== 2 || generating || !darkInput.files[0] || !lightInput.files[0];
       generateRow.disabled = generating || !rowProbe.files[0];
+      generateTaggedRows.disabled = generating || !rowProbe.files[0];
     }
     darkInput.onchange = updateActions;
     lightInput.onchange = updateActions;
@@ -142,7 +145,7 @@
       }
     };
 
-    generateRow.onclick = async () => {
+    async function generateFileExplorer(probeAction) {
       if (generating || !rowProbe.files[0]) return;
       generating = true;
       updateActions();
@@ -157,7 +160,7 @@
           throw new Error('Selecione um probe .json de até 2 MB.');
         }
         const probe = JSON.parse(await file.text());
-        parent.postMessage({ pluginMessage: { type: 'generate-file-explorer-row', probe } }, '*');
+        parent.postMessage({ pluginMessage: { type: probeAction, probe } }, '*');
       } catch (error) {
         generating = false;
         rowProbe.disabled = false;
@@ -167,7 +170,9 @@
         updateActions();
         show(error.message || String(error), 'error');
       }
-    };
+    }
+    generateRow.onclick = () => generateFileExplorer('generate-file-explorer-row');
+    generateTaggedRows.onclick = () => generateFileExplorer('generate-file-explorer-tagged-rows');
 
     onmessage = (event) => {
       const message = event.data.pluginMessage;

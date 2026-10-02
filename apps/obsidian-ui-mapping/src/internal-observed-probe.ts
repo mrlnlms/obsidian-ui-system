@@ -68,6 +68,32 @@ export async function exportInternalObservedProbe(app: App): Promise<string> {
     origin: 'internal-observed', implementation: 'Obsidian core DOM: .nav-file-title',
     variant: 'visible-file', dom: captureElement(row),
   } : null;
+  const taggedRows = ['json', 'zip'].flatMap((extension) => {
+    const tagged = Array.from(doc.querySelectorAll('.workspace-leaf-content[data-type="file-explorer"] .nav-file-title'))
+      .find((element) => visible(element) && element.classList.contains('is-unsupported') &&
+        element.getAttribute('data-path')?.toLowerCase().endsWith(`.${extension}`) &&
+        element.querySelector(':scope > .nav-file-tag'));
+    if (!tagged) return [];
+    const content = tagged.querySelector(':scope > .nav-file-title-content');
+    const tag = tagged.querySelector(':scope > .nav-file-tag');
+    if (!content || !tag) throw new Error(`File Explorer ${extension} sem label ou tag.`);
+    const labelStyle = doc.defaultView!.getComputedStyle(content);
+    const tagStyle = doc.defaultView!.getComputedStyle(tag);
+    const taggedSpecimen: ComponentSnapshot = {
+      id: 'obsidian.file-explorer-row', name: 'File Explorer file row', category: 'Navigation',
+      origin: 'internal-observed', implementation: 'Obsidian core DOM: .nav-file-title',
+      variant: 'visible-file-with-tag', dom: captureElement(tagged),
+    };
+    return [{
+      extension, specimen: taggedSpecimen,
+      horizontalCss: {
+        label: { flexShrink: labelStyle.flexShrink, overflow: labelStyle.overflow,
+          whiteSpace: labelStyle.whiteSpace, textOverflow: labelStyle.textOverflow },
+        tag: { flexShrink: tagStyle.flexShrink, alignSelf: tagStyle.alignSelf,
+          textTransform: tagStyle.textTransform },
+      },
+    }];
+  });
   const workspaceViewTypes = [...new Set(Array.from(doc.querySelectorAll('.workspace-leaf-content[data-type]'))
     .map((element) => element.getAttribute('data-type')).filter((value): value is string => !!value))].sort();
   const after = await readCaptureContext(app.vault.adapter, app.vault.configDir, doc, manifest, 'mapping');
@@ -85,6 +111,7 @@ export async function exportInternalObservedProbe(app: App): Promise<string> {
     sourceAttributes: row ? { dataPath: row.getAttribute('data-path'), draggable: row.getAttribute('draggable') } : null,
     labelOffsetPx,
     specimen,
+    taggedRows,
   }, null, 2) + '\n');
   return path;
 }

@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { readFileExplorerRowImport } from '../src/file-explorer-row-data';
+import { readFileExplorerTaggedRows } from '../src/file-explorer-row-tag-data';
 import { fileExplorerBackgroundPaint } from '../src/file-explorer-row-color';
 
 function evidence() {
@@ -75,4 +78,43 @@ test('refuses another origin, mode, state, or anatomy', () => {
   const missingOffset = evidence();
   (missingOffset as { labelOffsetPx?: unknown }).labelOffsetPx = undefined;
   assert.throws(() => readFileExplorerRowImport(missingOffset), /posição observada do label ausente/);
+});
+
+function taggedEvidence(): any {
+  return JSON.parse(readFileSync(join(process.cwd(), 'tests/fixtures/file-explorer-tagged-rows-probe.json'), 'utf8'));
+}
+
+test('reads the two observed tagged rows without treating sample filenames as tag rules', () => {
+  const models = readFileExplorerTaggedRows(taggedEvidence());
+  assert.deepEqual(models.map((model) => ({
+    variant: model.variant, observedClass: model.observedClass, mode: model.mode,
+    tag: model.tag, sample: model.sample,
+  })), [
+    { variant: 'visible-file-with-tag', observedClass: 'is-unsupported', mode: 'dark',
+      tag: 'JSON', sample: { width: 350.359375, height: 24.890625, labelInset: 58,
+        rightInset: 8, topInset: 4, bottomInset: 4, observedTagWidth: 35.53125 } },
+    { variant: 'visible-file-with-tag', observedClass: 'is-unsupported', mode: 'dark',
+      tag: 'ZIP', sample: { width: 350.359375, height: 24.890625, labelInset: 58,
+        rightInset: 8, topInset: 4, bottomInset: 4, observedTagWidth: 24.546875 } },
+  ]);
+  assert.equal(models[0]!.appearance.tagPaddingX, 4);
+  assert.equal(models[0]!.appearance.tagColorCss, 'rgb(102, 102, 102)');
+  assert.equal(models[0]!.tagTypography.letterSpacing, 0.45);
+  assert.equal(models[0]!.tagTypography.fontWeight, 600);
+  assert.equal(models[0]!.labelTypography.fontWeight, 400);
+  const source = taggedEvidence();
+  source.taggedRows[0].specimen.dom.children[0].text = 'Outro nome longo';
+  assert.equal(readFileExplorerTaggedRows(source)[0]!.label, 'Outro nome longo');
+});
+
+test('tagged reader rejects a missing tag, other origin, or unproved horizontal CSS', () => {
+  const withoutTag = taggedEvidence();
+  withoutTag.taggedRows[0].specimen.dom.children.pop();
+  assert.throws(() => readFileExplorerTaggedRows(withoutTag), /anatomia da row/);
+  const otherOrigin = taggedEvidence();
+  otherOrigin.taggedRows[0].specimen.origin = 'public-api';
+  assert.throws(() => readFileExplorerTaggedRows(otherOrigin), /origem não suportada/);
+  const otherCss = taggedEvidence();
+  otherCss.taggedRows[0].horizontalCss.label.textOverflow = 'clip';
+  assert.throws(() => readFileExplorerTaggedRows(otherCss), /comportamento horizontal/);
 });

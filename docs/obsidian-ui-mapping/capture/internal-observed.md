@@ -28,3 +28,18 @@ Sidebars and overlays are relevant UI contexts, but the current evidence does no
 The validated File Explorer probe writes `internal-observed-probe-<timestamp>.json` under `dev-vault/obsidian-ui-exports/figma-packages/`, with `origin: internal-observed` and its capture context. Its top-level `labelOffsetPx` records the active file row label's observed `{ x, y }` relative to the row from their bounding rectangles; it is sample geometry, not a layout rule. The existing Properties/breadcrumb diagnostic is `internal-observed-fixtures-<timestamp>.json` in the same ignored directory. Neither enters the public API catalog or Package v2. The File Explorer probe command and the tracked fixture remain for reproducibility; no new capture is needed for this inventory.
 
 Keep raw DOM, classes, attributes, scene content, dimensions, and computed styles in the evidence. The component-specific `FileExplorerRowModel` reader selects only the observed active Dark file row, its label slot and observed offset, padding, radius, and CSS colors from this standalone probe. The reader itself does not establish sizing or overflow. Separate measurements of the same row at two sidebar widths support the horizontal behavior translated by the Figma plugin; they do not establish other states or Light appearance. Observed dimensions are not automatically layout rules.
+
+## File row with trailing tag
+
+The same probe command now also records two Dark `is-unsupported` file rows with the separate anatomy `.nav-file-title > .nav-file-title-content + .nav-file-tag`. The observed JSON and ZIP files already exist in the development vault; their names and parent folders are scene content. The probe keeps each raw DOM snapshot and the computed horizontal CSS needed by the reader in `taggedRows`, without changing `ComponentSnapshot` or the Figma Package.
+
+Direct DOM/CSSOM measurement with the sidebar at two actual widths gave:
+
+| Sidebar | Row | JSON label / tag | ZIP label / tag |
+| --- | --- | --- | --- |
+| 374.359375 px | 350.359375 px | 247.28125 / 35.53125 px | 259.8125 / 24.546875 px |
+| 230 px | 206 px | 104.46875 / 35.53125 px | 115.453125 / 24.546875 px |
+
+The label starts 58 px from the row's left edge in this nested scene; the tag ends 8 px before the right edge. The label has `flex-shrink: 1`, `overflow: hidden`, `white-space: pre`, and `text-overflow: ellipsis`. The tag is a separate flex child with `margin-inline-start: auto` in the author CSS; its computed `flex-shrink` is also `1`, but its measured width remains constant while the label shrinks. The computed label-to-tag gap is 1.546875 px for the wide JSON sample and zero when narrow; ZIP has zero in both measurements. The tag stays visible.
+
+The row is 24.890625 px tall, with transparent background, 8 px radius, and label color `rgb(179, 179, 179)`. The tag is 13.5 px tall, vertically centered, transparent, with 4 px horizontal padding, 4 px radius, `rgb(102, 102, 102)` text, 9 px / 600 type, 13.5 px line height, 0.45 px letter spacing, and `text-transform: uppercase`. The label uses 13 px / 400 type and 16.9 px line height. These values describe only the observed Dark `is-unsupported` samples. The 58 px inset is their tree position, not a rule of trailing tags or a hierarchy model.

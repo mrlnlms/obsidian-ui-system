@@ -1,0 +1,306 @@
+{
+  "format": "obsidian-ui-internal-observed-probe",
+  "version": 1,
+  "context": {
+    "environment": {
+      "mode": "dark",
+      "platform": "macos"
+    }
+  },
+  "taggedRows": [
+    {
+      "extension": "json",
+      "specimen": {
+        "id": "obsidian.file-explorer-row",
+        "name": "File Explorer file row",
+        "category": "Navigation",
+        "origin": "internal-observed",
+        "implementation": "Obsidian core DOM: .nav-file-title",
+        "variant": "visible-file-with-tag",
+        "dom": {
+          "tag": "div",
+          "classes": [
+            "tree-item-self",
+            "nav-file-title",
+            "tappable",
+            "is-clickable",
+            "is-unsupported"
+          ],
+          "sizePx": {
+            "width": 350.359375,
+            "height": 24.890625
+          },
+          "styles": {
+            "width": "350.359px",
+            "height": "24.8906px",
+            "display": "flex",
+            "position": "relative",
+            "padding": "4px 8px 4px 58px",
+            "margin": "0px 0px 2px -34px",
+            "gap": "normal",
+            "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+            "fontSize": "13px",
+            "fontWeight": "400",
+            "fontStyle": "normal",
+            "lineHeight": "16.9px",
+            "letterSpacing": "normal",
+            "color": "rgb(179, 179, 179)",
+            "background": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgb(179, 179, 179)",
+            "borderRadius": "8px",
+            "opacity": "1"
+          },
+          "children": [
+            {
+              "tag": "div",
+              "classes": [
+                "tree-item-inner",
+                "nav-file-title-content"
+              ],
+              "text": "file-explorer-row-horizontal-2026-10-02",
+              "sizePx": {
+                "width": 247.28125,
+                "height": 16.890625
+              },
+              "styles": {
+                "width": "247.281px",
+                "height": "16.8906px",
+                "display": "block",
+                "position": "static",
+                "padding": "0px",
+                "margin": "0px",
+                "gap": "normal",
+                "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                "fontSize": "13px",
+                "fontWeight": "400",
+                "fontStyle": "normal",
+                "lineHeight": "16.9px",
+                "letterSpacing": "normal",
+                "color": "rgb(179, 179, 179)",
+                "background": "rgba(0, 0, 0, 0)",
+                "border": "0px none rgb(179, 179, 179)",
+                "borderRadius": "0px",
+                "opacity": "1"
+              },
+              "typography": {
+                "cssVariables": {
+                  "--font-interface": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-default": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-ui-small": "13px",
+                  "--font-weight": "400"
+                },
+                "fontFamilyDeclaration": {
+                  "source": "unresolved"
+                }
+              },
+              "children": []
+            },
+            {
+              "tag": "div",
+              "classes": [
+                "nav-file-tag"
+              ],
+              "text": "json",
+              "sizePx": {
+                "width": 35.53125,
+                "height": 13.5
+              },
+              "styles": {
+                "width": "35.5312px",
+                "height": "13.5px",
+                "display": "block",
+                "position": "static",
+                "padding": "0px 4px",
+                "margin": "0px 0px 0px 1.54688px",
+                "gap": "normal",
+                "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                "fontSize": "9px",
+                "fontWeight": "600",
+                "fontStyle": "normal",
+                "lineHeight": "13.5px",
+                "letterSpacing": "0.45px",
+                "color": "rgb(102, 102, 102)",
+                "background": "rgba(0, 0, 0, 0)",
+                "border": "0px none rgb(102, 102, 102)",
+                "borderRadius": "4px",
+                "opacity": "1"
+              },
+              "typography": {
+                "cssVariables": {
+                  "--font-interface": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-default": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-ui-small": "13px",
+                  "--font-weight": "400"
+                },
+                "fontFamilyDeclaration": {
+                  "source": "unresolved"
+                }
+              },
+              "children": []
+            }
+          ]
+        }
+      },
+      "horizontalCss": {
+        "label": {
+          "flexShrink": "1",
+          "overflow": "hidden",
+          "whiteSpace": "pre",
+          "textOverflow": "ellipsis"
+        },
+        "tag": {
+          "flexShrink": "1",
+          "alignSelf": "center",
+          "textTransform": "uppercase"
+        }
+      }
+    },
+    {
+      "extension": "zip",
+      "specimen": {
+        "id": "obsidian.file-explorer-row",
+        "name": "File Explorer file row",
+        "category": "Navigation",
+        "origin": "internal-observed",
+        "implementation": "Obsidian core DOM: .nav-file-title",
+        "variant": "visible-file-with-tag",
+        "dom": {
+          "tag": "div",
+          "classes": [
+            "tree-item-self",
+            "nav-file-title",
+            "tappable",
+            "is-clickable",
+            "is-unsupported"
+          ],
+          "sizePx": {
+            "width": 350.359375,
+            "height": 24.890625
+          },
+          "styles": {
+            "width": "350.359px",
+            "height": "24.8906px",
+            "display": "flex",
+            "position": "relative",
+            "padding": "4px 8px 4px 58px",
+            "margin": "0px 0px 2px -34px",
+            "gap": "normal",
+            "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+            "fontSize": "13px",
+            "fontWeight": "400",
+            "fontStyle": "normal",
+            "lineHeight": "16.9px",
+            "letterSpacing": "normal",
+            "color": "rgb(179, 179, 179)",
+            "background": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgb(179, 179, 179)",
+            "borderRadius": "8px",
+            "opacity": "1"
+          },
+          "children": [
+            {
+              "tag": "div",
+              "classes": [
+                "tree-item-inner",
+                "nav-file-title-content"
+              ],
+              "text": "obsidian-ui-package-v2-2026-10-01T21-31-26-285Z",
+              "sizePx": {
+                "width": 259.8125,
+                "height": 16.890625
+              },
+              "styles": {
+                "width": "259.812px",
+                "height": "16.8906px",
+                "display": "block",
+                "position": "static",
+                "padding": "0px",
+                "margin": "0px",
+                "gap": "normal",
+                "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                "fontSize": "13px",
+                "fontWeight": "400",
+                "fontStyle": "normal",
+                "lineHeight": "16.9px",
+                "letterSpacing": "normal",
+                "color": "rgb(179, 179, 179)",
+                "background": "rgba(0, 0, 0, 0)",
+                "border": "0px none rgb(179, 179, 179)",
+                "borderRadius": "0px",
+                "opacity": "1"
+              },
+              "typography": {
+                "cssVariables": {
+                  "--font-interface": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-default": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-ui-small": "13px",
+                  "--font-weight": "400"
+                },
+                "fontFamilyDeclaration": {
+                  "source": "unresolved"
+                }
+              },
+              "children": []
+            },
+            {
+              "tag": "div",
+              "classes": [
+                "nav-file-tag"
+              ],
+              "text": "zip",
+              "sizePx": {
+                "width": 24.546875,
+                "height": 13.5
+              },
+              "styles": {
+                "width": "24.5469px",
+                "height": "13.5px",
+                "display": "block",
+                "position": "static",
+                "padding": "0px 4px",
+                "margin": "0px",
+                "gap": "normal",
+                "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                "fontSize": "9px",
+                "fontWeight": "600",
+                "fontStyle": "normal",
+                "lineHeight": "13.5px",
+                "letterSpacing": "0.45px",
+                "color": "rgb(102, 102, 102)",
+                "background": "rgba(0, 0, 0, 0)",
+                "border": "0px none rgb(102, 102, 102)",
+                "borderRadius": "4px",
+                "opacity": "1"
+              },
+              "typography": {
+                "cssVariables": {
+                  "--font-interface": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-default": "ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", \"Inter\", \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+                  "--font-ui-small": "13px",
+                  "--font-weight": "400"
+                },
+                "fontFamilyDeclaration": {
+                  "source": "unresolved"
+                }
+              },
+              "children": []
+            }
+          ]
+        }
+      },
+      "horizontalCss": {
+        "label": {
+          "flexShrink": "1",
+          "overflow": "hidden",
+          "whiteSpace": "pre",
+          "textOverflow": "ellipsis"
+        },
+        "tag": {
+          "flexShrink": "1",
+          "alignSelf": "center",
+          "textTransform": "uppercase"
+        }
+      }
+    }
+  ]
+}
