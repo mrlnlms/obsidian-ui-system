@@ -92,6 +92,18 @@ Ao continuar de um handoff:
 
 Prefira registrar uma limitação conhecida e seguir a transformar incertezas irrelevantes em trabalho preventivo.
 
+## Fixtures para estados observáveis
+
+Em investigação `internal-observed`, ausência na UI atual não significa ausência ou impossibilidade de captura.
+
+Quando um padrão depende de conteúdo, hierarquia ou estado comum do Obsidian, crie no `dev-vault` o menor fixture necessário para fazê-lo aparecer e então observe o DOM real.
+
+Exemplos: frontmatter/YAML para Properties, notas em subpastas para estados hierárquicos, conteúdo conhecido para Search.
+
+Não invente estrutura ou estados que o Obsidian não produz. Mas também não reporte como lacuna algo que pode ser exposto criando um estado normal e controlado do app.
+
+Só registre como indisponível depois de tentar produzir o pré-requisito real de forma simples.
+
 ## Task references
 
 For Mapping capture and registry work, use the maintained guides under:
