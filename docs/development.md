@@ -7,6 +7,7 @@ This guide covers the local monorepo workflow: build the plugins, work in the Ob
 - macOS with [Obsidian](https://obsidian.md/) Desktop and Figma Desktop installed for the current local workflow.
 - Node.js 22 or newer, npm 10 or newer, and Git.
 - Obsidian 1.13.1 or newer for the Mapping `DisplayValueComponent` specimens.
+- For CLI-driven runtime checks, use the [Obsidian CLI](https://obsidian.md/help/cli) from a current macOS installer. Make sure `obsidian` resolves to the `obsidian-cli` binary, then verify with `obsidian vault=dev-vault version`.
 
 From the repository root:
 
@@ -21,6 +22,8 @@ The build writes `apps/obsidian-ui-mapping/main.js`, `apps/obsidian-ui-system-fi
 
 In Obsidian, choose **Open folder as vault** and select exactly `<repository>/dev-vault`. This vault is for execution and tests, not a source archive. Obsidian may generate local settings under `.obsidian/`; those settings are ignored by Git.
 
+For CLI commands, put `vault=dev-vault` immediately after `obsidian` (for example, `obsidian vault=dev-vault commands`). Never open the repository root as a vault or rely on current-directory vault selection; the root and development vault are nested paths.
+
 Open **Settings → Community plugins**, allow community plugins if prompted, and enable **Obsidian UI Mapping**. When migrating an existing vault, the new plugin ID requires enabling Mapping once. Run **Open Obsidian UI Mapping** from the Command Palette. The command opens or reveals one scrollable workspace tab with the canonical registry specimens. Press **Export snapshot** for an individual Mapping export.
 
 Each export creates `dev-vault/.obsidian-ui-system/ui-catalog-exports/<UTC timestamp>/` with `manifest.json`, `tokens.json`, `token-evidence.json`, `components.json`, and `capture-context.json`. The manifest records the runtime Obsidian API version, the installed SDK package version used at build time, and the snapshot schema version separately. The versioned token evidence file preserves CSSOM declarations, references, computed values, and uncertainty for the captured mode; `tokens.json` is its compatibility projection. The technical context sidecar records the installed Mapping `main.js` SHA-256, window viewport, and that capture's manifest. Exports are local and ignored by Git. The [schema package](../packages/ui-schema/README.md), [snapshot guide](obsidian-ui-mapping/capture/snapshot.md), and [component registry guide](obsidian-ui-mapping/capture/component-registry.md) describe their contract and limits.
@@ -32,6 +35,8 @@ Each export creates `dev-vault/.obsidian-ui-system/ui-catalog-exports/<UTC times
 Run `npm run dev` from the repository root to rebuild `main.js` when `apps/obsidian-ui-mapping/src/` changes. The local [Hot Reload](https://github.com/pjeby/hot-reload) plugin watches the tracked `.hotreload` marker in the Mapping source. Enable Hot Reload under **Community plugins** when it is installed locally.
 
 For the Button normal binding evidence, run **Developer: Diagnose Button and Search token bindings** in each appearance mode. The command opens Mapping, recreates its specimens, and writes one ignored `binding-diagnostic-<mode>-<timestamp>.json` per run alongside the ZIPs in `dev-vault/obsidian-ui-exports/figma-packages/`. It inspects applicable CSSOM property declarations, temporarily overrides only the proposed custom property on each target element, reads the computed property, and restores the original inline state. Inspect `verification.restoredExactly` and `status` for the three Button normal properties; for `color`, also inspect the `alias` response for `--text-color → --text-normal`. The command still records the previously established CTA and Search cases, which this Button action does not consume. These diagnostics are retained until manually removed; the development export cleanup command does not remove them. Each JSON remains an independent diagnostic capture, outside every Figma Package ZIP.
+
+For the first internal UI probe, keep the Files sidebar visible and run **Developer: Probe internal File Explorer row** through the Obsidian CLI (`vault=dev-vault command id=obsidian-ui-mapping:probe-internal-file-explorer-row`). It records a shallow inventory of currently visible core UI patterns and one File Explorer file-row DOM snapshot as `dev-vault/obsidian-ui-exports/figma-packages/internal-observed-probe-<UTC timestamp>.json`, next to the ZIPs. The specimen is explicitly `origin: internal-observed`; this standalone diagnostic does not enter the public API catalog or Figma Package. Probe files are ignored by Git and kept until manually removed.
 
 A reload can close Mapping and Layout Lab tabs because the plugin detaches its views on unload; run the matching Command Palette action to reopen them. A change to `manifest.json` may still require an Obsidian restart. For a one-time production build, use `npm run build`.
 
@@ -97,7 +102,7 @@ The CLI validates the four `capture-context.json` files and their sibling artifa
 
 To install, configure, and run the local Figma importer, follow the [Figma plugin guide](../apps/obsidian-ui-system-figma/README.md). On macOS, SF Pro / Regular must be available and render in Figma Desktop; the importer stops if that requirement fails. The Figma guide contains the font activation and plugin installation steps.
 
-`dev-vault/obsidian-ui-exports/figma-packages/` holds final ZIPs and standalone binding diagnostic JSONs that you may keep or delete. Hidden `dev-vault/.obsidian-ui-system/` holds technical Mapping/Lab exports, diff reports, package staging, and failure diagnostics. Both areas are ignored by Git. **Developer: Clean Obsidian UI Development Exports** is optional maintenance: it shows counts, asks for confirmation, and removes individual Mapping/Lab exports and diff reports. It leaves final Figma Packages, binding diagnostics, and failure diagnostics untouched. Deliberate development exports have no automatic retention policy.
+`dev-vault/obsidian-ui-exports/figma-packages/` holds final ZIPs, standalone binding diagnostic JSONs, and the `internal-observed` probe JSON; keep or delete these manually. Hidden `dev-vault/.obsidian-ui-system/` holds the existing technical Mapping/Lab exports, diff reports, package staging, and failure diagnostics. Both areas are ignored by Git. **Developer: Clean Obsidian UI Development Exports** is optional maintenance: it shows counts, asks for confirmation, and removes individual Mapping/Lab exports and diff reports. It leaves final Figma Packages, standalone diagnostics, and failure diagnostics untouched. Deliberate development exports have no automatic retention policy.
 
 ## Verification commands
 

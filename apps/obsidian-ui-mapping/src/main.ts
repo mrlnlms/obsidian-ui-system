@@ -3,12 +3,14 @@ import { MappingView, MAPPING_VIEW_TYPE } from './catalog';
 import { LayoutLabView, LAYOUT_LAB_VIEW_TYPE } from './layout-lab';
 import { exportFigmaPackage } from './figma-package';
 import { cleanDevelopmentExports, inspectDevelopmentExports } from './development-exports';
+import { exportInternalObservedProbe } from './internal-observed-probe';
 
 export default class ObsidianUIMappingPlugin extends Plugin {
   private openingViews = new Map<string, Promise<void>>();
   private exportingPackage = false;
   private cleaningExports = false;
   private diagnosingBindings = false;
+  private probingInternal = false;
 
   onload(): void {
     this.registerView(MAPPING_VIEW_TYPE, (leaf) => new MappingView(leaf));
@@ -32,6 +34,11 @@ export default class ObsidianUIMappingPlugin extends Plugin {
       id: 'diagnose-component-token-bindings',
       name: 'Developer: Diagnose Button and Search token bindings',
       callback: () => { void this.runBindingDiagnostic(); },
+    });
+    this.addCommand({
+      id: 'probe-internal-file-explorer-row',
+      name: 'Developer: Probe internal File Explorer row',
+      callback: () => { void this.runInternalProbe(); },
     });
     this.addCommand({
       id: 'clean-development-exports',
@@ -105,6 +112,25 @@ export default class ObsidianUIMappingPlugin extends Plugin {
       console.error('Binding diagnostic failed', error);
     } finally {
       this.diagnosingBindings = false;
+    }
+  }
+
+  private async runInternalProbe(): Promise<void> {
+    if (this.probingInternal) return;
+    this.probingInternal = true;
+    const notice = new Notice('Capturing one internal File Explorer row…', 0);
+    try {
+      const path = await exportInternalObservedProbe(this.app);
+      const base = this.app.vault.adapter instanceof FileSystemAdapter
+        ? this.app.vault.adapter.getBasePath() : this.app.vault.getName();
+      notice.setMessage(`Internal probe saved: ${base}/${path}`);
+      setTimeout(() => notice.hide(), 10000);
+    } catch (error) {
+      notice.setMessage(`Internal probe failed: ${error instanceof Error ? error.message : String(error)}`);
+      setTimeout(() => notice.hide(), 15000);
+      console.error('Internal File Explorer probe failed', error);
+    } finally {
+      this.probingInternal = false;
     }
   }
 

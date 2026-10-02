@@ -64,6 +64,8 @@ Do not create a plan merely to record a small direct edit. When a plan is useful
 
 Any new command that persists generated artifacts must have a clear destination and retention policy.
 
+Never write generated captures, inventories, diagnostics, or exports inside `dev-vault/.obsidian/`; that directory is for Obsidian configuration and plugin installation only. Put new Obsidian runtime evidence next to the Figma Package ZIPs in `dev-vault/obsidian-ui-exports/figma-packages/` unless the user explicitly chooses another destination. Do not create a hidden output directory for a new capture flow by default.
+
 ## Working rules
 
 - Read the existing code and relevant documentation before adding a new rule, abstraction, document, or output location.
@@ -120,6 +122,8 @@ For local setup, vault behavior, generated artifact locations, and verification 
 - Run the relevant TypeScript checks, builds, and automated tests described in `docs/development.md` before closing implementation work.
 - Automated tests do not replace runtime validation when behavior depends on Obsidian Desktop or Figma Desktop.
 - The user normally operates the Obsidian and Figma interfaces. Do not take control of those interfaces unless explicitly asked.
+- The repository root is never an Obsidian vault. Open only `<repository>/dev-vault` for this project. Always pass `vault=dev-vault` as the first Obsidian CLI argument; do not rely on the CLI's current-directory vault selection, which can select a registered parent vault.
 - When runtime exports can provide evidence, inspect the generated files before asking the user to manually confirm information already available there.
+- For Obsidian runtime work, first inspect the available command IDs and run plugin commands through the Obsidian CLI when it can do so. Request manual app interaction only after a concrete CLI limitation is established. Use DOM, attributes, states, and computed styles as structural evidence for UI patterns; do not use screenshots or computer use to catalog components.
 - When a required result exists only in the UI, clearly identify the remaining manual check.
 - There is no background monitoring between agent turns; do not imply that a future export will automatically resume the current task.
