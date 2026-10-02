@@ -90,7 +90,7 @@ export async function generateBoundButtonNormal(prepared: PreparedButtonBinding)
     const created = createButtonComponent(baseButton, font);
     component = created.component;
     component.name = 'Obsidian / Button / Normal';
-    component.description = 'Button normal observado no Package v2; radius, background e text color vinculados a Variables Dark/Light.';
+    component.description = 'Button normal do Obsidian. Usa Variables para raio, fundo e texto, com modos Light e Dark.';
     const labelProperty = component.addComponentProperty('Label', 'TEXT', source.button.text);
     created.label.componentPropertyReferences = { characters: labelProperty };
     if (created.label.characters !== source.button.text || created.label.width <= 0 ||
