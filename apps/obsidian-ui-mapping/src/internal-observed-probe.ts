@@ -55,7 +55,14 @@ export async function exportInternalObservedProbe(app: App): Promise<string> {
     };
   });
   const row = Array.from(doc.querySelectorAll('.workspace-leaf-content[data-type="file-explorer"] .nav-file-title'))
-    .find((element) => visible(element) && !element.classList.contains('is-unsupported'));
+    .find((element) => visible(element) && element.classList.contains('is-active') &&
+      !element.classList.contains('is-unsupported'));
+  const label = row?.querySelector(':scope > .nav-file-title-content');
+  if (row && !label) throw new Error('File Explorer row ativa sem .nav-file-title-content.');
+  const rowRect = row?.getBoundingClientRect();
+  const labelRect = label?.getBoundingClientRect();
+  const labelOffsetPx = rowRect && labelRect
+    ? { x: labelRect.left - rowRect.left, y: labelRect.top - rowRect.top } : null;
   const specimen: ComponentSnapshot | null = row ? {
     id: 'obsidian.file-explorer-row', name: 'File Explorer file row', category: 'Navigation',
     origin: 'internal-observed', implementation: 'Obsidian core DOM: .nav-file-title',
@@ -76,6 +83,7 @@ export async function exportInternalObservedProbe(app: App): Promise<string> {
     format: 'obsidian-ui-internal-observed-probe', version: 1, capturedAt,
     context: before, workspaceViewTypes, inventory,
     sourceAttributes: row ? { dataPath: row.getAttribute('data-path'), draggable: row.getAttribute('draggable') } : null,
+    labelOffsetPx,
     specimen,
   }, null, 2) + '\n');
   return path;

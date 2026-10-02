@@ -123,6 +123,7 @@ npm run test:exports --workspace @obsidian-ui-system/mapping
 npm run test:lifecycle --workspace @obsidian-ui-system/mapping
 npm run test:font --workspace @obsidian-ui-system/figma-plugin
 npm run test:search --workspace @obsidian-ui-system/figma-plugin
+npm run test:file-explorer-row --workspace @obsidian-ui-system/figma-plugin
 npm run test:ui-kit --workspace @obsidian-ui-system/figma-plugin
 npm run test:package --workspace @obsidian-ui-system/figma-plugin
 npm run test:variables --workspace @obsidian-ui-system/figma-plugin

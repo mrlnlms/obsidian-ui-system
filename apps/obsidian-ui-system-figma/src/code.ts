@@ -5,6 +5,7 @@ import { prepareButtonNormalBinding } from './button-normal-binding';
 import { generateBoundButtonNormal } from './button-normal-generation';
 import type { DiagnosticInput } from './button-binding-evidence';
 import { generateSearch } from './search-generation';
+import { generateFileExplorerRow } from './file-explorer-row-generation';
 import { planUiKitPlacement } from './ui-kit-layout';
 import { readFigmaPackage, type ImportedPackage } from './package-data';
 
@@ -15,6 +16,17 @@ let importedButtonV2: ButtonV2Package | undefined;
 let currentRequest = 0;
 
 figma.ui.onmessage = async (message: unknown) => {
+  if (isGenerateFileExplorerRowMessage(message)) {
+    try {
+      const { component, labelWidthPx } = await generateFileExplorerRow(message.probe);
+      figma.ui.postMessage({ type: 'result', ok: true,
+        text: `File Explorer row Active Dark criado. Component ${component.id}; largura natural do label: ${labelWidthPx} px.` });
+    } catch (error) {
+      figma.ui.postMessage({ type: 'result', ok: false,
+        text: error instanceof Error ? error.message : String(error) });
+    }
+    return;
+  }
   if (isClearPackageMessage(message)) {
     if (message.requestId >= currentRequest) {
       currentRequest = message.requestId;
@@ -82,6 +94,11 @@ figma.ui.onmessage = async (message: unknown) => {
       text: error instanceof Error ? error.message : String(error) });
   }
 };
+
+function isGenerateFileExplorerRowMessage(value: unknown): value is { type: 'generate-file-explorer-row'; probe: unknown } {
+  return typeof value === 'object' && value !== null && 'type' in value &&
+    value.type === 'generate-file-explorer-row' && 'probe' in value;
+}
 
 async function generateButton(componentsJson: unknown, layoutJson: unknown): Promise<ComponentSetNode> {
   let set: ComponentSetNode | undefined;

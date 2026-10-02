@@ -1,4 +1,5 @@
 import { isSupportedButtonLayoutModel, isTypographyLayoutModel } from './layout-model';
+import { parseCssPx, record } from './reader-primitives';
 
 export interface ButtonData {
   state: 'Normal' | 'Disabled' | 'CTA';
@@ -190,11 +191,6 @@ function unique(items: unknown[], variant: string, kind: string): unknown {
   return found[0];
 }
 
-function record(value: unknown, message: string): Record<string, unknown> {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new Error(message);
-  return value as Record<string, unknown>;
-}
-
 function str(value: unknown, message: string): string {
   if (typeof value !== 'string' || !value) throw new Error(message);
   return value;
@@ -205,9 +201,9 @@ function positive(value: unknown): value is number {
 }
 
 function px(value: unknown, message: string): number {
-  const match = /^([0-9]+(?:\.[0-9]+)?)px$/.exec(str(value, message));
-  if (!match) throw new Error(`${message}: esperado valor em px.`);
-  return Number(match[1]);
+  const parsed = parseCssPx(str(value, message));
+  if (parsed === null) throw new Error(`${message}: esperado valor em px.`);
+  return parsed;
 }
 
 function unit(value: unknown, message: string): number {

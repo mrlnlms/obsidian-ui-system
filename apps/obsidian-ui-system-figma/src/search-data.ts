@@ -1,4 +1,5 @@
 import { isTypographyLayoutModel } from './layout-model';
+import { parseCssPx, record } from './reader-primitives';
 
 /** Experimental Figma-ready model. It is deliberately separate from ui-schema. */
 export interface SearchVariantModel {
@@ -267,10 +268,6 @@ function unique(items: unknown[], variant: string, source: string): Record<strin
   if (found.length !== 1) throw new Error(`Search ${variant}: esperado um registro ${source}, encontrados ${found.length}.`);
   return record(found[0], `Search ${variant}: ${source} inválido.`);
 }
-function record(value: unknown, message: string): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(message);
-  return value as Record<string, unknown>;
-}
 function array(value: unknown, message: string): unknown[] {
   if (!Array.isArray(value)) throw new Error(message);
   return value;
@@ -292,9 +289,9 @@ function positive(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value > 0;
 }
 function px(value: unknown, message: string): number {
-  const match = /^([0-9]+(?:\.[0-9]+)?)px$/.exec(string(value, message));
-  if (!match) throw new Error(`${message}: esperado px.`);
-  return Number(match[1]);
+  const parsed = parseCssPx(string(value, message));
+  if (parsed === null) throw new Error(`${message}: esperado px.`);
+  return parsed;
 }
 function paddingOf(value: unknown, message: string): SearchVariantModel['input']['padding'] {
   const match = /^(\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px$/.exec(string(value, message));

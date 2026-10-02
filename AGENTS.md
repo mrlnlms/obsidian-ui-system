@@ -72,6 +72,7 @@ Never write generated captures, inventories, diagnostics, or exports inside `dev
 - Prefer extending an established structure over creating a parallel one.
 - Keep changes scoped to the requested milestone. Do not expand capture coverage, Figma generation, or the future Skill simply because adjacent infrastructure makes it possible.
 - Preserve already validated behavior when changing adjacent systems.
+- Before changing Figma generation, inspect the existing component code and its completed Desktop validations. Reuse mechanisms already proved in this repository, identify the exact behavior that is new, and consult external API documentation only when the code, local typings, and runtime readback leave a concrete gap.
 - Let evidence drive reconstruction and inference rather than visual guesswork.
 - Update maintained documentation when a durable path, contract, workflow, or architectural rule changes.
 - Avoid duplicating the same project rule across multiple documents. Keep the canonical explanation in the most appropriate place and link to it when needed.
@@ -137,9 +138,10 @@ For local setup, vault behavior, generated artifact locations, and verification 
 
 - Run the relevant TypeScript checks, builds, and automated tests described in `docs/development.md` before closing implementation work.
 - Automated tests do not replace runtime validation when behavior depends on Obsidian Desktop or Figma Desktop.
-- The user normally operates the Obsidian and Figma interfaces. Do not take control of those interfaces unless explicitly asked.
+- The user normally operates the Obsidian and Figma interfaces. A request for manual Desktop validation does not, by itself, authorize the agent to control the app or take screenshots; do so only when explicitly asked.
 - The repository root is never an Obsidian vault. Open only `<repository>/dev-vault` for this project. Always pass `vault=dev-vault` as the first Obsidian CLI argument; do not rely on the CLI's current-directory vault selection, which can select a registered parent vault.
 - When runtime exports can provide evidence, inspect the generated files before asking the user to manually confirm information already available there.
 - For Obsidian runtime work, first inspect the available command IDs and run plugin commands through the Obsidian CLI when it can do so. Request manual app interaction only after a concrete CLI limitation is established. Use DOM, attributes, states, and computed styles as structural evidence for UI patterns; do not use screenshots or computer use to catalog components.
 - When a required result exists only in the UI, clearly identify the remaining manual check.
+- For a user-operated Figma check, state the exact plugin action, input file and its role, whether a Package ZIP is needed, and the expected result. Do not call a file merely the "latest JSON" when the output folder contains different JSON formats. If Desktop returns a mismatch, diagnose the reported property against actual readback before asking for another run; do not require literal equality for a property the app normalizes.
 - There is no background monitoring between agent turns; do not imply that a future export will automatically resume the current task.

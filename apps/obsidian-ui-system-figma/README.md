@@ -1,6 +1,6 @@
 # Obsidian UI System for Figma Design
 
-This local Figma Design development plugin imports the validated Button and Search Component Sets from Package v1. Its Custom UI reads a local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. A restricted Package v2 action also generates one native Button normal Component with three bound Variables. The plugin does not read the local filesystem directly or access the network. The v1 Button and Search behavior and the three v2 Button normal bindings were validated in Figma Desktop.
+This local Figma Design development plugin imports the validated Button and Search Component Sets from Package v1. Its Custom UI reads a local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. A restricted Package v2 action also generates one native Button normal Component with three bound Variables. A separate development action reads the standalone internal-observed File Explorer row probe and creates one Active Dark Component. The plugin does not read the local filesystem directly or access the network. The v1 Button and Search behavior, the three v2 Button normal bindings, and the File Explorer row's horizontal behavior were validated in Figma Desktop.
 
 The [reconstruction reference](../../docs/obsidian-ui-system-figma/components/component-reconstruction.md) records the reusable rules demonstrated by the generated components.
 
@@ -58,6 +58,14 @@ The structural preflight requires causal `confirmed` evidence in both modes for 
 
 The generated Component starts in the Package's inference-source mode. The plugin checks binding IDs and Variable resolution through Dark → Light → Dark before restoring that mode. In Figma Desktop on 2026-10-01, the real Component retained the same radius, background and Label fill binding IDs through that sequence. The API resolved radius `8`, background `#333333 → #e4e4e4 → #333333`, and text `#dadada → #222222 → #dadada`; screenshots confirmed legible text in Dark and Light. `npm run test:variables --workspace @obsidian-ui-system/figma-plugin` covers the v2 reader, causal preflight, and selective projection. CTA, Search, and other specimens remain outside this v2 action.
 
+### File Explorer row Active Dark from a standalone probe
+
+Choose the latest `internal-observed-probe-*.json` under `dev-vault/obsidian-ui-exports/figma-packages/` in **Probe JSON**, then click **Generate File Explorer row**. This independent action accepts only `obsidian.file-explorer-row / visible-file`, active and Dark. It creates one native `Obsidian / File Explorer Row / Active` Component with an editable `Label` TextNode. The initial 276 × 24.890625 px root size and label position (24, 4) come from this sample. The observed label box 53.09375 × 16.890625 px remains comparison evidence; its width is not applied as a TextNode constraint. The action reports the natural width Figma renders for the baseline label. Evidence from the same Active row at two sidebar widths supports a resizable root and a label box that stretches between its 24 px left offset and 8 px right inset. The text remains on one line and truncates at the end when space runs out. The preview frame has 12 px horizontal gutters, matching the observed File Explorer host; it uses the observed Dark `--background-secondary` color `#282828` and is not part of the Component. The observed translucent fill retains its alpha as paint opacity. This action does not read or modify either Figma Package format.
+
+The TypeScript build and `test:file-explorer-row` cover the reader and deterministic color conversion. On 2026-10-02, the user confirmed in Figma Desktop that the long label truncates with an ellipsis when the preview frame narrows, reveals more text when widened, stays on one line without changing row height, and that `README` remains intact.
+
+This checkpoint covers only the Active Dark row. The standalone horizontal observation compared sidebar widths of 374.359375 and 230 px: row widths were 350.359375 and 206 px, and label widths were 318.359375 and 174 px. The JSON/ZIP tag, unsupported rows, folder indentation, Light, Variables, and Package integration remain outside this component action. The horizontal observation JSON is measurement evidence; only `internal-observed-probe-*.json` is input to **Generate File Explorer row**.
+
 ## Files
 
 - `src/code.ts`: Figma Component Set creation and font loading.
@@ -65,6 +73,7 @@ The generated Component starts in the Package's inference-source mode. The plugi
 - `src/button-data.ts`: validates and maps Button evidence from Mapping and Layout Lab.
 - `src/search-data.ts`: validates Search evidence and builds an experimental Figma-ready model.
 - `src/search-generation.ts`: creates the Search Component Set from positioned native nodes and the captured SVG masks.
+- `src/file-explorer-row-data.ts`, `src/file-explorer-row-color.ts`, `src/file-explorer-row-generation.ts`: read the standalone observed probe and generate the one Active Dark row.
 - `src/ui-kit-layout.ts`: calculates deterministic, non-overlapping section positions for each run.
 - `src/package-data.ts`: ZIP decoding and input preflight before generation.
 - `src/button-v2-package.ts`, `src/button-normal-binding.ts`: bounded v2 reader and structural confirmed-binding preflight.
