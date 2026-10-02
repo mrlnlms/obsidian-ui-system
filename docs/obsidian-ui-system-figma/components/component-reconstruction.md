@@ -39,7 +39,7 @@ Para texto de uma linha, preserve o comportamento de overflow medido. Um viewpor
 
 Os SVGs Search vêm do CSSOM observado. O Button não tem ícones nesse specimen. Medidas de um componente específico não devem ser copiadas como regras gerais.
 
-A ação v2 cria somente um ComponentNode de Button normal com `cornerRadius` e paint sólido vinculados às Variables confirmadas. O pré-check consulta a identidade causal do diagnóstico e a projeção dos tokens; a comparação de estilos resolvidos entre capturas não define o vínculo. Consulte o [contrato do Package](../../integration/figma-package/figma-package.md#button-normal-real-com-bindings) para o escopo. A geração real ainda aguarda inspeção manual no Figma Desktop.
+A ação v2 cria somente um ComponentNode de Button normal com `cornerRadius` e paint sólido vinculados às Variables confirmadas. O pré-check consulta a identidade causal do diagnóstico e a projeção dos tokens; a comparação de estilos resolvidos entre capturas não define o vínculo. O operador confirmou os dois bindings e a mudança visível do fill no Figma Desktop. A cor do texto permanece fixa no mode base e ficou pouco legível no Light; o Component não representa ainda o tema completo. Consulte o [contrato do Package](../../integration/figma-package/figma-package.md#button-normal-real-com-bindings) para o relatório e o escopo.
 
 ## Cuidados da Plugin API
 
