@@ -34,18 +34,24 @@ function packageInput(): FigmaPackageV2Input {
 function diagnostic(mode: 'dark' | 'light') {
   const context = artifact<CaptureContext>(mode, 'mapping', 'capture-context.json');
   context.pluginBuild.sha256 = '7'.repeat(64);
-  const result = (property: 'border-radius' | 'background-color', token: string) => ({
+  const result = (property: 'border-radius' | 'background-color' | 'color', token: string) => ({
     specimen: 'obsidian.button', variant: 'normal', element: 'root', property,
     tokenCandidate: token, status: 'confirmed', originalComputed: 'a different captured value',
     unreadableSheets: [], competingProbes: [], candidates: [{ property, rawValue: `var(${token})`,
       applicable: 'yes', references: [{ name: token, role: 'whole-value', fallback: null }] }],
     verification: { original: 'a different captured value', restored: 'a different captured value',
       matchedWitness: true, restoredExactly: true, inlineRestored: true },
+    ...(property === 'color' ? { alias: { token: '--text-color', targetToken: '--text-normal',
+      status: 'confirmed', unreadableSheets: [], candidates: [{ property: '--text-color',
+        rawValue: 'var(--text-normal)', applicable: 'yes', references: [{ name: '--text-normal',
+          role: 'whole-value', fallback: null }] }],
+      verification: { original: 'a different captured value', restored: 'a different captured value',
+        matchedWitness: true, restoredExactly: true, inlineRestored: true } } } : {}),
   });
   return { filename: `${mode}.json`, data: { format: 'obsidian-ui-binding-diagnostic', version: 1,
     mode, capturedAt: context.environment.capturedAt, context,
     results: [result('border-radius', '--button-radius'),
-      result('background-color', '--interactive-normal')] } };
+      result('background-color', '--interactive-normal'), result('color', '--text-color')] } };
 }
 
 function diagnostics() { return [diagnostic('dark'), diagnostic('light')]; }
@@ -69,6 +75,9 @@ test('real v2 reader and structural preflight reuse confirmed identities across 
   const prepared = prepareButtonNormalBinding(source, diagnostics());
   assert.equal(prepared.radius.cssName, '--button-radius');
   assert.equal(prepared.background.cssName, '--interactive-normal');
+  assert.equal(prepared.textColor.cssName, '--text-color');
+  assert.deepEqual(prepared.textColor.modes.dark.projected, { strategy: 'literal',
+    value: { r: 218 / 255, g: 218 / 255, b: 218 / 255 } });
   assert.deepEqual(prepared.background.modes.light.projected, { strategy: 'literal',
     value: { r: 0x12 / 255, g: 0x34 / 255, b: 0x56 / 255 } });
   assert.notEqual(prepared.evidence.origins.package.buildSha256,
@@ -85,6 +94,17 @@ test('structural preflight requires confirmed evidence and both projected mode v
   const fresh = readButtonV2Package(buildFigmaPackageV2Zip(packageInput()));
   delete fresh.tokens.tokens['--interactive-normal']!.light;
   assert.throws(() => prepareButtonNormalBinding(fresh, diagnostics()), /não projeta COLOR/);
+  const alias = diagnostics();
+  (alias[0]!.data.results[2] as { alias: { status: string } }).alias.status = 'unknown';
+  assert.throws(() => prepareButtonNormalBinding(readButtonV2Package(buildFigmaPackageV2Zip(packageInput())), alias),
+    /alias causal/);
+  const scoped = readButtonV2Package(buildFigmaPackageV2Zip(packageInput()));
+  scoped.tokens.tokens['--text-color']!.light!.declarations.push(
+    scoped.tokens.tokens['--text-color']!.light!.declarations[0]!);
+  assert.throws(() => prepareButtonNormalBinding(scoped, diagnostics()), /alias do Package v2 ausente/);
+  const unresolved = readButtonV2Package(buildFigmaPackageV2Zip(packageInput()));
+  delete unresolved.tokens.tokens['--text-normal']!.light;
+  assert.throws(() => prepareButtonNormalBinding(unresolved, diagnostics()), /não projeta COLOR/);
 });
 
 test('uses the Package inference-source mode for the real Button base', () => {

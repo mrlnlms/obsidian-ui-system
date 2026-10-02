@@ -1,16 +1,17 @@
 import type { TokenMode } from '@obsidian-ui-system/ui-schema';
-import type { VariablesPilotPackage } from './variables-pilot-package';
+import type { ButtonV2Package } from './button-v2-package';
 
 type Json = Record<string, unknown>;
-type Property = 'border-radius' | 'background-color';
+type Property = 'border-radius' | 'background-color' | 'color';
 const MODES = ['dark', 'light'] as const;
 const TARGETS: ReadonlyArray<{ property: Property; token: string }> = [
   { property: 'border-radius', token: '--button-radius' },
   { property: 'background-color', token: '--interactive-normal' },
+  { property: 'color', token: '--text-color' },
 ];
 
 export interface DiagnosticInput { filename: string; data: unknown }
-export interface BindingPilotMapping {
+export interface ButtonBindingMapping {
   specimen: 'obsidian.button'; variant: 'normal'; element: 'root';
   property: Property; mode: TokenMode; token: string; status: 'confirmed';
   diagnosticOrigin: string;
@@ -24,22 +25,6 @@ function object(value: unknown, label: string): Json {
 function string(value: unknown, label: string): string {
   if (typeof value !== 'string' || !value) throw new Error(`${label}: texto ausente`);
   return value;
-}
-
-function rgb(value: string): number[] | null {
-  const hex = /^#([0-9a-f]{6})$/i.exec(value.trim());
-  if (hex) return [0, 2, 4].map((offset) => parseInt(hex[1]!.slice(offset, offset + 2), 16));
-  const channels = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i.exec(value.trim());
-  if (!channels) return null;
-  const numbers = channels.slice(1).map(Number);
-  return numbers.every((part) => part <= 255) ? numbers : null;
-}
-
-function sameComputed(property: Property, diagnostic: string, packageCss: string): boolean {
-  if (property === 'border-radius') return diagnostic.trim() === packageCss.trim();
-  const left = rgb(diagnostic);
-  const right = rgb(packageCss);
-  return !!left && !!right && left.every((part, index) => part === right[index]);
 }
 
 function technicalContext(input: DiagnosticInput) {
@@ -62,10 +47,9 @@ function technicalContext(input: DiagnosticInput) {
   return { input, diagnostic, mode, capturedAt, environment, buildSha256, buildPath, viewport };
 }
 
-/** The real generator reuses confirmed identities without requiring capture-specific computed values. */
-export function deriveBindingPilotEvidence(
-  source: Pick<VariablesPilotPackage, 'manifest' | 'tokens'>, inputs: DiagnosticInput[],
-  validation: 'pilot-consistency' | 'structural' = 'pilot-consistency',
+/** The generator reuses confirmed identities without requiring capture-specific computed values. */
+export function deriveButtonBindingEvidence(
+  source: Pick<ButtonV2Package, 'manifest' | 'tokens'>, inputs: DiagnosticInput[],
 ) {
   if (inputs.length !== 2) throw new Error('Selecione exatamente os diagnósticos Dark e Light');
   const diagnostics = inputs.map(technicalContext);
@@ -76,29 +60,26 @@ export function deriveBindingPilotEvidence(
   }
   const packageContext = source.manifest.technicalContext;
   const keys = ['schemaVersion', 'obsidianVersion', 'obsidianSdkVersion', 'platform'] as const;
-  const packageKeys = ['sourceSchemaVersion', 'obsidianVersion', 'obsidianSdkVersion', 'platform'] as const;
   const viewportKeys = ['widthPx', 'heightPx', 'devicePixelRatio'] as const;
   for (const mode of MODES) {
     const current = byMode[mode];
     for (let index = 0; index < keys.length; index++) {
       const value = current.environment[keys[index]!];
-      if (value === undefined || value !== byMode.dark.environment[keys[index]!] ||
-          (validation === 'pilot-consistency' && value !== packageContext[packageKeys[index]!])) {
-        throw new Error(`${mode}: contexto técnico difere do Package v2`);
+      if (value === undefined || value !== byMode.dark.environment[keys[index]!]) {
+        throw new Error(`${mode}: contexto técnico difere entre diagnósticos`);
       }
     }
     for (const key of viewportKeys) {
       const value = current.viewport[key];
-      if (typeof value !== 'number' || value !== byMode.dark.viewport[key] ||
-          (validation === 'pilot-consistency' && value !== packageContext.viewport[key])) {
-        throw new Error(`${mode}: viewport/DPR difere do Package v2`);
+      if (typeof value !== 'number' || value !== byMode.dark.viewport[key]) {
+        throw new Error(`${mode}: viewport/DPR difere entre diagnósticos`);
       }
     }
     if (current.buildSha256 !== byMode.dark.buildSha256 || current.buildPath !== byMode.dark.buildPath) {
       throw new Error('Diagnósticos usam builds diferentes');
     }
   }
-  const mappings: BindingPilotMapping[] = [];
+  const mappings: ButtonBindingMapping[] = [];
   for (const mode of MODES) {
     const { diagnostic, input } = byMode[mode];
     if (!Array.isArray(diagnostic.results)) throw new Error(`${mode}: resultados ausentes`);
@@ -136,12 +117,24 @@ export function deriveBindingPilotEvidence(
             object(item.references[0], 'reference').fallback === null)) {
         throw new Error(`${mode}/${property}: referência CSSOM direta ausente ou ambígua`);
       }
-      if (validation === 'pilot-consistency') {
-        const packageCss = source.tokens.tokens[token]?.[mode]?.computed.selected;
-        if (typeof packageCss !== 'string' || typeof result.originalComputed !== 'string' ||
-            !sameComputed(property, result.originalComputed, packageCss)) {
-          throw new Error(`${mode}/${property}: valor diagnóstico difere do Package v2`);
-        }
+      if (property === 'color') {
+        const alias = object(result.alias, `${mode}/color.alias`);
+        const response = object(alias.verification, `${mode}/color.alias.verification`);
+        if (alias.status !== 'confirmed' || alias.token !== '--text-color' ||
+            alias.targetToken !== '--text-normal' || response.matchedWitness !== true ||
+            response.restoredExactly !== true || response.inlineRestored !== true ||
+            response.original !== result.originalComputed || response.restored !== result.originalComputed ||
+            !Array.isArray(alias.unreadableSheets) || alias.unreadableSheets.length ||
+            !Array.isArray(alias.candidates) || alias.candidates.length === 0 ||
+            alias.candidates.some((item) => {
+              const row = object(item, 'alias candidate');
+              return row.applicable !== 'yes' || row.property !== '--text-color' ||
+                row.rawValue !== 'var(--text-normal)' || !Array.isArray(row.references) ||
+                row.references.length !== 1 ||
+                object(row.references[0], 'alias reference').name !== '--text-normal' ||
+                object(row.references[0], 'alias reference').role !== 'whole-value' ||
+                object(row.references[0], 'alias reference').fallback !== null;
+            })) throw new Error(`${mode}/color: alias causal --text-color → --text-normal não confirmado`);
       }
       mappings.push({ specimen: 'obsidian.button', variant: 'normal', element: 'root',
         property, mode, token, status: 'confirmed', diagnosticOrigin: input.filename });

@@ -4,13 +4,15 @@ import { parseVarReferences } from './token-references';
 type Truth = 'yes' | 'no' | 'unknown';
 type Status = 'confirmed' | 'rejected' | 'unknown';
 type DiagnosticCase = {
-  specimen: string; variant: string; target: string; property: 'border-radius' | 'background-color';
-  token: string; witness: string;
+  specimen: string; variant: string; target: string; property: 'border-radius' | 'background-color' | 'color';
+  token: string; witness: string; aliasTarget?: string;
 };
 
 export const bindingDiagnosticCases: readonly DiagnosticCase[] = [
   { specimen: 'obsidian.button', variant: 'normal', target: 'root', property: 'border-radius', token: '--button-radius', witness: '37px' },
   { specimen: 'obsidian.button', variant: 'normal', target: 'root', property: 'background-color', token: '--interactive-normal', witness: 'rgb(1, 253, 97)' },
+  { specimen: 'obsidian.button', variant: 'normal', target: 'root', property: 'color', token: '--text-color',
+    aliasTarget: '--text-normal', witness: 'rgb(251, 37, 9)' },
   { specimen: 'obsidian.button', variant: 'cta', target: 'root', property: 'background-color', token: '--interactive-accent', witness: 'rgb(251, 37, 9)' },
   { specimen: 'obsidian.search', variant: 'empty', target: 'input', property: 'background-color', token: '--background-modifier-form-field', witness: 'rgb(1, 253, 97)' },
 ];
@@ -36,7 +38,7 @@ function ruleCondition(rule: CSSRule, view: Window): Condition | null {
   return { kind, text, active: 'unknown' };
 }
 
-function collectCandidates(element: HTMLElement, property: DiagnosticCase['property']): {
+function collectCandidates(element: HTMLElement, property: DiagnosticCase['property'] | `--${string}`): {
   candidates: Candidate[]; unreadableSheets: { kind: string; sheetIndex: number; href: string | null }[];
 } {
   const doc = element.ownerDocument;
@@ -44,7 +46,7 @@ function collectCandidates(element: HTMLElement, property: DiagnosticCase['prope
   if (!view) throw new Error('Specimen has no window');
   const candidates: Candidate[] = [];
   const unreadableSheets: { kind: string; sheetIndex: number; href: string | null }[] = [];
-  const wanted = property === 'background-color' ? ['background-color', 'background'] : ['border-radius'];
+  const wanted = property === 'background-color' ? ['background-color', 'background'] : [property];
   const add = (style: CSSStyleDeclaration, selector: string | null, source: Candidate['source'], conditions: Condition[]) => {
     let applicable: Truth = 'yes';
     if (conditions.some(({ active }) => active === 'no')) applicable = 'no';
@@ -125,7 +127,7 @@ function probe(element: HTMLElement, property: DiagnosticCase['property'], token
   const inlineRestored = element.style.getPropertyValue(token) === inline &&
     element.style.getPropertyPriority(token) === priority &&
     Array.from({ length: element.style.length }, (_, index) => element.style.item(index)).includes(token) === hadInlineDeclaration;
-  const expected = property === 'background-color' ? witness.replaceAll(' ', '') : witness;
+  const expected = property === 'border-radius' ? witness : witness.replaceAll(' ', '');
   return { original, witness, stimulated, restored, restoredExactly: restored === original && inlineRestored,
     inlineRestored,
     matchedWitness: stimulated?.replaceAll(' ', '') === expected && stimulated !== original };
@@ -154,13 +156,27 @@ export function diagnoseBinding(specimen: RenderedSpecimen, item: DiagnosticCase
     competingProbes.some((result) => !result.restoredExactly || (verification?.matchedWitness && result.matchedWitness));
   const status: Status = !verification || !verification.restoredExactly || ambiguous ? 'unknown'
     : verification.matchedWitness ? 'confirmed' : 'rejected';
+  const alias = item.aliasTarget ? (() => {
+    const observed = collectCandidates(target, item.token as `--${string}`);
+    const applicable = observed.candidates.filter((candidate) => candidate.applicable === 'yes');
+    const directAlias = applicable.length > 0 && applicable.every((candidate) =>
+      candidate.property === item.token && wholeValueToken(candidate) === item.aliasTarget);
+    const uncertain = observed.unreadableSheets.length > 0 ||
+      observed.candidates.some((candidate) => candidate.applicable === 'unknown');
+    const response = directAlias && !uncertain
+      ? probe(target, item.property, item.aliasTarget!, item.witness) : null;
+    const aliasStatus: Status = !response || !response.restoredExactly ? 'unknown'
+      : response.matchedWitness ? 'confirmed' : 'rejected';
+    return { token: item.token, targetToken: item.aliasTarget, candidates: observed.candidates,
+      unreadableSheets: observed.unreadableSheets, verification: response, status: aliasStatus };
+  })() : undefined;
   return {
     specimen: item.specimen, variant: item.variant, element: item.target, tag: target.tagName.toLowerCase(),
     classes: Array.from(target.classList), property: item.property, tokenCandidate: item.token,
     originalComputed: verification?.original ?? target.ownerDocument.defaultView!.getComputedStyle(target).getPropertyValue(item.property).trim(),
     candidates, unreadableSheets, competingProbes,
     method: verification ? 'CSSOM direct var reference + temporary element custom-property override' : 'CSSOM only',
-    verification, status,
+    verification, status, ...(alias ? { alias } : {}),
     reason: !direct ? 'No applicable direct var declaration for candidate'
       : !verification?.restoredExactly ? 'Original computed style did not restore'
       : ambiguous ? 'CSSOM coverage, applicability, or competing token response is ambiguous'

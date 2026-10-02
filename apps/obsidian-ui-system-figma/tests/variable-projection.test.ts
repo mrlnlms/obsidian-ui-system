@@ -2,11 +2,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
-import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
+import { strFromU8, unzipSync } from 'fflate';
 import type { MultiModeTokens, TokenEvidenceCapture } from '@obsidian-ui-system/ui-schema';
-import { pilotCandidates, bindingPilotCandidates, projectFigmaVariableCandidates } from '../src/variable-projection';
-import { readVariablesPilotPackage } from '../src/variables-pilot-package';
-import { readFigmaPackage } from '../src/package-data';
+import { projectFigmaVariableCandidates } from '../src/variable-projection';
 
 const fixture = unzipSync(new Uint8Array(readFileSync(join(process.cwd(),
   '../obsidian-ui-mapping/tests/fixtures/controlled-dark-light-2026-10-01.zip'))));
@@ -23,18 +21,16 @@ function realTokens(): MultiModeTokens {
   };
 }
 
-test('classifies every real identity with a narrow pilot and preserves source evidence', () => {
+test('classifies every real identity with selective projection and preserves source evidence', () => {
   const tokens = realTokens();
   const before = JSON.stringify(tokens);
   const all = projectFigmaVariableCandidates(tokens);
   const counts = Object.fromEntries(['direct', 'needs-evaluation', 'deferred', 'omit']
     .map((decision) => [decision, all.filter((entry) => entry.decision === decision).length]));
   assert.equal(all.length, 1181);
-  assert.deepEqual(counts, { direct: 4, 'needs-evaluation': 65, deferred: 10, omit: 1102 });
-  assert.deepEqual(pilotCandidates(all).map((entry) => entry.cssName),
-    ['--background-primary', '--modal-background', '--button-radius']);
-  assert.deepEqual(bindingPilotCandidates(all).map((entry) => entry.cssName),
-    ['--button-radius', '--interactive-normal']);
+  assert.deepEqual(counts, { direct: 5, 'needs-evaluation': 65, deferred: 10, omit: 1101 });
+  assert.deepEqual(all.filter((item) => item.decision === 'direct').map((item) => item.cssName),
+    ['--background-primary', '--button-radius', '--interactive-normal', '--modal-background', '--text-normal']);
   assert.equal(JSON.stringify(tokens), before);
 });
 
@@ -62,6 +58,12 @@ test('projects exact Dark/Light values and only the proven pure alias', () => {
     value: { r: 51 / 255, g: 51 / 255, b: 51 / 255 } });
   assert.deepEqual(normal.modes.light.projected, { strategy: 'literal',
     value: { r: 228 / 255, g: 228 / 255, b: 228 / 255 } });
+  const text = byName.get('--text-normal')!;
+  assert.equal(text.figmaType, 'COLOR');
+  assert.deepEqual(text.modes.dark.projected, { strategy: 'literal',
+    value: { r: 218 / 255, g: 218 / 255, b: 218 / 255 } });
+  assert.deepEqual(text.modes.light.projected, { strategy: 'literal',
+    value: { r: 34 / 255, g: 34 / 255, b: 34 / 255 } });
   assert.equal(byName.get('--interactive-accent')?.decision, 'needs-evaluation');
   assert.equal(byName.get('--anim-duration-fast')?.decision, 'deferred');
   assert.equal(byName.get('--anim-motion-smooth')?.decision, 'deferred');
@@ -74,7 +76,6 @@ test('binding color requires direct colors in both modes', () => {
   tokens.tokens['--interactive-normal']!.light!.computed.selected = 'color-mix(in srgb, white, black)';
   const all = projectFigmaVariableCandidates(tokens);
   assert.equal(all.find((entry) => entry.cssName === '--interactive-normal')?.decision, 'needs-evaluation');
-  assert.throws(() => bindingPilotCandidates(all), /not directly projectable/);
 });
 
 test('rejects an uncertain or fallback alias without synthesizing another mode', () => {
@@ -84,7 +85,6 @@ test('rejects an uncertain or fallback alias without synthesizing another mode',
     ? modal.light!.attribution.declarationIndex : 0]!.rawValue = 'var(--background-primary, red)';
   const all = projectFigmaVariableCandidates(tokens);
   assert.equal(all.find((entry) => entry.cssName === '--modal-background')?.decision, 'omit');
-  assert.throws(() => pilotCandidates(all), /not directly projectable/);
   delete tokens.tokens['--button-radius']!.light;
   assert.equal(projectFigmaVariableCandidates(tokens)
     .find((entry) => entry.cssName === '--button-radius')?.decision, 'omit');
@@ -93,25 +93,4 @@ test('rejects an uncertain or fallback alias without synthesizing another mode',
   tokens.tokens['--background-primary']!.light!.computed.selected = 'color-mix(in srgb, red, white)';
   assert.equal(projectFigmaVariableCandidates(tokens)
     .find((entry) => entry.cssName === '--modal-background')?.decision, 'omit');
-});
-
-test('separate v2 pilot reader accepts controlled source and v1 importer still rejects it', () => {
-  const tokens = realTokens();
-  const capture = (mode: 'dark' | 'light') => source(mode, 'capture-context.json');
-  const manifest = {
-    schemaVersion: '0.5.0', modes: ['dark', 'light'], assembledAt: '2026-10-01T22:00:00.000Z',
-    technicalContext: { status: 'verified', buildSha256: capture('dark').pluginBuild.sha256 },
-    sources: {
-      dark: { mapping: capture('dark') }, light: { mapping: capture('light') },
-    },
-  };
-  const components = { dark: source('dark', 'components.json'), light: source('light', 'components.json') };
-  const bytes = zipSync(Object.fromEntries(Object.entries({
-    'package-manifest.json': { format: 'obsidian-ui-figma-package', version: 2, schemaVersion: '0.5.0' },
-    'manifest.json': manifest, 'tokens.json': tokens, 'components.json': components,
-  }).map(([name, value]) => [name, strToU8(JSON.stringify(value))])));
-  const read = readVariablesPilotPackage(bytes);
-  assert.equal(read.tokens.tokens['--modal-background']?.dark?.status, 'resolved');
-  assert.deepEqual(read.ctaBackground, { dark: 'rgb(138, 92, 245)', light: 'rgb(152, 115, 247)' });
-  assert.throws(() => readFigmaPackage(bytes), /layout\.json ausente|versão do pacote/);
 });

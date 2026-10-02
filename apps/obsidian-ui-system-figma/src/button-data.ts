@@ -165,7 +165,7 @@ export function readButtonVariantImport(
     background: options.boundProperties ? { r: 0, g: 0, b: 0 } :
       rgb(styles.background, `Button ${variant}: background`),
     border: border(styles.border, `Button ${variant}: border`),
-    color: rgb(styles.color, `Button ${variant}: color`),
+    color: options.boundProperties ? { r: 0, g: 0, b: 0 } : rgb(styles.color, `Button ${variant}: color`),
     opacity: unit(styles.opacity, `Button ${variant}: opacity`),
     fontFamily: str(styles.fontFamily, `Button ${variant}: fontFamily`),
     fontSize: px(styles.fontSize, `Button ${variant}: fontSize`),

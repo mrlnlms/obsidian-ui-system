@@ -18,7 +18,8 @@ function matches(actual: VariableValue, expected: number | RGB): boolean {
     Math.abs(actual.b - expected.b) < 1e-6;
 }
 
-function checkBindings(component: ComponentNode, radiusId: string, backgroundId: string) {
+function checkBindings(component: ComponentNode, label: TextNode, radiusId: string,
+  backgroundId: string, textColorId: string) {
   const bound = component.boundVariables ?? {};
   const corners = ['topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius'] as const;
   const cornerIds = corners.map((name) => bound[name]?.id ?? null);
@@ -27,18 +28,28 @@ function checkBindings(component: ComponentNode, radiusId: string, backgroundId:
   }
   const fills = component.fills;
   if (fills === figma.mixed || fills.length !== 1 || fills[0]?.type !== 'SOLID' ||
-      fills[0].boundVariables?.color?.id !== backgroundId) {
+      fills[0].boundVariables?.color?.id !== backgroundId ||
+      bound.fills?.length !== 1 || bound.fills[0]?.id !== backgroundId) {
     throw new Error('Button normal: binding do paint sólido ausente ou divergente');
+  }
+  const textFills = label.fills;
+  if (textFills === figma.mixed || textFills.length !== 1 || textFills[0]?.type !== 'SOLID' ||
+      textFills[0].boundVariables?.color?.id !== textColorId ||
+      label.boundVariables?.fills?.length !== 1 ||
+      label.boundVariables.fills[0]?.id !== textColorId) {
+    throw new Error('Button normal: binding da cor do Label ausente ou divergente');
   }
   return { cornerRadius: bound.cornerRadius?.id ?? null,
     corners: Object.fromEntries(corners.map((name, index) => [name, cornerIds[index]])),
     paintColor: fills[0].boundVariables.color.id,
-    nodeFills: bound.fills?.map((item) => item.id) ?? null };
+    nodeFills: bound.fills?.map((item) => item.id) ?? null,
+    textPaintColor: textFills[0].boundVariables.color.id,
+    textNodeFills: label.boundVariables?.fills?.map((item) => item.id) ?? null };
 }
 
 /** Creates one native Button Component, with only its confirmed normal-state bindings. */
 export async function generateBoundButtonNormal(prepared: PreparedButtonBinding) {
-  const { source, radius, background, evidence } = prepared;
+  const { source, radius, background, textColor, evidence } = prepared;
   const font = await loadButtonFont(source.button);
   figma.ui.postMessage({ type: 'typography', text: `Typography: ${font.family} / ${font.style} ✓` });
   const collection = figma.variables.createVariableCollection(`Obsidian UI / Button Normal ${Date.now()}`);
@@ -49,29 +60,37 @@ export async function generateBoundButtonNormal(prepared: PreparedButtonBinding)
     const modeIds = { dark: darkId, light: collection.addMode('Light') };
     const radiusVariable = figma.variables.createVariable(radius.cssName, collection, 'FLOAT');
     const backgroundVariable = figma.variables.createVariable(background.cssName, collection, 'COLOR');
+    const textColorVariable = figma.variables.createVariable(textColor.cssName, collection, 'COLOR');
     radiusVariable.scopes = ['CORNER_RADIUS'];
     backgroundVariable.scopes = ['FRAME_FILL'];
-    for (const [variable, candidate] of [[radiusVariable, radius], [backgroundVariable, background]] as const) {
+    textColorVariable.scopes = ['TEXT_FILL'];
+    for (const [variable, candidate] of [[radiusVariable, radius], [backgroundVariable, background],
+      [textColorVariable, textColor]] as const) {
       variable.description = JSON.stringify({ source: 'Package v2 + confirmed Mapping diagnostics',
         packageOrigin: evidence.origins.package,
         diagnosticOrigins: evidence.origins.diagnostics,
-        binding: evidence.mappings.filter((item) => item.token === candidate.cssName) });
+        binding: evidence.mappings.filter((item) => item.token === candidate.cssName),
+        ...(candidate === textColor ? { projectedFrom: '--text-normal',
+          reason: 'Confirmed scoped alias --text-color: var(--text-normal)' } : {}) });
       for (const mode of MODES) variable.setValueForMode(modeIds[mode], literal(candidate, mode));
     }
     const radiusReadback = await figma.variables.getVariableByIdAsync(radiusVariable.id);
     const backgroundReadback = await figma.variables.getVariableByIdAsync(backgroundVariable.id);
+    const textColorReadback = await figma.variables.getVariableByIdAsync(textColorVariable.id);
     if (!radiusReadback || radiusReadback.resolvedType !== 'FLOAT' ||
-        !backgroundReadback || backgroundReadback.resolvedType !== 'COLOR') {
+        !backgroundReadback || backgroundReadback.resolvedType !== 'COLOR' ||
+        !textColorReadback || textColorReadback.resolvedType !== 'COLOR') {
       throw new Error('Button normal: readback de identidade ou tipo das Variables falhou');
     }
 
     const baseMode = source.baseMode;
     const baseButton = { ...source.button, radius: literal(radius, baseMode) as number,
-      background: literal(background, baseMode) as RGB };
+      background: literal(background, baseMode) as RGB,
+      color: literal(textColor, baseMode) as RGB };
     const created = createButtonComponent(baseButton, font);
     component = created.component;
     component.name = 'Obsidian / Button / Normal';
-    component.description = 'Button normal observado no Package v2; radius e fill vinculados a Variables Dark/Light.';
+    component.description = 'Button normal observado no Package v2; radius, background e text color vinculados a Variables Dark/Light.';
     const labelProperty = component.addComponentProperty('Label', 'TEXT', source.button.text);
     created.label.componentPropertyReferences = { characters: labelProperty };
     if (created.label.characters !== source.button.text || created.label.width <= 0 ||
@@ -81,8 +100,10 @@ export async function generateBoundButtonNormal(prepared: PreparedButtonBinding)
     component.setBoundVariable('cornerRadius', radiusVariable);
     component.fills = [figma.variables.setBoundVariableForPaint(
       { type: 'SOLID', color: literal(background, baseMode) as RGB }, 'color', backgroundVariable)];
+    created.label.fills = [figma.variables.setBoundVariableForPaint(
+      { type: 'SOLID', color: literal(textColor, baseMode) as RGB }, 'color', textColorVariable)];
     component.setExplicitVariableModeForCollection(collection, modeIds[baseMode]);
-    checkBindings(component, radiusVariable.id, backgroundVariable.id);
+    checkBindings(component, created.label, radiusVariable.id, backgroundVariable.id, textColorVariable.id);
 
     const nextX = figma.currentPage.children.filter((node) => node !== component)
       .map((node) => node.absoluteBoundingBox).filter((bounds): bounds is Rect => bounds !== null)
@@ -96,19 +117,25 @@ export async function generateBoundButtonNormal(prepared: PreparedButtonBinding)
       if (component.resolvedVariableModes[collection.id] !== modeIds[mode]) {
         throw new Error(`Button normal: mode ${mode} não aplicado`);
       }
-      const bindings = checkBindings(component, radiusVariable.id, backgroundVariable.id);
+      const bindings = checkBindings(component, created.label, radiusVariable.id,
+        backgroundVariable.id, textColorVariable.id);
       const radiusValue = radiusReadback.resolveForConsumer(component).value;
       const backgroundValue = backgroundReadback.resolveForConsumer(component).value;
-      if (!matches(radiusValue, literal(radius, mode)) || !matches(backgroundValue, literal(background, mode))) {
+      const textColorValue = textColorReadback.resolveForConsumer(created.label).value;
+      if (!matches(radiusValue, literal(radius, mode)) ||
+          !matches(backgroundValue, literal(background, mode)) ||
+          !matches(textColorValue, literal(textColor, mode))) {
         throw new Error(`Button normal: resolução de Variables divergente no mode ${mode}`);
       }
-      readback.push({ mode, bindings, radius: radiusValue, background: backgroundValue });
+      readback.push({ mode, bindings, radius: radiusValue, background: backgroundValue,
+        textColor: textColorValue });
     }
     component.setExplicitVariableModeForCollection(collection, modeIds[baseMode]);
     figma.currentPage.selection = [component];
     figma.viewport.scrollAndZoomIntoView([component]);
     return { componentId: component.id, collectionId: collection.id,
-      variableIds: { radius: radiusVariable.id, background: backgroundVariable.id },
+      variableIds: { radius: radiusVariable.id, background: backgroundVariable.id,
+        textColor: textColorVariable.id },
       baseMode, readback };
   } catch (error) {
     if (component && !component.removed) component.remove();

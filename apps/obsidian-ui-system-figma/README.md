@@ -1,8 +1,8 @@
 # Obsidian UI System for Figma Design
 
-This local Figma Design development plugin imports the validated Button and Search Component Sets from Package v1. Its Custom UI reads a local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. A restricted Package v2 action can also generate one native Button normal Component with two bound Variables. The plugin does not read the local filesystem directly or access the network. The v1 Button and Search behavior and the two v2 Button normal bindings were validated in Figma Desktop.
+This local Figma Design development plugin imports the validated Button and Search Component Sets from Package v1. Its Custom UI reads a local ZIP with `FileReader` and passes its bytes to the plugin code through `postMessage`. A restricted Package v2 action also generates one native Button normal Component with three bound Variables. The plugin does not read the local filesystem directly or access the network. The v1 Button and Search behavior and the three v2 Button normal bindings were validated in Figma Desktop.
 
-The [reconstruction reference](../../docs/obsidian-ui-system-figma/components/component-reconstruction.md) records the reusable rules demonstrated by these pilots. A separate development plugin under `variables-pilot/` retains the earlier Variables and disposable binding probes.
+The [reconstruction reference](../../docs/obsidian-ui-system-figma/components/component-reconstruction.md) records the reusable rules demonstrated by the generated components.
 
 ## Build and install
 
@@ -34,7 +34,7 @@ The plugin checks `figma.listAvailableFontsAsync()`, loads the exact `FontName` 
 
 The checked package uses schema `0.4.0` and includes the Button's `fontStyle=normal`. Older `0.3.0` exports cannot satisfy automatic typography validation. Obsidian's `??` entries are a no-override sentinel, not a font family; Capture omits them from usable typography CSS variable values while `tokens.json` retains the literal raw CSS values. The plugin also filters sentinels during import.
 
-The manifest has no invented `id`. Figma assigns plugin IDs; an ID is needed for private `pluginData` and publishing updates. The local importer and Variables pilot do not use private `pluginData`. If a future version needs it, obtain a Figma-issued ID through **Plugins → Development → New Plugin…**; do not invent one.
+The manifest has no invented `id`. Figma assigns plugin IDs; an ID is needed for private `pluginData` and publishing updates. The local importer does not use private `pluginData`. If a future version needs it, obtain a Figma-issued ID through **Plugins → Development → New Plugin…**; do not invent one.
 
 ## Develop
 
@@ -52,27 +52,11 @@ Run `npm run test:package --workspace @obsidian-ui-system/figma-plugin` to check
 
 ### Real Button normal from Package v2
 
-In the **main** Figma development plugin, choose a Package v2 ZIP. Select the standalone `binding-diagnostic-dark-*.json` and `binding-diagnostic-light-*.json` files produced by Mapping, then click **Generate Button normal**. The action creates one native `Obsidian / Button / Normal` Component with an editable `Label` property. It creates one Dark/Light collection containing only `--button-radius` (`FLOAT`, corner radius) and `--interactive-normal` (`COLOR`, solid fill), binds those properties on the Component, and places it to the right of existing page content. Repeated successful runs add another Component and collection. The v1 **Generate UI Kit** action remains separate.
+In the **main** Figma development plugin, choose a Package v2 ZIP. Select the standalone `binding-diagnostic-dark-*.json` and `binding-diagnostic-light-*.json` files produced by Mapping, then click **Generate Button normal**. Use diagnostic files that include the three confirmed Button normal properties. The action creates one native `Obsidian / Button / Normal` Component with an editable `Label` property. It creates one Dark/Light collection containing `--button-radius` (`FLOAT`, corner radius), `--interactive-normal` (`COLOR`, background fill), and `--text-color` (`COLOR`, Label fill). Repeated successful runs add another Component and collection. The v1 **Generate UI Kit** action remains separate.
 
-The structural preflight requires a `confirmed` causal diagnostic for `obsidian.button / normal / root` in both modes for `border-radius → --button-radius` and `background-color → --interactive-normal`. It checks the direct CSSOM reference, witness and restoration, then requires both token identities and projectable values in Package v2. It does not require diagnostic values, token values, and component snapshot styles to be equal. Package and diagnostic build hashes and timestamps remain distinct in the Variable descriptions. A rejected preflight leaves the canvas untouched; a handled generation failure removes its new Component and collection. The generated Component starts in the Package's inference-source mode, and the plugin checks stored binding IDs and Variable resolution through Dark → Light → Dark before restoring that mode. Its report appears below the status message.
+The structural preflight requires causal `confirmed` evidence in both modes for `border-radius → --button-radius`, `background-color → --interactive-normal`, and `color → --text-color`. For text color it also requires a confirmed scoped alias `--text-color → --text-normal`; Package v2 records `--text-color: var(--text-normal)` on `button`, while the literal Dark/Light values come from the resolved `--text-normal` token. It checks CSSOM references, witness responses, restoration, token existence, and projectable values. It does not require diagnostic values, token values, and component snapshot styles to be equal. Package and diagnostic origins remain distinct in Variable descriptions. A rejected preflight leaves the canvas untouched; a handled generation failure removes its new Component and collection.
 
-`npm run test:variables --workspace @obsidian-ui-system/figma-plugin` covers the v2 reader and structural preflight, including changed resolved values. TypeScript and build checks cover the Figma API calls. In Figma Desktop on 2026-10-01, the generated native Component kept the same radius and fill binding IDs through Dark → Light → Dark. The API resolved radius `8` throughout and background `#333333 → #e4e4e4 → #333333`; screenshots confirmed the visible background change and radius. The text `teste` and Hug width were visible. **Text color remains the captured base-mode style**, so it appears faint on the Light fill; this action binds only radius and background. CTA, Search, and other specimens are outside this v2 action.
-
-### Package v2 Variables pilot
-
-The build also creates `variables-pilot/dist/code.js`. In a **disposable Figma Design file**, import `variables-pilot/manifest.json` as a separate development plugin and run **Obsidian UI Variables Pilot**. Figma requires the imported file to be named `manifest.json`; the root `manifest.json` is the main importer. Select the controlled Package v2 ZIP from `dev-vault/obsidian-ui-exports/figma-packages/`, inspect the preview and the separate `--interactive-accent` CSS proof, then click **Criar e verificar 3 Variables**. The plugin creates a new collection named `Obsidian UI / Variables Pilot <build hash> <timestamp>` with Dark/Light modes and three Variables. It writes source/projection details into each Variable's description, reads back both mode values and descriptions, verifies the `--modal-background` alias and mode switching, and displays the report in the UI. This avoids private `pluginData`, which requires a Figma-issued plugin ID. A successful collection remains in the disposable file; a failed attempt removes its new collection. Repeating a successful run creates another collection. No automatic cleanup is performed.
-
-The pilot v2 reader and projection are independent of `src/package-data.ts`; the main importer's v1 UI Kit action does not use them. `--interactive-accent` is evaluated in the pilot UI browser and compared with the captured Button CTA, but is not created as a Variable. `TIMING`, `EASING`, and `STRING` are outside this pilot. Run `npm run test:variables --workspace @obsidian-ui-system/figma-plugin` for the pure projection and v2 reader tests.
-
-The three-Variable readback and the `--interactive-accent` UI-browser proof were confirmed in Figma Desktop on 2026-10-01 with the controlled v2 ZIP. The [package guide](../../docs/integration/figma-package/figma-package.md) records the values and limits of that proof.
-
-### Disposable Button normal binding pilot
-
-The same separate development plugin has a second action, **Criar e verificar Button com bindings**. In a disposable Figma Design file, select the existing Package v2 ZIP plus the standalone Dark and Light diagnostic JSONs from the same `dev-vault/obsidian-ui-exports/figma-packages/` folder. The action requires confirmed `obsidian.button / normal / root` diagnostics for `border-radius → --button-radius` and `background-color → --interactive-normal`. It checks the CSSOM `var(...)` reference, witness response, restoration, technical context, and values in both modes before creating anything. Package and diagnostic build hashes may differ; the report keeps both origins and timestamps. Repeated runs create additional disposable collections and frames.
-
-The JSONs are already local Obsidian diagnostic exports; they require no download. Use the same visible folder for all three file pickers. Choose `binding-diagnostic-dark-*.json` in **Diagnóstico Dark** and `binding-diagnostic-light-*.json` in **Diagnóstico Light**.
-
-The **Criar e verificar 3 Variables** button and its three-candidate preview belong to the earlier Variables experiment; this Button pilot uses only **Criar e verificar Button com bindings**. The action creates exactly two Variables in a new Dark/Light collection and one frame named `Button normal binding probe`. It binds the frame radius and solid paint color, then reports binding IDs and resolved Variable values after Dark → Light → Dark. The frame remains selected for inspection; on a handled failure, the new frame and collection are removed. A user-operated Figma Desktop run confirmed all four radius corner binding IDs, the paint and node fill binding ID, and mode-specific Variable resolution of radius `8` and background `#333333 → #e4e4e4 → #333333`. Screenshots and the operator's mode-switching check confirmed the frame's visible Dark and Light fills and radius 8. The plugin's final state is Dark.
+The generated Component starts in the Package's inference-source mode. The plugin checks binding IDs and Variable resolution through Dark → Light → Dark before restoring that mode. In Figma Desktop on 2026-10-01, the real Component retained the same radius, background and Label fill binding IDs through that sequence. The API resolved radius `8`, background `#333333 → #e4e4e4 → #333333`, and text `#dadada → #222222 → #dadada`; screenshots confirmed legible text in Dark and Light. `npm run test:variables --workspace @obsidian-ui-system/figma-plugin` covers the v2 reader, causal preflight, and selective projection. CTA, Search, and other specimens remain outside this v2 action.
 
 ## Files
 
@@ -86,11 +70,8 @@ The **Criar e verificar 3 Variables** button and its three-candidate preview bel
 - `src/button-v2-package.ts`, `src/button-normal-binding.ts`: bounded v2 reader and structural confirmed-binding preflight.
 - `src/button-component.ts`, `src/button-normal-generation.ts`: shared native Button construction and real bound Normal generation.
 - `src/variable-projection.ts`: pure, selective Package v2 token decisions.
-- `src/variables-pilot-package.ts`: bounded v2 reader for the separate pilot.
-- `src/binding-pilot-evidence.ts`: pure diagnostic preflight and separate provenance mapping.
-- `src/binding-pilot-figma.ts`: disposable bound frame creation and API readback.
-- `src/variables-pilot.ts`, `variables-pilot/manifest.json`, `variables-pilot/ui.html`: isolated Variable creation/readback and UI CSS color proof.
-- `src/ui.html`: single ZIP picker, package summary and status messages.
+- `src/button-binding-evidence.ts`: causal diagnostic preflight and separate provenance mapping.
+- `src/ui.html`: ZIP and Dark/Light diagnostic pickers, package summary and status messages.
 - `tests/fixtures/`: real Obsidian ZIP used by the importer tests.
 - `manifest.json`: Figma Design plugin registration, pointing to `dist/code.js` and `src/ui.html`.
 - `dist/code.js`: generated locally and ignored by Git.

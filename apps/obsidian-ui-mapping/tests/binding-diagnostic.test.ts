@@ -27,7 +27,7 @@ class FakeElement {
 (globalThis as { CSSRule?: { IMPORT_RULE: number } }).CSSRule = { IMPORT_RULE: 3 };
 
 function fixture(options: {
-  property?: 'border-radius' | 'background-color'; token?: string; cssValue?: string;
+  property?: 'border-radius' | 'background-color' | 'color'; token?: string; cssValue?: string;
   original?: string; ruleSelector?: string; unreadable?: boolean; follows?: boolean;
   competingToken?: string; activeToken?: string;
 } = {}) {
@@ -100,6 +100,34 @@ test('dimension witness confirms border radius without retaining the override', 
   assert.equal(result.status, 'confirmed');
   assert.equal(result.verification?.stimulated, '37px');
   assert.equal(result.verification?.restored, '8px');
+});
+
+test('Button normal text color requires a direct token reference and causal response', () => {
+  const setup = fixture({ property: 'color', token: '--text-normal', original: 'rgb(218, 218, 218)' });
+  const result = run(setup, { property: 'color', token: '--text-normal', witness: 'rgb(251, 37, 9)' });
+  assert.equal(result.status, 'confirmed');
+  assert.equal(result.verification?.stimulated, 'rgb(251, 37, 9)');
+  assert.equal(result.verification?.restoredExactly, true);
+  assert.equal(setup.target.style.getPropertyValue('--text-normal'), '');
+});
+
+test('Button text color reports a causal scoped alias chain separately', () => {
+  const setup = fixture({ property: 'color', token: '--text-color', original: 'rgb(218, 218, 218)' });
+  const aliasStyle = new FakeStyle();
+  aliasStyle.setProperty('--text-color', 'var(--text-normal)');
+  const sheet = setup.doc.styleSheets[0] as { cssRules: { length: number; item: (index: number) => unknown } };
+  const originalItem = sheet.cssRules.item;
+  sheet.cssRules = { length: 2, item: (index) => index === 1
+    ? { selectorText: 'button', style: aliasStyle } : originalItem(index) };
+  setup.doc.defaultView.getComputedStyle = (element) => ({ getPropertyValue: (name) => name === 'color'
+    ? element.style.getPropertyValue('--text-color') || element.style.getPropertyValue('--text-normal') ||
+      'rgb(218, 218, 218)' : '' });
+  const result = run(setup, { property: 'color', token: '--text-color', aliasTarget: '--text-normal',
+    witness: 'rgb(251, 37, 9)' });
+  assert.equal(result.status, 'confirmed');
+  assert.equal(result.alias?.status, 'confirmed');
+  assert.equal(result.alias?.candidates[0]?.rawValue, 'var(--text-normal)');
+  assert.equal(result.alias?.verification?.restoredExactly, true);
 });
 
 test('an originally empty inline custom property remains declared after the probe', () => {

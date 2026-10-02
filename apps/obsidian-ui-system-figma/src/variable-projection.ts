@@ -21,8 +21,8 @@ export interface FigmaVariableCandidate {
 }
 
 const MODES = ['dark', 'light'] as const;
-const PILOT = ['--background-primary', '--modal-background', '--button-radius'] as const;
-const BINDING_PILOT = ['--button-radius', '--interactive-normal'] as const;
+const SUPPORTED = ['--background-primary', '--modal-background', '--button-radius',
+  '--interactive-normal', '--text-normal'] as const;
 
 function wholeFunction(value: string, name: string): boolean {
   if (!value.startsWith(`${name}(`)) return false;
@@ -69,7 +69,7 @@ function candidate(name: string, tokens: MultiModeTokens['tokens']): FigmaVariab
     }];
   })) as FigmaVariableCandidate['modes'];
   const result: FigmaVariableCandidate = { cssName: name, decision: 'omit',
-    reason: 'No selected UI Kit use in this pilot', modes };
+    reason: 'No supported Figma Variable projection for this token', modes };
 
   if (/^--anim-duration-/.test(name) || name === '--loading-icon-delay' || /^--anim-motion-/.test(name)) {
     result.decision = 'deferred';
@@ -88,7 +88,7 @@ function candidate(name: string, tokens: MultiModeTokens['tokens']): FigmaVariab
     result.reason = 'Color expression needs typed CSS evaluation and visual verification';
     return result;
   }
-  if (!(PILOT as readonly string[]).includes(name) && !(BINDING_PILOT as readonly string[]).includes(name)) return result;
+  if (!(SUPPORTED as readonly string[]).includes(name)) return result;
 
   if (name === '--button-radius') {
     const values = {} as Record<TokenMode, number>;
@@ -99,7 +99,7 @@ function candidate(name: string, tokens: MultiModeTokens['tokens']): FigmaVariab
     }
     for (const mode of MODES) modes[mode].projected = { strategy: 'literal', value: values[mode] };
     result.figmaType = 'FLOAT';
-  } else if (name === '--background-primary' || name === '--interactive-normal') {
+  } else if (name === '--background-primary' || name === '--interactive-normal' || name === '--text-normal') {
     const values = {} as Record<TokenMode, { r: number; g: number; b: number }>;
     for (const mode of MODES) {
       const value = hexRgb(modes[mode].computedCss!);
@@ -134,20 +134,4 @@ export function projectFigmaVariableCandidates(tokens: MultiModeTokens): FigmaVa
     throw new Error('Package v2 token evidence is invalid');
   }
   return Object.keys(tokens.tokens).sort().map((name) => candidate(name, tokens.tokens));
-}
-
-export function pilotCandidates(candidates: FigmaVariableCandidate[]): FigmaVariableCandidate[] {
-  return PILOT.map((name) => {
-    const entry = candidates.find((item) => item.cssName === name);
-    if (!entry || entry.decision !== 'direct') throw new Error(`Pilot token is not directly projectable: ${name}`);
-    return entry;
-  });
-}
-
-export function bindingPilotCandidates(candidates: FigmaVariableCandidate[]): FigmaVariableCandidate[] {
-  return BINDING_PILOT.map((name) => {
-    const entry = candidates.find((item) => item.cssName === name);
-    if (!entry || entry.decision !== 'direct') throw new Error(`Binding pilot token is not directly projectable: ${name}`);
-    return entry;
-  });
 }

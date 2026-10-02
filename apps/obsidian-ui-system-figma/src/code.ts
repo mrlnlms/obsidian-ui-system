@@ -3,7 +3,7 @@ import { createButtonComponent, loadButtonFont } from './button-component';
 import { readPackageVersion, readButtonV2Package, type ButtonV2Package } from './button-v2-package';
 import { prepareButtonNormalBinding } from './button-normal-binding';
 import { generateBoundButtonNormal } from './button-normal-generation';
-import type { DiagnosticInput } from './binding-pilot-evidence';
+import type { DiagnosticInput } from './button-binding-evidence';
 import { generateSearch } from './search-generation';
 import { planUiKitPlacement } from './ui-kit-layout';
 import { readFigmaPackage, type ImportedPackage } from './package-data';
