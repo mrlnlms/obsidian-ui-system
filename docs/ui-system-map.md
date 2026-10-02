@@ -163,7 +163,7 @@ Current state:
 
 | Building block | State |
 | --- | --- |
-| Workspace Tab | **Figma-validated for the bounded Dark desktop Main/Sidedock sample** |
+| Workspace Tab | **Dark desktop Main/Sidedock Figma-validated**; Light appearance has not been captured or implemented |
 | View Header | **figma-validated for the bounded Markdown Dark sample** |
 | Breadcrumb Segment | **native Figma Component**, editable `Label` |
 | Breadcrumb Trail | **native Figma Component**, uses Segment instances + current title |
@@ -257,7 +257,7 @@ semantic architecture ESTABLISHED
 File Explorer         STRUCTURALLY SUFFICIENT
 View Header           FIGMA-VALIDATED (bounded sample)
 Breadcrumb            BUILT as nested Components
-Workspace Tab         FIGMA-VALIDATED (bounded Dark desktop)
+Workspace Tab         FIGMA-VALIDATED (Dark only; Light pending)
 Side Panel/Sidedock   NEXT composition target
 
 VIEW CONTENT
@@ -275,8 +275,9 @@ The next work should optimize for **usable screen composition**, not evidence vo
 
 ### Phase A — finish the host skeleton
 
-1. **Workspace Tab — completed for the bounded Dark desktop sample**
-   - the reusable Figma Component Set covers Main/Sidedock and Active/Inactive;
+1. **Workspace Tab — completed only for the bounded Dark desktop sample**
+   - the reusable Figma Component Set covers Main/Sidedock and Active/Inactive in Dark;
+   - Light still needs its own appearance evidence and Figma projection in the theme phase;
    - the tab group remains a host composition to assemble from this component.
 2. **Side Panel / WorkspaceSidedock composition**
    - resizable host;
@@ -309,6 +310,7 @@ After the useful component vocabulary exists in Figma:
 - consolidate observed states into Component Sets;
 - close important hover/active/disabled gaps;
 - project Dark/Light Variables where evidence exists;
+- capture and implement the Workspace Tab Light appearance; the validated Dark set does not establish Light colors or states;
 - normalize naming/sections/properties;
 - only then treat the library as publication-ready.
 
