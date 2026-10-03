@@ -1,14 +1,15 @@
 import { readSidePanelModel, type SidePanelModel, type SidePanelTab } from './side-panel-data';
+import type { IconButtonLibrary } from './icon-button-generation';
 
 type TabState = 'Active' | 'Inactive';
 
 /** Composes the observed Dark left Sidedock from the already validated Workspace Tab set. */
 export async function generateSidePanel(probe: unknown,
-  workspaceTabSet?: ComponentSetNode): Promise<{
+  workspaceTabSet: ComponentSetNode, iconButtons: IconButtonLibrary): Promise<{
   panel: ComponentNode; group: ComponentSetNode; preview: FrameNode;
 }> {
   const model = readSidePanelModel(probe);
-  const tabSet = workspaceTabSet ?? findWorkspaceTabSet();
+  const tabSet = workspaceTabSet;
   if (tabSet.name !== 'Obsidian / Workspace Tab') {
     throw new Error('Side Panel: Workspace Tab Component Set incompatível.');
   }
@@ -136,14 +137,10 @@ export async function generateSidePanel(probe: unknown,
     toggle.resize(model.toggleWidth, model.toggleHeight);
     toggle.fills = [];
     toggle.strokes = [];
-    const toggleGlyph = figma.createNodeFromSvg(colorSvg(model.toggleSvg, model.toggleIconColor,
-      model.toggleIconSize));
-    toggleGlyph.name = 'Collapse icon';
-    toggle.appendChild(toggleGlyph);
-    toggleGlyph.resize(model.toggleIconSize, model.toggleIconSize);
-    toggleGlyph.x = model.toggleIconX;
-    toggleGlyph.y = model.toggleIconY;
-    toggleGlyph.opacity = model.toggleIconOpacity;
+    const toggleButton = iconButtons.create('Sidedock / Collapse', 'Sidedock');
+    toggleButton.name = 'Collapse icon';
+    toggle.appendChild(toggleButton);
+    toggleButton.isExposedInstance = true;
 
     const viewInstance = slot.createInstance();
     viewInstance.name = 'Hosted View';
@@ -201,17 +198,6 @@ export async function generateSidePanel(probe: unknown,
     icons.forEach((node) => { if (!node.removed) node.remove(); });
     throw error;
   }
-}
-
-function findWorkspaceTabSet(): ComponentSetNode {
-  const sets = figma.currentPage.findAll((node) => node.type === 'COMPONENT_SET' &&
-    node.name === 'Obsidian / Workspace Tab') as ComponentSetNode[];
-  const set = sets.sort((a, b) => (b.absoluteBoundingBox?.x ?? 0) - (a.absoluteBoundingBox?.x ?? 0))[0];
-  if (!set || set.children.length !== 4 || set.componentPropertyDefinitions.Context?.type !== 'VARIANT' ||
-      set.componentPropertyDefinitions.State?.type !== 'VARIANT') {
-    throw new Error('Side Panel: gere primeiro o Workspace Tab Dark nesta página do Figma.');
-  }
-  return set;
 }
 
 function findTabVariant(set: ComponentSetNode, state: TabState): ComponentNode {

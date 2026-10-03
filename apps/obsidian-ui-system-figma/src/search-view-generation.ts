@@ -1,5 +1,6 @@
 import { fontFailure, requiredFont } from './font-resolution';
 import { readSearchViewModel, type SearchViewGroup, type SearchViewModel } from './search-view-data';
+import type { IconButtonLibrary } from './icon-button-generation';
 
 const SORT_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>';
 
@@ -7,7 +8,7 @@ const SORT_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24
 export async function composeSearchInSidePanel(probe: unknown,
   searchSet: ComponentSetNode, host: {
     panel: ComponentNode; group: ComponentSetNode; preview: FrameNode;
-  }): Promise<{
+  }, iconButtons: IconButtonLibrary): Promise<{
   component: ComponentNode; preview: FrameNode;
 }> {
   const model = readSearchViewModel(probe);
@@ -15,7 +16,7 @@ export async function composeSearchInSidePanel(probe: unknown,
   const existingRoots = new Set(figma.currentPage.children.map((node) => node.id));
   let preview: FrameNode | undefined;
   try {
-    const component = await generateSearchView(probe, searchSet);
+    const component = await generateSearchView(probe, searchSet, iconButtons);
 
     preview = target.preview.clone();
     preview.name = 'Side Panel / Dark resize preview / Search';
@@ -132,7 +133,7 @@ async function verifyHostedSearch(panelInstance: InstanceNode, content: Componen
 
 /** First bounded Dark Search View content; suitable for the Side Panel Hosted View slot. */
 export async function generateSearchView(probe: unknown,
-  searchSet: ComponentSetNode): Promise<ComponentNode> {
+  searchSet: ComponentSetNode, iconButtons: IconButtonLibrary): Promise<ComponentNode> {
   const model = readSearchViewModel(probe);
   const search = findFilledSearch(searchSet);
   const available = (await figma.listAvailableFontsAsync()).map((item) => item.fontName);
@@ -153,7 +154,7 @@ export async function generateSearchView(probe: unknown,
   let component: ComponentNode | undefined;
   const parts: ComponentNode[] = [];
   try {
-    const field = createGlobalSearchField(model, search);
+    const field = createGlobalSearchField(model, search, iconButtons);
     parts.push(field);
     component = figma.createComponent();
     component.name = 'Obsidian / Search View / Dark';
@@ -167,7 +168,7 @@ export async function generateSearchView(probe: unknown,
     component.strokes = [];
     component.clipsContent = true;
 
-    addSearchRow(component, model, field, parts);
+    addSearchRow(component, model, field, parts, iconButtons);
     addResultsInfo(component, model, font, parts);
     const results = addResults(component, model, font, parts);
     if (component.width !== model.width || results.width !== model.width) {
@@ -204,7 +205,7 @@ function findFilledSearch(set: ComponentSetNode): { variant: ComponentNode; valu
 }
 
 function createGlobalSearchField(model: SearchViewModel,
-  search: ReturnType<typeof findFilledSearch>): ComponentNode {
+  search: ReturnType<typeof findFilledSearch>, iconButtons: IconButtonLibrary): ComponentNode {
   const g = model.geometry;
   const width = model.width - 2 * g.inset - g.searchSettingsWidth - g.searchRowGap;
   const field = figma.createComponent();
@@ -224,17 +225,18 @@ function createGlobalSearchField(model: SearchViewModel,
   const viewport = base.findOne((node) => node.name === 'Text viewport');
   if (viewport?.type !== 'FRAME') throw new Error('Search View: viewport da Search Filled ausente.');
   viewport.resize(width - g.inputTextLeft - g.inputTextRight, viewport.height);
-  const matchCase = frame(field, 'Match case', 24, 20);
+  const matchCase = iconButtons.create('Search / Match case', 'Input', 'Default', 'Opaque');
+  field.appendChild(matchCase);
+  matchCase.isExposedInstance = true;
+  matchCase.name = 'Match case';
   matchCase.x = width - 60;
   matchCase.y = 5;
   matchCase.constraints = { horizontal: 'MAX', vertical: 'CENTER' };
-  matchCase.fills = [paint(model.colors.input)];
-  icon(matchCase, 'Match case icon', model.icons.matchCase, model.colors.muted, 16, 4, 2);
   return field;
 }
 
 function addSearchRow(parent: ComponentNode, model: SearchViewModel,
-  field: ComponentNode, parts: ComponentNode[]): void {
+  field: ComponentNode, parts: ComponentNode[], iconButtons: IconButtonLibrary): void {
   const g = model.geometry;
   const row = figma.createComponent();
   row.name = 'Obsidian / Search / Controls / Dark';
@@ -257,8 +259,10 @@ function addSearchRow(parent: ComponentNode, model: SearchViewModel,
   input.layoutGrow = 1;
   input.minWidth = 1;
   input.isExposedInstance = true;
-  const settings = frame(row, 'Search settings', g.searchSettingsWidth, 24);
-  icon(settings, 'Settings icon', model.icons.settings, model.colors.muted, 16, 6, 4);
+  const settings = iconButtons.create('Search / Settings', 'Toolbar', 'Default', 'Opaque');
+  settings.name = 'Search settings';
+  row.appendChild(settings);
+  settings.isExposedInstance = true;
   const instance = row.createInstance();
   instance.name = 'Search controls';
   parent.appendChild(instance);

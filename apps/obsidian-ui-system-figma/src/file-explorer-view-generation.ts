@@ -1,12 +1,12 @@
-import { fontFailure, requiredFont } from './font-resolution';
-import { readFileExplorerViewModel, type FileExplorerViewModel, type FilesRow } from './file-explorer-view-data';
+import { readFileExplorerViewModel, type FileExplorerViewModel } from './file-explorer-view-data';
+import type { IconButtonLibrary } from './icon-button-generation';
+import type { TreeRowLibrary } from './tree-navigation-row-generation';
 
 interface SidePanelHost { panel: ComponentNode; group: ComponentSetNode; preview: FrameNode }
-interface RowSources { folders: ComponentNode[]; tagged: ComponentNode[] }
 
 /** Composes the observed Files excerpt from existing rows in the validated Side Panel. */
 export async function composeFilesInSidePanel(probe: unknown, host: SidePanelHost,
-  sources: RowSources): Promise<{ component: ComponentNode; preview: FrameNode;
+  rows: TreeRowLibrary, iconButtons: IconButtonLibrary): Promise<{ component: ComponentNode; preview: FrameNode;
     actions: ComponentSetNode }> {
   const model = readFileExplorerViewModel(probe);
   const filesTab = host.group.children.find((node): node is ComponentNode =>
@@ -22,11 +22,9 @@ export async function composeFilesInSidePanel(probe: unknown, host: SidePanelHos
   }
   const rootIds = new Set(figma.currentPage.children.map((node) => node.id));
   try {
-    const font = await loadFont(model);
-    const actions = createActionSet(model);
-    const defaults = createDefaultFileSet(model, font);
-    const component = createFilesView(model, actions, defaults, sources);
-    placeComponents([actions, defaults, component]);
+    const actions = createActionSet(model, iconButtons);
+    const component = createFilesView(model, actions, rows);
+    placeComponents([actions, component]);
 
     const preview = host.preview.clone();
     preview.name = 'Side Panel / Dark resize preview / Files';
@@ -57,37 +55,16 @@ export async function composeFilesInSidePanel(probe: unknown, host: SidePanelHos
   }
 }
 
-async function loadFont(model: FileExplorerViewModel): Promise<FontName> {
-  const available = (await figma.listAvailableFontsAsync()).map((item) => item.fontName);
-  const font = requiredFont({ cssStack: model.body.fontFamily, platform: 'macos',
-    weight: 400, style: 'normal' }, available);
-  try { await figma.loadFontAsync(font); }
-  catch { throw fontFailure(font, `Required font could not be loaded: ${font.family} / ${font.style}.`); }
-  const probe = figma.createText();
-  try {
-    probe.fontName = font;
-    probe.characters = model.body.rows[4]!.label;
-    if (probe.hasMissingFont || probe.width <= 0 || probe.height <= 0) {
-      throw fontFailure(font, 'Files View: fonte exigida não renderizou.');
-    }
-  } finally { probe.remove(); }
-  return font;
-}
-
-function createActionSet(model: FileExplorerViewModel): ComponentSetNode {
+function createActionSet(model: FileExplorerViewModel, iconButtons: IconButtonLibrary): ComponentSetNode {
   const variants = model.header.actions.map((action) => {
     const component = figma.createComponent();
     component.name = `Action=${action.name}`;
     component.resize(28, 24);
     component.fills = [];
     component.strokes = [];
-    const svg = figma.createNodeFromSvg(action.svg.replace(/currentColor/g, action.color));
-    svg.name = 'Icon';
-    component.appendChild(svg);
-    svg.resize(model.header.iconSize, model.header.iconSize);
-    svg.x = model.header.iconX;
-    svg.y = model.header.iconY;
-    svg.opacity = model.header.iconOpacity;
+    const button = iconButtons.create(`Files / ${action.name}`);
+    component.appendChild(button);
+    button.isExposedInstance = true;
     return component;
   });
   const set = figma.combineAsVariants(variants, figma.currentPage);
@@ -101,58 +78,11 @@ function createActionSet(model: FileExplorerViewModel): ComponentSetNode {
   return set;
 }
 
-function createDefaultFileSet(model: FileExplorerViewModel, font: FontName): ComponentSetNode {
-  const variants: ComponentNode[] = [];
-  const labels: TextNode[] = [];
-  for (const depth of [0, 3]) {
-    const sample = model.body.rows.find((row) => row.kind === 'file' && row.depth === depth)!;
-    const component = figma.createComponent();
-    component.name = `Depth=${depth}`;
-    component.description = `Arquivo comum Dark observado na profundidade ${depth}.`;
-    component.resize(model.width - model.body.paddingX * 2, model.body.rowHeight);
-    component.fills = [];
-    component.strokes = [];
-    component.cornerRadius = 8;
-    const label = figma.createText();
-    label.name = 'Label';
-    component.appendChild(label);
-    label.fontName = font;
-    label.fontSize = model.body.fontSize;
-    label.lineHeight = { unit: 'PIXELS', value: model.body.lineHeight };
-    label.fills = [paint(model.body.defaultColor)];
-    label.characters = 'File';
-    label.textAutoResize = 'NONE';
-    label.resize(component.width - sample.labelOffset - model.body.rightInset,
-      model.body.lineHeight);
-    label.textTruncation = 'ENDING';
-    label.x = sample.labelOffset;
-    label.y = 4;
-    label.constraints = { horizontal: 'STRETCH', vertical: 'MIN' };
-    if (label.hasMissingFont || label.width <= 0) {
-      throw fontFailure(font, 'Files View: label de arquivo comum não renderizou.');
-    }
-    variants.push(component);
-    labels.push(label);
-  }
-  const set = figma.combineAsVariants(variants, figma.currentPage);
-  set.name = 'Obsidian / File Explorer Row / Default';
-  set.description = 'Arquivo comum Dark sem seleção; profundidades 0 e 3 observadas, Label editável.';
-  const labelProperty = set.addComponentProperty('Label', 'TEXT', 'File');
-  labels.forEach((label) => { label.componentPropertyReferences = { characters: labelProperty }; });
-  variants.forEach((variant, index) => { variant.x = 20; variant.y = 20 + index * 48; });
-  set.resizeWithoutConstraints(model.width + 16, 20 + variants.length * 48);
-  if (set.componentPropertyDefinitions.Depth?.type !== 'VARIANT' ||
-      set.componentPropertyDefinitions[labelProperty]?.type !== 'TEXT') {
-    throw new Error('Files View: variants ou Label de arquivo comum ausentes.');
-  }
-  return set;
-}
-
 function createFilesView(model: FileExplorerViewModel, actionSet: ComponentSetNode,
-  defaultSet: ComponentSetNode, sources: RowSources): ComponentNode {
+  rows: TreeRowLibrary): ComponentNode {
   const component = figma.createComponent();
   component.name = 'Obsidian / File Explorer View / Dark';
-  component.description = 'Conteúdo Files Dark para o Side Panel. Barra de ações e recorte da árvore observada; usa instâncias de Folder Row, arquivo comum e arquivo etiquetado. Labels são conteúdo de exemplo.';
+  component.description = 'Conteúdo Files Dark no Side Panel; ações e linhas usam Icon Button e Tree Navigation Row.';
   component.layoutMode = 'VERTICAL';
   component.primaryAxisSizingMode = 'FIXED';
   component.counterAxisSizingMode = 'FIXED';
@@ -209,21 +139,14 @@ function createFilesView(model: FileExplorerViewModel, actionSet: ComponentSetNo
   body.strokes = [];
   body.clipsContent = true;
   for (const row of model.body.rows) {
-    const source = findRowSource(row, defaultSet, sources);
-    const instance = source.createInstance();
-    instance.name = `${row.kind} / ${row.label}`;
+    const instance = rows.create(row);
     body.appendChild(instance);
+    instance.isExposedInstance = true;
     instance.layoutSizingHorizontal = 'FILL';
     instance.minWidth = 1;
-    instance.isExposedInstance = true;
-    const propertyOwner = row.kind === 'file' ? defaultSet : source;
-    const labelProperty = Object.keys(propertyOwner.componentPropertyDefinitions).find((key) =>
-      key.startsWith('Label#') && propertyOwner.componentPropertyDefinitions[key]?.type === 'TEXT');
-    if (!labelProperty) throw new Error(`Files View: Label ausente em ${source.name}.`);
-    instance.setProperties({ [labelProperty]: row.label });
     const label = instance.findOne((node) => node.type === 'TEXT' && node.name === 'Label');
     if (label?.type !== 'TEXT' || label.characters !== row.label) {
-      throw new Error(`Files View: Label não aplicado em ${source.name}.`);
+      throw new Error(`Files View: Label não aplicado em ${instance.name}.`);
     }
   }
   header.x = rightEdgeExcept(component) + 64;
@@ -233,20 +156,6 @@ function createFilesView(model: FileExplorerViewModel, actionSet: ComponentSetNo
     throw new Error('Files View: composição inicial divergente.');
   }
   return component;
-}
-
-function findRowSource(row: FilesRow, defaults: ComponentSetNode,
-  sources: RowSources): ComponentNode {
-  const source = row.kind === 'folder' ? sources.folders.find((node) =>
-    node.name === `Obsidian / Folder Row / ${row.state} / Depth ${row.depth}`) :
-    row.kind === 'tagged' ? sources.tagged.find((node) =>
-      node.name === `Obsidian / File Explorer Row / Tagged ${row.tag?.toUpperCase()}`) :
-      defaults.children.find((node): node is ComponentNode =>
-        node.type === 'COMPONENT' && node.variantProperties?.Depth === String(row.depth));
-  if (!source || source.type !== 'COMPONENT') {
-    throw new Error(`Files View: componente ${row.kind}/${row.depth}/${row.tag ?? row.state} ausente.`);
-  }
-  return source;
 }
 
 async function verifyFilesHost(panel: InstanceNode, content: ComponentNode, filesTab: ComponentNode,
@@ -281,6 +190,16 @@ async function verifyFilesHost(panel: InstanceNode, content: ComponentNode, file
     throw new Error(`Files View: resize ou slots divergentes em ${panel.width} px. ` +
       JSON.stringify({ hosted: [hosted.width, hosted.height], header: header?.width,
         body: body?.width, rowWidths: rows.map((row) => row.width), expectedRowWidth }));
+  }
+  for (const index of [5, 6]) {
+    const row = rows[index];
+    const metadata = row?.type === 'INSTANCE' ? row.findOne((node) => node.name === 'Metadata') : null;
+    const text = row?.type === 'INSTANCE' ? row.findOne((node) => node.name === 'Metadata text') : null;
+    if (!row || metadata?.type !== 'FRAME' || !metadata.visible ||
+        text?.type !== 'TEXT' || text.characters !== model.body.rows[index]!.tag!.toUpperCase() ||
+        Math.abs(row.width - metadata.x - metadata.width - model.body.rightInset) > 0.5) {
+      throw new Error(`Files View: metadata ${model.body.rows[index]!.tag} perdeu o alinhamento em ${panel.width} px.`);
+    }
   }
 }
 

@@ -46,6 +46,7 @@ A ação v2 cria um ComponentNode de Button normal com `cornerRadius`, backgroun
 - Use `@figma/plugin-typings` instalado no projeto e as referências de `figma-use` e `figma-generate-library` antes de pesquisar fora. Use `figma-generative-plugins` ao alterar o plugin. Recorra à web apenas se houver lacuna real ou necessidade de verificar uma mudança recente da API.
 - Carregue o `FontName` exato antes de modificar `characters`; `listAvailableFontsAsync()` e `loadFontAsync()` não provam, sozinhos, que um TextNode renderiza. Verifique `hasMissingFont` e dimensões positivas. A stack macOS atual exige SF Pro ativada no Figma Desktop; se falhar, pare com instrução de setup humano.
 - Verifique que vincular uma Component Property não alterou texto, sizing ou clipping. Faça uma prova temporária da edição na instance quando a API permitir; remova os nodes de prova. Isso complementa, mas não substitui, a inspeção do painel e do canvas pelo usuário.
+- Defina `isExposedInstance` somente depois de anexar a instance a um Component ou Component Set (inclusive por um Frame descendente). A API rejeita a exposição de uma instance ainda solta na página.
 - Mantenha a fonte do plugin em `apps/obsidian-ui-system-figma/`; o build gera `dist/code.js`. Um novo build não atualiza Component Sets já gerados no arquivo.
 
 ## Critério de fechamento de cada componente

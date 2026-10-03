@@ -193,9 +193,9 @@ Current Figma status:
 - Folder Row: validated for observed Expanded/Collapsed appearances and depths 0–2;
 - horizontal resize/ellipsis behavior: validated for the bounded observed cases.
 
-The previously validated Explorer rows remain closed. The user explicitly requested a new incremental Files composition from the scene open in Obsidian on 2026-10-02. `Obsidian / File Explorer View / Dark` uses the existing Folder Row and tagged JSON/ZIP Components inside the validated Side Panel host. It adds only the missing Default File depth 0/3 and five Header Action variants. A focused nine-row excerpt omits repeated JSON entries. The user accepted the new composition in Figma Desktop on 2026-10-03; this request did not reopen the validated row components.
+The previously validated Explorer rows remain closed. The user requested an incremental Files composition from the scene open in Obsidian on 2026-10-02. Its original version used separate Folder, Default File, and tagged JSON/ZIP Components in the validated Side Panel; the user accepted it in Figma Desktop on 2026-10-03. The current consolidation projects the same bounded states into `Obsidian / Tree Navigation Row / Dark`: `Kind=Folder|File`, only observed depths/states, and editable optional metadata for JSON/ZIP. Files now composes those variants. The user confirmed the new structure in Figma Desktop on 2026-10-03.
 
-Known production debt: Folder Row currently exists as six independent Components (2 observed states × 3 observed depths). During UI Kit consolidation, evaluate a Component Set with `State = Expanded | Collapsed` and `Depth = 0 | 1 | 2`. Do not invent unobserved states/depths merely to make the set look complete.
+The six Folder combinations are variants in that shared set (`State=Expanded|Collapsed`, `Depth=0|1|2`). File Default depths 0/2/3 and Selected depth 0 use the same anatomy. Do not invent unobserved states/depths merely to fill a matrix. The older individual generators remain available for diagnostics but are no longer called by full generation.
 
 ### 4.4 Search, Bookmarks, Outline and All Properties Views
 
@@ -209,6 +209,8 @@ These are hosted Views, not generic “sidebar rows”. Bookmarks is also a host
 These should be built as **View content systems** placed inside the same workspace/sidedock hosting structure.
 
 The Figma plugin offers one normal Dark generation action on a blank page: select a Package v1 ZIP and click **Generate UI Kit**. The ZIP supplies Button/Search; versioned tracked probes supply the implemented internal Components. The action calls their existing generators in dependency order, passes new Components and the Side Panel host explicitly into Search, Files and Bookmarks View compositions, and places each View in a duplicate of the validated Side Panel preview. No prior Component Set, standalone JSON selection, or individual generator click is required. A failed run removes the new page roots. The bounded Package v2 Button normal Variables pilot keeps its distinct diagnostic inputs. The user accepted the unified flow and Search component-reuse revision on 2026-10-02 and the Files and Bookmarks compositions on 2026-10-03. Each next Component should reuse finished pieces and be added to this full generation path.
+
+Before the next sidebar/ribbon surface, the full action now builds `Obsidian / Icon Button / Dark` and `Obsidian / Tree Navigation Row / Dark` from the already tracked evidence. Icon Button owns the observed 28×24 toolbar geometry, 28×39 Sidedock context and 24×20 Search Match case context, button `State`/`Tone`, and a swappable observed SVG. `Tone=Muted|Opaque` preserves the recorded glyph opacity. Files/Bookmarks header actions, View Header controls, Search settings/Match case and the Side Panel collapse control use instances. Tree Navigation Row owns the common File/Folder row geometry, selection, typography, ellipsis and indent; a trailing tag is optional metadata. The user validated the generated result in Figma Desktop on 2026-10-03; this checkpoint adds no Light, hover or Variables work.
 
 ### 4.5 Document/editor-embedded UI
 
@@ -236,7 +238,7 @@ Represent what is already known:
 Examples:
 
 - Breadcrumb Segment is already a valid Component even though hover has not been characterized.
-- Folder Row has enough evidence for Expanded/Collapsed; those should eventually be expressed as real state properties rather than six disconnected end-state specimens.
+- Folder Row's observed Expanded/Collapsed and depths 0–2 are now properties in the Figma-validated Tree Navigation Row set.
 
 The standard for “done enough” is: **someone can use the piece to design a plausible Obsidian interface and its known behavior survives normal resizing/editing.**
 
@@ -272,6 +274,8 @@ Side Panel/Sidedock   FIGMA-VALIDATED (bounded Dark left host)
 VIEW CONTENT
 Search                 FIGMA-VALIDATED (bounded Dark Side Panel composition)
 Bookmarks              FIGMA-VALIDATED (bounded Dark Side Panel composition)
+Icon Button            FIGMA-VALIDATED (bounded Dark contexts)
+Tree Navigation Row    FIGMA-VALIDATED (bounded Dark combinations)
 Outline                exploratory evidence
 All Properties         shallow evidence
 
@@ -303,7 +307,7 @@ At the end of Phase A, the Figma library should be able to draw a recognizable O
 The validated File Explorer rows remain closed. The user requested a separate hosted Files View composition after that checkpoint.
 
 1. **Search View content — closed for the bounded Dark composition and unified generation:** it reuses Search Filled, editable result Components and the validated Side Panel host. The user accepted the revision on 2026-10-02.
-2. **Files View composition — closed for the bounded Dark excerpt:** Default File and Header Action Components compose the reused Folder and tagged rows in the Side Panel. The user accepted the result on 2026-10-03.
+2. **Files View composition — closed for the bounded Dark excerpt:** its original Folder, Default File, tagged rows and Header Actions were accepted on 2026-10-03. The new primitive-based composition requires comparison with that accepted appearance.
 3. **Bookmarks View content — closed for the bounded Dark composition:** it uses the existing Bookmarks tab and Side Panel host. Its header reuses the Files action Components for the identical New group and Collapse all icons; its own action and row sets cover the observed Dark scene with a group, selected nested bookmark, and a multiline root bookmark. The user accepted the generated result on 2026-10-03.
 4. **Next: Outline View content.** Build it from the already obvious hierarchical/wrapping behavior, couple it to the validated Side Panel host, and add it to the one-action UI Kit generation.
 5. Add **All Properties View content** only to the level needed to represent the real hosted View.

@@ -1,11 +1,13 @@
 import { fontFailure, requiredFont } from './font-resolution';
 import { readBookmarksViewModel, type BookmarksViewModel, type BookmarkRow } from './bookmarks-view-data';
+import type { IconButtonLibrary } from './icon-button-generation';
 
 interface Host { panel: ComponentNode; group: ComponentSetNode; preview: FrameNode }
 
 /** Adds Bookmarks content to a copy of the validated Side Panel preview. */
 export async function composeBookmarksInSidePanel(probe: unknown, host: Host,
-  fileActions: ComponentSetNode): Promise<{ component: ComponentNode; preview: FrameNode }> {
+  fileActions: ComponentSetNode, iconButtons: IconButtonLibrary): Promise<{
+    component: ComponentNode; preview: FrameNode }> {
   const model = readBookmarksViewModel(probe);
   const tab = host.group.children.find((node): node is ComponentNode =>
     node.type === 'COMPONENT' && node.variantProperties?.Active === 'Bookmarks');
@@ -23,7 +25,7 @@ export async function composeBookmarksInSidePanel(probe: unknown, host: Host,
   const roots = new Set(figma.currentPage.children.map((node) => node.id));
   try {
     const font = await loadFont(model);
-    const actions = createNewActions(model);
+    const actions = createNewActions(model, iconButtons);
     const rows = createRowSet(model, font);
     const component = createView(model, actions, fileActions, rows);
     place([actions, rows, component]);
@@ -73,20 +75,16 @@ async function loadFont(model: BookmarksViewModel): Promise<FontName> {
   return font;
 }
 
-function createNewActions(model: BookmarksViewModel): ComponentSetNode {
+function createNewActions(model: BookmarksViewModel, iconButtons: IconButtonLibrary): ComponentSetNode {
   const variants = model.actions.filter((action) => action.svg).map((action) => {
     const node = figma.createComponent();
     node.name = `Action=${action.name}`;
     node.resize(28, 24);
     node.fills = [];
     node.strokes = [];
-    const glyph = figma.createNodeFromSvg(action.svg!.replace(/currentColor/g, 'rgb(179, 179, 179)'));
-    glyph.name = 'Icon';
-    node.appendChild(glyph);
-    glyph.resize(16, 16);
-    glyph.x = 6;
-    glyph.y = 4;
-    glyph.opacity = 0.85;
+    const button = iconButtons.create(`Bookmarks / ${action.name}`);
+    node.appendChild(button);
+    button.isExposedInstance = true;
     return node;
   });
   const set = figma.combineAsVariants(variants, figma.currentPage);

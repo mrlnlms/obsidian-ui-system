@@ -1,9 +1,8 @@
 import { readButtonImport } from './button-data';
 import { createButtonComponent, loadButtonFont } from './button-component';
 import { generateSearch } from './search-generation';
-import { generateFileExplorerRow } from './file-explorer-row-generation';
-import { generateFileExplorerTaggedRows } from './file-explorer-row-tag-generation';
-import { generateFolderRows } from './folder-row-generation';
+import { createTreeRowLibrary } from './tree-navigation-row-generation';
+import { createIconButtonLibrary, type IconSource } from './icon-button-generation';
 import { generateViewHeader } from './view-header-generation';
 import { generateWorkspaceTab } from './workspace-tab-generation';
 import { generateSidePanel } from './side-panel-generation';
@@ -21,6 +20,7 @@ import { readSidePanelModel } from './side-panel-data';
 import { readSearchViewModel } from './search-view-data';
 import { readFileExplorerViewModel } from './file-explorer-view-data';
 import { readBookmarksViewModel } from './bookmarks-view-data';
+import { readTreeRowEvidence } from './tree-navigation-row-data';
 import activeRowProbe from '../tests/fixtures/file-explorer-active-row-probe.json';
 import taggedRowsProbe from '../tests/fixtures/file-explorer-tagged-rows-probe.json';
 import folderRowsProbe from '../tests/fixtures/folder-rows-probe.json';
@@ -42,6 +42,7 @@ export function validateIncludedEvidence(): void {
   readSearchViewModel(searchViewProbe);
   readFileExplorerViewModel(filesViewProbe);
   readBookmarksViewModel(bookmarksViewProbe);
+  readTreeRowEvidence(folderRowsProbe, activeRowProbe, taggedRowsProbe, filesViewProbe);
 }
 
 /** One Package v1, one action, one fresh composition on the current page. */
@@ -52,20 +53,34 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
   validateIncludedEvidence();
   const originalRoots = new Set(figma.currentPage.children.map((node) => node.id));
   try {
+    const filesModel = readFileExplorerViewModel(filesViewProbe);
+    const bookmarksModel = readBookmarksViewModel(bookmarksViewProbe);
+    const headerModel = readViewHeaderModel(viewHeaderProbe);
+    const sideModel = readSidePanelModel(sidePanelProbe);
+    const searchModel = readSearchViewModel(searchViewProbe);
+    const iconSources: IconSource[] = [
+      ...filesModel.header.actions.map((action) => ({ name: `Files / ${action.name}`,
+        svg: action.svg, color: action.color })),
+      ...bookmarksModel.actions.filter((action) => action.svg).map((action) => ({
+        name: `Bookmarks / ${action.name}`, svg: action.svg!, color: 'rgb(179, 179, 179)' })),
+      ...[...headerModel.navigation, ...headerModel.actions].map((icon) => ({
+        name: `View Header / ${icon.name}`, svg: icon.svgMarkup, color: icon.colorCss })),
+      { name: 'Search / Settings', svg: searchModel.icons.settings, color: searchModel.colors.muted },
+      { name: 'Search / Match case', svg: searchModel.icons.matchCase, color: searchModel.colors.muted },
+      { name: 'Sidedock / Collapse', svg: sideModel.toggleSvg, color: sideModel.toggleIconColor },
+    ];
+    const iconButtons = createIconButtonLibrary(iconSources, searchModel.colors.input);
     const button = await generateButton(input.components, input.layout);
     const search = await generateSearch(input.components, input.layout);
     organizePublicSets(button, search);
-    await generateFileExplorerRow(activeRowProbe);
-    const tagged = await generateFileExplorerTaggedRows(taggedRowsProbe);
-    const folders = await generateFolderRows(folderRowsProbe);
-    await generateViewHeader(viewHeaderProbe);
+    const rows = await createTreeRowLibrary(folderRowsProbe, activeRowProbe, taggedRowsProbe, filesViewProbe);
+    await generateViewHeader(viewHeaderProbe, iconButtons);
     const workspaceTab = await generateWorkspaceTab(workspaceTabProbe);
-    const sidePanel = await generateSidePanel(sidePanelProbe, workspaceTab.set);
-    const searchResult = await composeSearchInSidePanel(searchViewProbe, search, sidePanel);
-    const filesResult = await composeFilesInSidePanel(filesViewProbe, sidePanel,
-      { folders, tagged: tagged.components });
+    const sidePanel = await generateSidePanel(sidePanelProbe, workspaceTab.set, iconButtons);
+    const searchResult = await composeSearchInSidePanel(searchViewProbe, search, sidePanel, iconButtons);
+    const filesResult = await composeFilesInSidePanel(filesViewProbe, sidePanel, rows, iconButtons);
     const bookmarksResult = await composeBookmarksInSidePanel(bookmarksViewProbe, sidePanel,
-      filesResult.actions);
+      filesResult.actions, iconButtons);
     figma.currentPage.selection = [bookmarksResult.preview];
     figma.viewport.scrollAndZoomIntoView([bookmarksResult.preview]);
     return { preview: bookmarksResult.preview, searchView: searchResult.component,

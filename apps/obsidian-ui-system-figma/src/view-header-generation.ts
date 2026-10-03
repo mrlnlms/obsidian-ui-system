@@ -1,9 +1,10 @@
 import { fontFailure, requiredFont } from './font-resolution';
 import { readViewHeaderModel, type HeaderIcon, type HeaderRect, type HeaderText,
   type ViewHeaderModel } from './view-header-data';
+import type { IconButtonLibrary } from './icon-button-generation';
 
 /** Three bounded native components for the first visible Dark Markdown View Header. */
-export async function generateViewHeader(probe: unknown): Promise<{
+export async function generateViewHeader(probe: unknown, iconButtons: IconButtonLibrary): Promise<{
   component: ComponentNode; trail: ComponentNode; segment: ComponentNode; title: string;
 }> {
   const model = readViewHeaderModel(probe);
@@ -46,7 +47,7 @@ export async function generateViewHeader(probe: unknown): Promise<{
     const left = frame(component, 'Navigation', model.left);
     left.minWidth = model.left.width;
     left.maxWidth = model.left.width;
-    model.navigation.forEach((icon) => addIcon(left, icon, model.left));
+    model.navigation.forEach((icon) => addIcon(left, icon, model.left, iconButtons));
 
     const trailInstance = trail.createInstance();
     trailInstance.name = 'Breadcrumb Trail';
@@ -59,7 +60,7 @@ export async function generateViewHeader(probe: unknown): Promise<{
     const actions = frame(component, 'Actions', model.actionsArea);
     actions.minWidth = model.actionsArea.width;
     actions.maxWidth = model.actionsArea.width;
-    model.actions.forEach((icon) => addIcon(actions, icon, model.actionsArea));
+    model.actions.forEach((icon) => addIcon(actions, icon, model.actionsArea, iconButtons));
 
     const trailMain = await trailInstance.getMainComponentAsync();
     const mismatches = [
@@ -337,22 +338,19 @@ function verifyNestedProperties(component: ComponentNode, titleProperty: string,
   }
 }
 
-function addIcon(parent: FrameNode, icon: HeaderIcon, parentRect: HeaderRect): void {
-  const button = frame(parent, icon.name, relative(icon.rect, parentRect));
-  button.constraints = { horizontal: 'MIN', vertical: 'MIN' };
-  const markup = icon.svgMarkup.replace('width="24"', 'width="16"')
-    .replace('height="24"', 'height="16"').replace('stroke="currentColor"', `stroke="${icon.colorCss}"`);
-  const glyph = figma.createNodeFromSvg(markup);
-  glyph.name = `Glyph / ${icon.name}`;
-  button.appendChild(glyph);
-  glyph.resize(icon.svgRect.width, icon.svgRect.height);
-  glyph.x = icon.svgRect.x - icon.rect.x;
-  glyph.y = icon.svgRect.y - icon.rect.y;
-  glyph.opacity = icon.opacity;
-  glyph.constraints = { horizontal: 'MIN', vertical: 'MIN' };
-  if (Math.abs(glyph.width - icon.svgRect.width) > 0.05 ||
-      Math.abs(glyph.height - icon.svgRect.height) > 0.05) {
-    throw new Error(`View Header: SVG ${icon.name} mudou de tamanho no Figma.`);
+function addIcon(parent: FrameNode, icon: HeaderIcon, parentRect: HeaderRect,
+  iconButtons: IconButtonLibrary): void {
+  const instance = iconButtons.create(`View Header / ${icon.name}`, 'Toolbar',
+    icon.disabled ? 'Disabled' : 'Default');
+  parent.appendChild(instance);
+  instance.isExposedInstance = true;
+  instance.x = icon.rect.x - parentRect.x;
+  instance.y = icon.rect.y - parentRect.y;
+  instance.name = `Glyph / ${icon.name}`;
+  instance.constraints = { horizontal: 'MIN', vertical: 'MIN' };
+  if (Math.abs(instance.width - icon.rect.width) > 0.05 ||
+      Math.abs(instance.height - icon.rect.height) > 0.05) {
+    throw new Error(`View Header: Icon Button ${icon.name} mudou de tamanho.`);
   }
 }
 
