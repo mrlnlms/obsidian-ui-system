@@ -3,11 +3,15 @@ import { readSidePanelModel, type SidePanelModel, type SidePanelTab } from './si
 type TabState = 'Active' | 'Inactive';
 
 /** Composes the observed Dark left Sidedock from the already validated Workspace Tab set. */
-export async function generateSidePanel(probe: unknown): Promise<{
+export async function generateSidePanel(probe: unknown,
+  workspaceTabSet?: ComponentSetNode): Promise<{
   panel: ComponentNode; group: ComponentSetNode; preview: FrameNode;
 }> {
   const model = readSidePanelModel(probe);
-  const tabSet = findWorkspaceTabSet();
+  const tabSet = workspaceTabSet ?? findWorkspaceTabSet();
+  if (tabSet.name !== 'Obsidian / Workspace Tab') {
+    throw new Error('Side Panel: Workspace Tab Component Set incompatível.');
+  }
   const activeTab = findTabVariant(tabSet, 'Active');
   const inactiveTab = findTabVariant(tabSet, 'Inactive');
   const iconProperties = {

@@ -201,11 +201,13 @@ Known production debt: Folder Row currently exists as six independent Components
 
 These are hosted Views, not generic “sidebar rows”.
 
-- **Search:** the earlier internal inventory observed only one match inside a file-grouped result. A focused Dark Search View probe now covers the query/control row, count/sort bar, and three file groups. The Figma action reuses the existing Search content and duplicates the validated Side Panel resize preview with Search hosted at both widths. The user confirmed the corrected Figma Desktop result for this bounded Dark composition.
+- **Search:** the earlier internal inventory observed only one match inside a file-grouped result. A focused Dark Search View probe covers the query/control row, count/sort bar, and three file groups. The first hosted composition was confirmed in Figma Desktop. A reported reuse defect reopened only its internals: the revised generator now nests the existing `Obsidian / Search` Filled instance in a global-field component, uses component instances for the control row, toolbar, file groups and matches, and omits the unrelated collapsed `Outline probe` sample. The user accepted the revised unified generation on 2026-10-02.
 - **Outline:** visual evidence already demonstrates a hierarchical list with wrapping/variable-height items. It is exploratory, not yet closed as a Figma family.
 - **All Properties:** a separate `all-properties` View exists; the in-document `.metadata-property` observation does not define this View.
 
 These should be built as **View content systems** placed inside the same workspace/sidedock hosting structure.
+
+The Figma plugin now offers one normal Dark generation action on a blank page: select a Package v1 ZIP and click **Generate UI Kit**. The ZIP supplies Button/Search; versioned tracked probes supply the implemented internal Components. The action calls their existing generators in dependency order, passes the new Search Component Set and Side Panel host explicitly into Search View composition, and places that View in a duplicate of the validated Side Panel preview. No prior Component Set, standalone JSON selection, or individual generator click is required. A failed run removes the new page roots. The bounded Package v2 Button normal Variables pilot keeps its distinct diagnostic inputs. The user accepted the unified flow and Search component-reuse revision on 2026-10-02; they do not expand the current component inventory. Each next Component should reuse finished pieces and be added to this full generation path.
 
 ### 4.5 Document/editor-embedded UI
 
@@ -298,8 +300,8 @@ At the end of Phase A, the Figma library should be able to draw a recognizable O
 
 File Explorer is closed for the current scope by user confirmation and is not an item in this phase.
 
-1. **Search View content — completed for the bounded Dark scene:** the query/control surface, count/sort bar and grouped results are swapped into a duplicate of the validated Side Panel resize preview; the user accepted the corrected Figma result.
-2. Build **Outline View content** from the already obvious hierarchical/wrapping behavior, coupled to the validated Side Panel host.
+1. **Search View content — closed for the bounded Dark composition and unified generation:** it reuses Search Filled, editable result Components and the validated Side Panel host. The user accepted the revision on 2026-10-02.
+2. **Next: Outline View content.** Build it from the already obvious hierarchical/wrapping behavior, couple it to the validated Side Panel host, and add it to the one-action UI Kit generation.
 3. Add **All Properties View content** only to the level needed to represent the real hosted View.
 
 At the end of Phase B, the UI Kit should support drawing the common side-panel Views shown in Obsidian.

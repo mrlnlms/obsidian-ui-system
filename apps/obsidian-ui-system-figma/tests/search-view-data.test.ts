@@ -12,12 +12,12 @@ test('reads the observed query controls and file-grouped results', () => {
   const model = readSearchViewModel(evidence());
   assert.equal(model.width, 200);
   assert.equal(model.query, 'probe');
-  assert.equal(model.resultCount, '6 results');
+  assert.equal(model.resultCount, '4 results');
   assert.equal(model.geometry.resultsInfoHeight, 33);
   assert.deepEqual(model.groups.map((group) => [group.title, group.collapsed, group.matches.length]), [
-    ['Outline probe', true, 0], ['Properties probe', false, 2], ['README', false, 2],
+    ['Properties probe', false, 2], ['README', false, 2],
   ]);
-  assert.ok(model.groups[2]!.matches[0]!.height > model.groups[1]!.matches[0]!.height);
+  assert.ok(model.groups[1]!.matches[0]!.height > model.groups[0]!.matches[0]!.height);
 });
 
 test('rejects a different theme, missing file group and unsafe SVG', () => {
@@ -26,7 +26,7 @@ test('rejects a different theme, missing file group and unsafe SVG', () => {
   assert.throws(() => readSearchViewModel(theme), /Dark v1/);
   const missing = evidence();
   missing.groups.pop();
-  assert.throws(() => readSearchViewModel(missing), /três grupos/);
+  assert.throws(() => readSearchViewModel(missing), /dois grupos/);
   const unsafe = evidence();
   unsafe.icons.settings = '<svg viewBox="0 0 24 24" onload="alert(1)"></svg>';
   assert.throws(() => readSearchViewModel(unsafe), /SVG settings/);

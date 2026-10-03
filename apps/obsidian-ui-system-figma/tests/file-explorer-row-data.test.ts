@@ -30,6 +30,12 @@ function evidence() {
   };
 }
 
+test('bundled active row is usable by the complete kit action', () => {
+  const bundled = JSON.parse(readFileSync(join(process.cwd(),
+    'tests/fixtures/file-explorer-active-row-probe.json'), 'utf8'));
+  assert.equal(readFileExplorerRowImport(bundled).label, 'README');
+});
+
 test('selects the observed active Dark row without turning scene details into component fields', () => {
   const source = evidence();
   assert.deepEqual(readFileExplorerRowImport(source), {

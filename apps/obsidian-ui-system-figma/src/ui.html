@@ -21,40 +21,15 @@
 </head>
 <body>
   <h1>Obsidian UI System</h1>
-  <p>Selecione o pacote exportado pelo comando do Obsidian.</p>
-  <label>Figma Package <input id="package" type="file" accept=".zip,application/zip"></label>
+  <p>Selecione o Figma Package v1 exportado pelo Obsidian. O plugin gera os componentes já implementados e monta a Search View no Side Panel em uma única ação.</p>
+  <label>Figma Package ZIP <input id="package" type="file" accept=".zip,application/zip"></label>
   <div id="summary" role="status" aria-live="polite"></div>
   <button id="generate" type="button" disabled>Generate UI Kit</button>
   <div id="v2" hidden>
-    <p>Button normal com Variables. Selecione os diagnósticos confirmados Dark e Light do Mapping.</p>
+    <p>Package v2: piloto separado de Button normal com Variables. Selecione os diagnósticos Dark e Light confirmados.</p>
     <label>Diagnóstico Dark <input id="dark" type="file" accept=".json,application/json"></label>
     <label>Diagnóstico Light <input id="light" type="file" accept=".json,application/json"></label>
     <button id="bind" type="button" disabled>Generate Button normal</button>
-  </div>
-  <div id="file-explorer-row">
-    <p>File Explorer Dark: selecione um internal-observed-probe-*.json. Tags exigem amostras JSON/ZIP; Folder row exige o probe com folderRows. Estas ações não usam o ZIP do Package.</p>
-    <label>Probe JSON <input id="row-probe" type="file" accept=".json,application/json"></label>
-    <button id="generate-row" type="button" disabled>Generate File Explorer row</button>
-    <button id="generate-tagged-rows" type="button" disabled>Generate tagged rows (JSON + ZIP)</button>
-    <button id="generate-folder-rows" type="button" disabled>Generate folder rows (Dark, Depth 0–2)</button>
-  </div>
-  <div id="view-header">
-    <p>View Header Dark: selecione o view-header-probe-2026-10-02.json da Markdown View. Esta ação não usa o Package ZIP.</p>
-    <label>View Header probe JSON <input id="header-probe" type="file" accept=".json,application/json"></label>
-    <button id="generate-header" type="button" disabled>Generate View Header</button>
-  </div>
-  <div id="workspace-tab">
-    <p>Workspace Tab Dark: selecione workspace-tab-probe-2026-10-02.json. Esta ação não usa o Package ZIP.</p>
-    <label>Workspace Tab probe JSON <input id="tab-probe" type="file" accept=".json,application/json"></label>
-    <button id="generate-tab" type="button" disabled>Generate Workspace Tab</button>
-  </div>
-  <div id="side-panel">
-    <p>Side Panel Left Dark: usa o Workspace Tab já gerado nesta página e o probe observado embutido no plugin. Não precisa selecionar JSON nem Package ZIP.</p>
-    <button id="generate-panel" type="button">Generate Side Panel</button>
-  </div>
-  <div id="search-view">
-    <p>Search View Dark: requer o Side Panel / Dark resize preview nesta página. Reutiliza o conteúdo Search existente, corrige o campo de busca e duplica o preview com a View hospedada. Usa o probe embutido; não precisa selecionar JSON nem Package ZIP.</p>
-    <button id="generate-search-view" type="button">Generate Search in Side Panel</button>
   </div>
   <div id="typography" role="status" aria-live="polite"></div>
   <div id="status" role="status" aria-live="polite"></div>
@@ -66,16 +41,6 @@
     const darkInput = document.getElementById('dark');
     const lightInput = document.getElementById('light');
     const bind = document.getElementById('bind');
-    const rowProbe = document.getElementById('row-probe');
-    const generateRow = document.getElementById('generate-row');
-    const generateTaggedRows = document.getElementById('generate-tagged-rows');
-    const generateFolderRows = document.getElementById('generate-folder-rows');
-    const headerProbe = document.getElementById('header-probe');
-    const generateHeader = document.getElementById('generate-header');
-    const tabProbe = document.getElementById('tab-probe');
-    const generateTab = document.getElementById('generate-tab');
-    const generatePanel = document.getElementById('generate-panel');
-    const generateSearchView = document.getElementById('generate-search-view');
     const summary = document.getElementById('summary');
     const typography = document.getElementById('typography');
     const status = document.getElementById('status');
@@ -89,19 +54,7 @@
       generate.disabled = readyVersion !== 1 || generating;
       v2.hidden = readyVersion !== 2;
       bind.disabled = readyVersion !== 2 || generating || !darkInput.files[0] || !lightInput.files[0];
-      generateRow.disabled = generating || !rowProbe.files[0];
-      generateTaggedRows.disabled = generating || !rowProbe.files[0];
-      generateFolderRows.disabled = generating || !rowProbe.files[0];
-      generateHeader.disabled = generating || !headerProbe.files[0];
-      generateTab.disabled = generating || !tabProbe.files[0];
-      generatePanel.disabled = generating;
-      generateSearchView.disabled = generating;
     }
-    darkInput.onchange = updateActions;
-    lightInput.onchange = updateActions;
-    rowProbe.onchange = updateActions;
-    headerProbe.onchange = updateActions;
-    tabProbe.onchange = updateActions;
 
     function show(text, kind = '') {
       status.textContent = text;
@@ -126,7 +79,7 @@
       report.textContent = '';
       parent.postMessage({ pluginMessage: { type: 'clear-package', requestId: id } }, '*');
       const file = packageInput.files[0];
-      if (!file) { show('Selecione um Figma Package .zip.'); return; }
+      if (!file) { show('Selecione um Figma Package ZIP.'); return; }
       if (!file.name.toLowerCase().endsWith('.zip')) {
         show('Selecione um arquivo .zip exportado pelo Obsidian.', 'error');
         return;
@@ -148,10 +101,12 @@
       packageInput.disabled = true;
       typography.textContent = '';
       report.textContent = '';
-      show('Verificando tipografia e gerando UI Kit…');
+      show('Gerando UI Kit e compondo Search no Side Panel…');
       parent.postMessage({ pluginMessage: { type: 'generate-ui-kit' } }, '*');
     };
 
+    darkInput.onchange = updateActions;
+    lightInput.onchange = updateActions;
     bind.onclick = async () => {
       if (readyVersion !== 2 || generating) return;
       generating = true;
@@ -178,93 +133,6 @@
       }
     };
 
-    async function generateFileExplorer(probeAction) {
-      if (generating || !rowProbe.files[0]) return;
-      generating = true;
-      updateActions();
-      rowProbe.disabled = true;
-      packageInput.disabled = true;
-      darkInput.disabled = true;
-      lightInput.disabled = true;
-      show('Lendo probe e gerando File Explorer row…');
-      try {
-        const file = rowProbe.files[0];
-        if (!file.name.toLowerCase().endsWith('.json') || file.size > 2 * 1024 * 1024) {
-          throw new Error('Selecione um probe .json de até 2 MB.');
-        }
-        const probe = JSON.parse(await file.text());
-        parent.postMessage({ pluginMessage: { type: probeAction, probe } }, '*');
-      } catch (error) {
-        generating = false;
-        rowProbe.disabled = false;
-        packageInput.disabled = false;
-        darkInput.disabled = false;
-        lightInput.disabled = false;
-        updateActions();
-        show(error.message || String(error), 'error');
-      }
-    }
-    generateRow.onclick = () => generateFileExplorer('generate-file-explorer-row');
-    generateTaggedRows.onclick = () => generateFileExplorer('generate-file-explorer-tagged-rows');
-    generateFolderRows.onclick = () => generateFileExplorer('generate-folder-rows');
-
-    generateHeader.onclick = async () => {
-      if (generating || !headerProbe.files[0]) return;
-      generating = true;
-      updateActions();
-      headerProbe.disabled = true;
-      show('Lendo probe e gerando View Header…');
-      try {
-        const file = headerProbe.files[0];
-        if (!file.name.toLowerCase().endsWith('.json') || file.size > 2 * 1024 * 1024) {
-          throw new Error('Selecione um View Header probe .json de até 2 MB.');
-        }
-        parent.postMessage({ pluginMessage: { type: 'generate-view-header', probe: JSON.parse(await file.text()) } }, '*');
-      } catch (error) {
-        generating = false;
-        headerProbe.disabled = false;
-        updateActions();
-        show(error.message || String(error), 'error');
-      }
-    };
-
-    generateTab.onclick = async () => {
-      if (generating || !tabProbe.files[0]) return;
-      generating = true;
-      updateActions();
-      tabProbe.disabled = true;
-      show('Lendo probe e gerando Workspace Tab…');
-      try {
-        const file = tabProbe.files[0];
-        if (!file.name.toLowerCase().endsWith('.json') || file.size > 2 * 1024 * 1024) {
-          throw new Error('Selecione um Workspace Tab probe .json de até 2 MB.');
-        }
-        parent.postMessage({ pluginMessage: { type: 'generate-workspace-tab',
-          probe: JSON.parse(await file.text()) } }, '*');
-      } catch (error) {
-        generating = false;
-        tabProbe.disabled = false;
-        updateActions();
-        show(error.message || String(error), 'error');
-      }
-    };
-
-    generatePanel.onclick = () => {
-      if (generating) return;
-      generating = true;
-      updateActions();
-      show('Compondo Side Panel a partir do probe embutido…');
-      parent.postMessage({ pluginMessage: { type: 'generate-side-panel' } }, '*');
-    };
-
-    generateSearchView.onclick = () => {
-      if (generating) return;
-      generating = true;
-      updateActions();
-      show('Duplicando o Side Panel validado e incluindo Search View…');
-      parent.postMessage({ pluginMessage: { type: 'generate-search-view' } }, '*');
-    };
-
     onmessage = (event) => {
       const message = event.data.pluginMessage;
       if (message?.type === 'package-ready' && message.requestId === requestId) {
@@ -289,9 +157,6 @@
         packageInput.disabled = false;
         darkInput.disabled = false;
         lightInput.disabled = false;
-        rowProbe.disabled = false;
-        headerProbe.disabled = false;
-        tabProbe.disabled = false;
         updateActions();
       }
     };

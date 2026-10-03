@@ -14,6 +14,7 @@
     "test:side-panel": "esbuild tests/side-panel-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/side-panel-data.test.cjs && node --test ../../.build/side-panel-data.test.cjs",
     "test:search-view": "esbuild tests/search-view-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/search-view-data.test.cjs && node --test ../../.build/search-view-data.test.cjs",
     "test:ui-kit": "esbuild tests/ui-kit-layout.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/ui-kit-layout.test.cjs && node --test ../../.build/ui-kit-layout.test.cjs",
+    "test:full-ui-kit": "esbuild tests/full-ui-kit-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/full-ui-kit-data.test.cjs && node --test ../../.build/full-ui-kit-data.test.cjs",
     "test:package": "esbuild tests/package-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/figma-package-data.test.cjs && node --test ../../.build/figma-package-data.test.cjs",
     "test:variables": "esbuild tests/variable-projection.test.ts tests/button-binding-evidence.test.ts tests/button-normal-binding.test.ts --bundle --platform=node --format=cjs --outdir=../../.build/variable-tests && node --test ../../.build/variable-tests/variable-projection.test.js ../../.build/variable-tests/button-binding-evidence.test.js ../../.build/variable-tests/button-normal-binding.test.js",
     "dev": "esbuild src/code.ts --bundle --platform=browser --target=es2017 --outfile=dist/code.js --watch"

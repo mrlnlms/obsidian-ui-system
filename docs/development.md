@@ -38,11 +38,11 @@ For the Button normal binding evidence, run **Developer: Diagnose Button and Sea
 
 The validated first File Explorer row probe remains available as **Developer: Probe internal File Explorer row** (`vault=dev-vault command id=obsidian-ui-mapping:probe-internal-file-explorer-row`). It writes a standalone `internal-observed-probe-<UTC timestamp>.json` next to the ZIPs, outside the public API catalog and Figma Package. Probe files are ignored by Git and kept until manually removed. See [internal UI scope and inventory](obsidian-ui-mapping/capture/internal-observed.md) before extending this work.
 
-The same probe includes visible Dark folder rows at observed depths 0–2 in `folderRows`. In the Figma plugin, use this probe JSON with **Generate folder rows (Dark, Depth 0–2)**; it does not use a Package ZIP. `npm run test:folder-row --workspace @obsidian-ui-system/figma-plugin` checks the specific folder reader.
+The same probe includes visible Dark folder rows at observed depths 0–2 in `folderRows`. Its focused tracked fixture is bundled into the Figma plugin's **Generate UI Kit** action; there is no separate Figma probe selection. `npm run test:folder-row --workspace @obsidian-ui-system/figma-plugin` checks the specific folder reader.
 
-The one-scene `view-header-probe-2026-10-02.json` is retained next to the ZIPs; a tracked copy in the Figma plugin's `tests/fixtures/` supports the bounded View Header reader test. Select this JSON in **View Header probe JSON** and click **Generate View Header** in the Figma plugin. It does not use a Package ZIP. The probe is development evidence retained until manual removal, not a public catalog or Package export.
+The one-scene `view-header-probe-2026-10-02.json` is retained next to the ZIPs; a tracked copy in the Figma plugin's `tests/fixtures/` supports the bounded View Header reader and is bundled into **Generate UI Kit**. The probe is development evidence retained until manual removal, not a public catalog or Package export.
 
-The targeted `workspace-tab-probe-2026-10-02.json` is retained in the same ignored export directory; its tracked copy in the Figma plugin's `tests/fixtures/` supports the Workspace Tab reader test. Select it in **Workspace Tab probe JSON** and click **Generate Workspace Tab**. No Package ZIP is needed. The broader raw CLI diagnostic remains beside it for traceability. Both local files are retained until manual removal; neither belongs to the public catalog or Package export. Run `npm run test:workspace-tab --workspace @obsidian-ui-system/figma-plugin` for the reader check.
+The targeted `workspace-tab-probe-2026-10-02.json` is retained in the same ignored export directory; its tracked copy in the Figma plugin's `tests/fixtures/` supports the Workspace Tab reader and is bundled into **Generate UI Kit**. The broader raw CLI diagnostic remains beside it for traceability. Both local files are retained until manual removal; neither belongs to the public catalog or Package export. Run `npm run test:workspace-tab --workspace @obsidian-ui-system/figma-plugin` for the reader check.
 
 A reload can close Mapping and Layout Lab tabs because the plugin detaches its views on unload; run the matching Command Palette action to reopen them. A change to `manifest.json` may still require an Obsidian restart. For a one-time production build, use `npm run build`.
 
@@ -104,9 +104,11 @@ npm run package:v2 -- \
   --inference-source dark
 ```
 
-The CLI validates the four `capture-context.json` files and their sibling artifacts, then writes an exclusively created `obsidian-ui-package-v2-<assembly timestamp>.zip` in the same ignored package directory. Mapping and Layout Lab timestamps may differ. `--inference-source` can be `dark` or `light` and defaults to `dark`; `--output PATH` optionally chooses another destination. Source folders and final ZIPs remain until manual removal. The main Figma plugin accepts v2 only for [generating Button normal with three bound Variables](../apps/obsidian-ui-system-figma/README.md#real-button-normal-from-package-v2); its full Button/Search UI Kit action still uses v1.
+The CLI validates the four `capture-context.json` files and their sibling artifacts, then writes an exclusively created `obsidian-ui-package-v2-<assembly timestamp>.zip` in the same ignored package directory. Mapping and Layout Lab timestamps may differ. `--inference-source` can be `dark` or `light` and defaults to `dark`; `--output PATH` optionally chooses another destination. Source folders and final ZIPs remain until manual removal. The main Figma plugin accepts v2 only for [generating Button normal with three bound Variables](../apps/obsidian-ui-system-figma/README.md#package-v2-button-normal-pilot); its full UI Kit action still uses v1.
 
 To install, configure, and run the local Figma importer, follow the [Figma plugin guide](../apps/obsidian-ui-system-figma/README.md). On macOS, SF Pro / Regular must be available and render in Figma Desktop; the importer stops if that requirement fails. The Figma guide contains the font activation and plugin installation steps.
+
+On a blank Figma Design page, select one Package v1 ZIP and click **Generate UI Kit** once. The plugin uses that ZIP for Button/Search and bundles the versioned Dark probe fixtures for the implemented internal components; it generates new Components and the Search-hosted Side Panel preview in dependency order. The existing `test:full-ui-kit` script checks the combined input preflight. The Package v2 Button normal Variables pilot remains a separate action with its own diagnostics.
 
 `dev-vault/obsidian-ui-exports/figma-packages/` holds final ZIPs, standalone binding diagnostic JSONs, and the `internal-observed` probe JSON; keep or delete these manually. Hidden `dev-vault/.obsidian-ui-system/` holds the existing technical Mapping/Lab exports, diff reports, package staging, and failure diagnostics. Both areas are ignored by Git. **Developer: Clean Obsidian UI Development Exports** is optional maintenance: it shows counts, asks for confirmation, and removes individual Mapping/Lab exports and diff reports. It leaves final Figma Packages, standalone diagnostics, and failure diagnostics untouched. Deliberate development exports have no automatic retention policy.
 
@@ -135,6 +137,7 @@ npm run test:workspace-tab --workspace @obsidian-ui-system/figma-plugin
 npm run test:side-panel --workspace @obsidian-ui-system/figma-plugin
 npm run test:search-view --workspace @obsidian-ui-system/figma-plugin
 npm run test:ui-kit --workspace @obsidian-ui-system/figma-plugin
+npm run test:full-ui-kit --workspace @obsidian-ui-system/figma-plugin
 npm run test:package --workspace @obsidian-ui-system/figma-plugin
 npm run test:variables --workspace @obsidian-ui-system/figma-plugin
 ```

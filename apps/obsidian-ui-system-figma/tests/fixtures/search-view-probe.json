@@ -6,7 +6,7 @@
   "width": 200,
   "height": 840.109375,
   "query": "probe",
-  "resultCount": "6 results",
+  "resultCount": "4 results",
   "sortLabel": "File name (A to Z)",
   "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
   "geometry": {
@@ -44,12 +44,6 @@
     "more": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"svg-icon lucide-more-horizontal\"><circle cx=\"12\" cy=\"12\" r=\"1\"></circle><circle cx=\"19\" cy=\"12\" r=\"1\"></circle><circle cx=\"5\" cy=\"12\" r=\"1\"></circle></svg>"
   },
   "groups": [
-    {
-      "title": "Outline probe",
-      "collapsed": true,
-      "matches": [],
-      "height": 24.890625
-    },
     {
       "title": "Properties probe",
       "collapsed": false,

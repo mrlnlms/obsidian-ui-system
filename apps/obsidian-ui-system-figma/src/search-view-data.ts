@@ -26,7 +26,7 @@ export interface SearchViewModel {
   groups: SearchViewGroup[];
 }
 
-/** Bounded Dark Search scene: controls, count/sort bar and file-grouped matches. */
+/** Bounded Dark Search scene: controls, count/sort bar and selected file-grouped matches. */
 export function readSearchViewModel(input: unknown): SearchViewModel {
   const root = record(input, 'Search View: probe inválido.');
   if (root.format !== 'obsidian-search-view-probe' || root.version !== 1 || root.mode !== 'Dark') {
@@ -66,8 +66,8 @@ export function readSearchViewModel(input: unknown): SearchViewModel {
     }
     return [key, value];
   })) as SearchViewModel['icons'];
-  if (!Array.isArray(root.groups) || root.groups.length !== 3) {
-    throw new Error('Search View: os três grupos observados são exigidos.');
+  if (!Array.isArray(root.groups) || root.groups.length !== 2) {
+    throw new Error('Search View: os dois grupos selecionados são exigidos.');
   }
   const groups = root.groups.map((raw, index): SearchViewGroup => {
     const group = record(raw, `Search View: grupo ${index} inválido.`);
@@ -84,7 +84,7 @@ export function readSearchViewModel(input: unknown): SearchViewModel {
       }
       return { text: match.text, height };
     });
-    if (group.collapsed !== (index === 0) || matches.length !== (index === 0 ? 0 : 2)) {
+    if (group.collapsed || matches.length !== 2) {
       throw new Error(`Search View: anatomia observada do grupo ${index} mudou.`);
     }
     return { title: group.title, collapsed: group.collapsed, matches };
