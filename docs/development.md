@@ -108,7 +108,7 @@ The CLI validates the four `capture-context.json` files and their sibling artifa
 
 To install, configure, and run the local Figma importer, follow the [Figma plugin guide](../apps/obsidian-ui-system-figma/README.md). On macOS, SF Pro / Regular must be available and render in Figma Desktop; the importer stops if that requirement fails. The Figma guide contains the font activation and plugin installation steps.
 
-On a blank Figma Design page, select one Package v1 ZIP and click **Generate UI Kit** once. The plugin uses that ZIP for Button/Search and bundles the versioned Dark probe fixtures for the implemented internal components; it generates new Components and separate Search- and Files-hosted Side Panel previews in dependency order. `test:full-ui-kit` checks the combined input preflight, while `test:file-explorer-view` checks the focused Files reader. The Package v2 Button normal Variables pilot remains a separate action with its own diagnostics.
+On a blank Figma Design page, select one Package v1 ZIP and click **Generate UI Kit** once. The plugin uses that ZIP for Button/Search and bundles the versioned Dark probe fixtures for the implemented internal components; it generates new Components and separate Search-, Files-, and Bookmarks-hosted Side Panel previews in dependency order. `test:full-ui-kit` checks the combined input preflight; `test:file-explorer-view` and `test:bookmarks-view` check the focused readers. The Package v2 Button normal Variables pilot remains a separate action with its own diagnostics.
 
 `dev-vault/obsidian-ui-exports/figma-packages/` holds final ZIPs, standalone binding diagnostic JSONs, and the `internal-observed` probe JSON; keep or delete these manually. Hidden `dev-vault/.obsidian-ui-system/` holds the existing technical Mapping/Lab exports, diff reports, package staging, and failure diagnostics. Both areas are ignored by Git. **Developer: Clean Obsidian UI Development Exports** is optional maintenance: it shows counts, asks for confirmation, and removes individual Mapping/Lab exports and diff reports. It leaves final Figma Packages, standalone diagnostics, and failure diagnostics untouched. Deliberate development exports have no automatic retention policy.
 
@@ -138,6 +138,7 @@ npm run test:side-panel --workspace @obsidian-ui-system/figma-plugin
 npm run test:search-view --workspace @obsidian-ui-system/figma-plugin
 npm run test:ui-kit --workspace @obsidian-ui-system/figma-plugin
 npm run test:full-ui-kit --workspace @obsidian-ui-system/figma-plugin
+npm run test:bookmarks-view --workspace @obsidian-ui-system/figma-plugin
 npm run test:package --workspace @obsidian-ui-system/figma-plugin
 npm run test:variables --workspace @obsidian-ui-system/figma-plugin
 ```

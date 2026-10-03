@@ -6,7 +6,8 @@ interface RowSources { folders: ComponentNode[]; tagged: ComponentNode[] }
 
 /** Composes the observed Files excerpt from existing rows in the validated Side Panel. */
 export async function composeFilesInSidePanel(probe: unknown, host: SidePanelHost,
-  sources: RowSources): Promise<{ component: ComponentNode; preview: FrameNode }> {
+  sources: RowSources): Promise<{ component: ComponentNode; preview: FrameNode;
+    actions: ComponentSetNode }> {
   const model = readFileExplorerViewModel(probe);
   const filesTab = host.group.children.find((node): node is ComponentNode =>
     node.type === 'COMPONENT' && node.variantProperties?.Active === 'Files');
@@ -47,7 +48,7 @@ export async function composeFilesInSidePanel(probe: unknown, host: SidePanelHos
     } finally { resizeProbe.remove(); }
     figma.currentPage.selection = [preview];
     figma.viewport.scrollAndZoomIntoView([preview]);
-    return { component, preview };
+    return { component, preview, actions };
   } catch (error) {
     for (const node of figma.currentPage.children) {
       if (!rootIds.has(node.id) && !node.removed) node.remove();

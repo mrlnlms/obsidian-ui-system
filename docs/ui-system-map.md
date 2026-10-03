@@ -197,17 +197,18 @@ The previously validated Explorer rows remain closed. The user explicitly reques
 
 Known production debt: Folder Row currently exists as six independent Components (2 observed states × 3 observed depths). During UI Kit consolidation, evaluate a Component Set with `State = Expanded | Collapsed` and `Depth = 0 | 1 | 2`. Do not invent unobserved states/depths merely to make the set look complete.
 
-### 4.4 Search, Outline and All Properties Views
+### 4.4 Search, Bookmarks, Outline and All Properties Views
 
-These are hosted Views, not generic “sidebar rows”.
+These are hosted Views, not generic “sidebar rows”. Bookmarks is also a hosted left View: its validated tab and Side Panel slot previously lacked their own content composition.
 
 - **Search:** the earlier internal inventory observed only one match inside a file-grouped result. A focused Dark Search View probe covers the query/control row, count/sort bar, and three file groups. The first hosted composition was confirmed in Figma Desktop. A reported reuse defect reopened only its internals: the revised generator now nests the existing `Obsidian / Search` Filled instance in a global-field component, uses component instances for the control row, toolbar, file groups and matches, and omits the unrelated collapsed `Outline probe` sample. The user accepted the revised unified generation on 2026-10-02.
+- **Bookmarks:** the Dark left tab and host were already validated. The focused Bookmarks content adds its own four-action header and three observed rows; it reuses two identical action variants from Files. The user confirmed the hosted View in Figma Desktop on 2026-10-03.
 - **Outline:** visual evidence already demonstrates a hierarchical list with wrapping/variable-height items. It is exploratory, not yet closed as a Figma family.
 - **All Properties:** a separate `all-properties` View exists; the in-document `.metadata-property` observation does not define this View.
 
 These should be built as **View content systems** placed inside the same workspace/sidedock hosting structure.
 
-The Figma plugin offers one normal Dark generation action on a blank page: select a Package v1 ZIP and click **Generate UI Kit**. The ZIP supplies Button/Search; versioned tracked probes supply the implemented internal Components. The action calls their existing generators in dependency order, passes new Components and the Side Panel host explicitly into Search and Files View compositions, and places each View in a duplicate of the validated Side Panel preview. No prior Component Set, standalone JSON selection, or individual generator click is required. A failed run removes the new page roots. The bounded Package v2 Button normal Variables pilot keeps its distinct diagnostic inputs. The user accepted the unified flow and Search component-reuse revision on 2026-10-02 and the Files composition on 2026-10-03. Each next Component should reuse finished pieces and be added to this full generation path.
+The Figma plugin offers one normal Dark generation action on a blank page: select a Package v1 ZIP and click **Generate UI Kit**. The ZIP supplies Button/Search; versioned tracked probes supply the implemented internal Components. The action calls their existing generators in dependency order, passes new Components and the Side Panel host explicitly into Search, Files and Bookmarks View compositions, and places each View in a duplicate of the validated Side Panel preview. No prior Component Set, standalone JSON selection, or individual generator click is required. A failed run removes the new page roots. The bounded Package v2 Button normal Variables pilot keeps its distinct diagnostic inputs. The user accepted the unified flow and Search component-reuse revision on 2026-10-02 and the Files and Bookmarks compositions on 2026-10-03. Each next Component should reuse finished pieces and be added to this full generation path.
 
 ### 4.5 Document/editor-embedded UI
 
@@ -270,6 +271,7 @@ Side Panel/Sidedock   FIGMA-VALIDATED (bounded Dark left host)
 
 VIEW CONTENT
 Search                 FIGMA-VALIDATED (bounded Dark Side Panel composition)
+Bookmarks              FIGMA-VALIDATED (bounded Dark Side Panel composition)
 Outline                exploratory evidence
 All Properties         shallow evidence
 
@@ -302,8 +304,9 @@ The validated File Explorer rows remain closed. The user requested a separate ho
 
 1. **Search View content — closed for the bounded Dark composition and unified generation:** it reuses Search Filled, editable result Components and the validated Side Panel host. The user accepted the revision on 2026-10-02.
 2. **Files View composition — closed for the bounded Dark excerpt:** Default File and Header Action Components compose the reused Folder and tagged rows in the Side Panel. The user accepted the result on 2026-10-03.
-3. **Next: Outline View content.** Build it from the already obvious hierarchical/wrapping behavior, couple it to the validated Side Panel host, and add it to the one-action UI Kit generation.
-4. Add **All Properties View content** only to the level needed to represent the real hosted View.
+3. **Bookmarks View content — closed for the bounded Dark composition:** it uses the existing Bookmarks tab and Side Panel host. Its header reuses the Files action Components for the identical New group and Collapse all icons; its own action and row sets cover the observed Dark scene with a group, selected nested bookmark, and a multiline root bookmark. The user accepted the generated result on 2026-10-03.
+4. **Next: Outline View content.** Build it from the already obvious hierarchical/wrapping behavior, couple it to the validated Side Panel host, and add it to the one-action UI Kit generation.
+5. Add **All Properties View content** only to the level needed to represent the real hosted View.
 
 At the end of Phase B, the UI Kit should support drawing the common side-panel Views shown in Obsidian.
 

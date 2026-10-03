@@ -9,6 +9,7 @@ import { generateWorkspaceTab } from './workspace-tab-generation';
 import { generateSidePanel } from './side-panel-generation';
 import { composeSearchInSidePanel } from './search-view-generation';
 import { composeFilesInSidePanel } from './file-explorer-view-generation';
+import { composeBookmarksInSidePanel } from './bookmarks-view-generation';
 import { planUiKitPlacement } from './ui-kit-layout';
 import type { ImportedPackage } from './package-data';
 import { readFileExplorerRowImport } from './file-explorer-row-data';
@@ -19,6 +20,7 @@ import { readWorkspaceTabModel } from './workspace-tab-data';
 import { readSidePanelModel } from './side-panel-data';
 import { readSearchViewModel } from './search-view-data';
 import { readFileExplorerViewModel } from './file-explorer-view-data';
+import { readBookmarksViewModel } from './bookmarks-view-data';
 import activeRowProbe from '../tests/fixtures/file-explorer-active-row-probe.json';
 import taggedRowsProbe from '../tests/fixtures/file-explorer-tagged-rows-probe.json';
 import folderRowsProbe from '../tests/fixtures/folder-rows-probe.json';
@@ -27,6 +29,7 @@ import workspaceTabProbe from '../tests/fixtures/workspace-tab-probe.json';
 import sidePanelProbe from '../tests/fixtures/side-panel-probe.json';
 import searchViewProbe from '../tests/fixtures/search-view-probe.json';
 import filesViewProbe from '../tests/fixtures/file-explorer-view-probe.json';
+import bookmarksViewProbe from '../tests/fixtures/bookmarks-view-probe.json';
 
 /** Checks every included observed fixture before a Figma node is created. */
 export function validateIncludedEvidence(): void {
@@ -38,11 +41,13 @@ export function validateIncludedEvidence(): void {
   readSidePanelModel(sidePanelProbe);
   readSearchViewModel(searchViewProbe);
   readFileExplorerViewModel(filesViewProbe);
+  readBookmarksViewModel(bookmarksViewProbe);
 }
 
 /** One Package v1, one action, one fresh composition on the current page. */
 export async function generateFullUiKit(input: ImportedPackage): Promise<{
   preview: FrameNode; searchView: ComponentNode; filesView: ComponentNode;
+  bookmarksView: ComponentNode;
 }> {
   validateIncludedEvidence();
   const originalRoots = new Set(figma.currentPage.children.map((node) => node.id));
@@ -59,10 +64,12 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     const searchResult = await composeSearchInSidePanel(searchViewProbe, search, sidePanel);
     const filesResult = await composeFilesInSidePanel(filesViewProbe, sidePanel,
       { folders, tagged: tagged.components });
-    figma.currentPage.selection = [filesResult.preview];
-    figma.viewport.scrollAndZoomIntoView([filesResult.preview]);
-    return { preview: filesResult.preview, searchView: searchResult.component,
-      filesView: filesResult.component };
+    const bookmarksResult = await composeBookmarksInSidePanel(bookmarksViewProbe, sidePanel,
+      filesResult.actions);
+    figma.currentPage.selection = [bookmarksResult.preview];
+    figma.viewport.scrollAndZoomIntoView([bookmarksResult.preview]);
+    return { preview: bookmarksResult.preview, searchView: searchResult.component,
+      filesView: filesResult.component, bookmarksView: bookmarksResult.component };
   } catch (error) {
     for (const node of figma.currentPage.children) {
       if (!originalRoots.has(node.id) && !node.removed) node.remove();
