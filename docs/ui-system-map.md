@@ -193,7 +193,7 @@ Current Figma status:
 - Folder Row: validated for observed Expanded/Collapsed appearances and depths 0–2;
 - horizontal resize/ellipsis behavior: validated for the bounded observed cases.
 
-**This File Explorer front is closed for the current milestone.** The user confirmed that the existing Explorer work was already built and working in Figma. Do not reinterpret the roadmap's former "File Explorer View" item as permission to regenerate those pieces or add another composition. No separate native View component was part of the committed scope, and that absence does not create a task. Reopen Explorer only for an explicit request or a concrete defect reported by the user.
+The previously validated Explorer rows remain closed. The user explicitly requested a new incremental Files composition from the scene open in Obsidian on 2026-10-02. `Obsidian / File Explorer View / Dark` uses the existing Folder Row and tagged JSON/ZIP Components inside the validated Side Panel host. It adds only the missing Default File depth 0/3 and five Header Action variants. A focused nine-row excerpt omits repeated JSON entries. The user accepted the new composition in Figma Desktop on 2026-10-03; this request did not reopen the validated row components.
 
 Known production debt: Folder Row currently exists as six independent Components (2 observed states × 3 observed depths). During UI Kit consolidation, evaluate a Component Set with `State = Expanded | Collapsed` and `Depth = 0 | 1 | 2`. Do not invent unobserved states/depths merely to make the set look complete.
 
@@ -207,7 +207,7 @@ These are hosted Views, not generic “sidebar rows”.
 
 These should be built as **View content systems** placed inside the same workspace/sidedock hosting structure.
 
-The Figma plugin now offers one normal Dark generation action on a blank page: select a Package v1 ZIP and click **Generate UI Kit**. The ZIP supplies Button/Search; versioned tracked probes supply the implemented internal Components. The action calls their existing generators in dependency order, passes the new Search Component Set and Side Panel host explicitly into Search View composition, and places that View in a duplicate of the validated Side Panel preview. No prior Component Set, standalone JSON selection, or individual generator click is required. A failed run removes the new page roots. The bounded Package v2 Button normal Variables pilot keeps its distinct diagnostic inputs. The user accepted the unified flow and Search component-reuse revision on 2026-10-02; they do not expand the current component inventory. Each next Component should reuse finished pieces and be added to this full generation path.
+The Figma plugin offers one normal Dark generation action on a blank page: select a Package v1 ZIP and click **Generate UI Kit**. The ZIP supplies Button/Search; versioned tracked probes supply the implemented internal Components. The action calls their existing generators in dependency order, passes new Components and the Side Panel host explicitly into Search and Files View compositions, and places each View in a duplicate of the validated Side Panel preview. No prior Component Set, standalone JSON selection, or individual generator click is required. A failed run removes the new page roots. The bounded Package v2 Button normal Variables pilot keeps its distinct diagnostic inputs. The user accepted the unified flow and Search component-reuse revision on 2026-10-02 and the Files composition on 2026-10-03. Each next Component should reuse finished pieces and be added to this full generation path.
 
 ### 4.5 Document/editor-embedded UI
 
@@ -298,11 +298,12 @@ At the end of Phase A, the Figma library should be able to draw a recognizable O
 
 ### Phase B — compose other hosted Views
 
-File Explorer is closed for the current scope by user confirmation and is not an item in this phase.
+The validated File Explorer rows remain closed. The user requested a separate hosted Files View composition after that checkpoint.
 
 1. **Search View content — closed for the bounded Dark composition and unified generation:** it reuses Search Filled, editable result Components and the validated Side Panel host. The user accepted the revision on 2026-10-02.
-2. **Next: Outline View content.** Build it from the already obvious hierarchical/wrapping behavior, couple it to the validated Side Panel host, and add it to the one-action UI Kit generation.
-3. Add **All Properties View content** only to the level needed to represent the real hosted View.
+2. **Files View composition — closed for the bounded Dark excerpt:** Default File and Header Action Components compose the reused Folder and tagged rows in the Side Panel. The user accepted the result on 2026-10-03.
+3. **Next: Outline View content.** Build it from the already obvious hierarchical/wrapping behavior, couple it to the validated Side Panel host, and add it to the one-action UI Kit generation.
+4. Add **All Properties View content** only to the level needed to represent the real hosted View.
 
 At the end of Phase B, the UI Kit should support drawing the common side-panel Views shown in Obsidian.
 

@@ -67,8 +67,8 @@ figma.ui.onmessage = async (message: unknown) => {
     const result = await generateFullUiKit(importedPackage);
     figma.ui.postMessage({ type: 'result', ok: true,
       text: `UI Kit Dark criado: Button, Search, File Explorer rows, Folder rows, ` +
-        `View Header, Workspace Tab, Side Panel e ${result.searchView.name}, ` +
-        `hospedada no preview de resize duplicado.` });
+        `View Header, Workspace Tab, Side Panel, ${result.searchView.name} e ` +
+        `${result.filesView.name}. Search e Files estão em previews separados do Side Panel.` });
   } catch (error) {
     figma.ui.postMessage({ type: 'result', ok: false,
       text: error instanceof Error ? error.message : String(error) });

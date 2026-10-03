@@ -1,0 +1,168 @@
+{
+  "format": "obsidian-file-explorer-view-probe",
+  "version": 1,
+  "mode": "Dark",
+  "hostWidth": 200,
+  "header": {
+    "height": 40,
+    "padding": 8,
+    "gap": 2,
+    "iconSize": 16,
+    "iconX": 6,
+    "iconY": 4,
+    "iconOpacity": 0.85,
+    "actions": [
+      {
+        "name": "New note",
+        "size": {
+          "width": 28,
+          "height": 24
+        },
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"svg-icon lucide-edit\"><path d=\"M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"></path><path d=\"M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z\"></path></svg>",
+        "color": "rgb(179, 179, 179)"
+      },
+      {
+        "name": "New folder",
+        "size": {
+          "width": 28,
+          "height": 24
+        },
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"svg-icon lucide-folder-plus\"><path d=\"M12 10v6\"></path><path d=\"M9 13h6\"></path><path d=\"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z\"></path></svg>",
+        "color": "rgb(179, 179, 179)"
+      },
+      {
+        "name": "Change sort order",
+        "size": {
+          "width": 28,
+          "height": 24
+        },
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"svg-icon lucide-sort-asc\"><path d=\"m3 8 4-4 4 4\"></path><path d=\"M7 4v16\"></path><path d=\"M11 12h4\"></path><path d=\"M11 16h7\"></path><path d=\"M11 20h10\"></path></svg>",
+        "color": "rgb(179, 179, 179)"
+      },
+      {
+        "name": "Auto-reveal current file",
+        "size": {
+          "width": 28,
+          "height": 24
+        },
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"svg-icon lucide-gallery-vertical\"><path d=\"M3 2h18\"></path><rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\"></rect><path d=\"M3 22h18\"></path></svg>",
+        "color": "rgb(179, 179, 179)"
+      },
+      {
+        "name": "Collapse all",
+        "size": {
+          "width": 28,
+          "height": 24
+        },
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"svg-icon lucide-chevrons-down-up\"><path d=\"m7 20 5-5 5 5\"></path><path d=\"m7 4 5 5 5-5\"></path></svg>",
+        "color": "rgb(179, 179, 179)"
+      }
+    ]
+  },
+  "body": {
+    "paddingTop": 4,
+    "paddingX": 12,
+    "paddingBottom": 24,
+    "rowGap": 2,
+    "background": "rgba(0, 0, 0, 0)",
+    "defaultFile": {
+      "color": "rgb(179, 179, 179)",
+      "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+      "fontSize": 13,
+      "lineHeight": 16.9,
+      "rightInset": 8
+    },
+    "rows": [
+      {
+        "kind": "folder",
+        "state": "Collapsed",
+        "depth": 0,
+        "label": "internal-observed-fixtures",
+        "tag": null,
+        "labelOffset": 24,
+        "width": 176,
+        "height": 24.890625
+      },
+      {
+        "kind": "folder",
+        "state": "Expanded",
+        "depth": 0,
+        "label": "obsidian-ui-exports",
+        "tag": null,
+        "labelOffset": 24,
+        "width": 176,
+        "height": 24.890625
+      },
+      {
+        "kind": "folder",
+        "state": "Expanded",
+        "depth": 1,
+        "label": "figma-packages",
+        "tag": null,
+        "labelOffset": 41,
+        "width": 176,
+        "height": 24.890625
+      },
+      {
+        "kind": "folder",
+        "state": "Expanded",
+        "depth": 2,
+        "label": "pasta fechada",
+        "tag": null,
+        "labelOffset": 58,
+        "width": 176,
+        "height": 24.890625
+      },
+      {
+        "kind": "file",
+        "state": "Default",
+        "depth": 3,
+        "label": "teste grave",
+        "tag": null,
+        "labelOffset": 75,
+        "width": 176,
+        "height": 24.890625
+      },
+      {
+        "kind": "tagged",
+        "state": "Default",
+        "depth": 2,
+        "label": "file-explorer-row-horizontal-2026-10-02",
+        "tag": "json",
+        "labelOffset": 58,
+        "width": 176,
+        "height": 24.890625
+      },
+      {
+        "kind": "tagged",
+        "state": "Default",
+        "depth": 2,
+        "label": "obsidian-ui-package-v2-2026-10-01T21-31-26-285Z",
+        "tag": "zip",
+        "labelOffset": 58,
+        "width": 176,
+        "height": 24.890625
+      },
+      {
+        "kind": "file",
+        "state": "Default",
+        "depth": 0,
+        "label": "Arquivos com nomes muito longos demais para caber todo na horizontal da barra",
+        "tag": null,
+        "labelOffset": 24,
+        "width": 176,
+        "height": 24.890625
+      },
+      {
+        "kind": "file",
+        "state": "Default",
+        "depth": 0,
+        "label": "README",
+        "tag": null,
+        "labelOffset": 24,
+        "width": 176,
+        "height": 24.890625
+      }
+    ]
+  }
+}
