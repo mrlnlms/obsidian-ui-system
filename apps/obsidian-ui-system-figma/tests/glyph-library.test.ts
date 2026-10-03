@@ -6,6 +6,8 @@ import { canonicalGlyphs, glyphGeometry, observedUiKitGlyphSources } from '../sr
 import { readBookmarksViewModel } from '../src/bookmarks-view-data';
 import { readFileExplorerViewModel } from '../src/file-explorer-view-data';
 import { readFolderRowModels } from '../src/folder-row-data';
+import { disclosureTransform } from '../src/disclosure-rendering';
+import { rebindGlyphTone } from '../src/icon-button-generation';
 import { readSearchViewModel } from '../src/search-view-data';
 import { readSidePanelModel } from '../src/side-panel-data';
 import { readViewHeaderModel } from '../src/view-header-data';
@@ -88,4 +90,47 @@ test('Folder row disclosure uses the observed shared path and consumer rotation'
   const rows = readFolderRowModels(folders);
   assert.ok(rows.every((row) => row.disclosure.path === path));
   assert.deepEqual(new Set(rows.map((row) => row.disclosure.rotationDeg)), new Set([0, -90]));
+  const open = disclosureTransform(7, 7.4375, 10, 0);
+  const closed = disclosureTransform(7, 7.4375, 10, -90);
+  assert.deepEqual(open, [[1, 0, 7], [0, 1, 7.4375]]);
+  assert.deepEqual(closed, [[0, 1, 7], [-1, 0, 17.4375]]);
+  const place = (point: [number, number]): [number, number] => [
+    closed[0][0] * point[0] + closed[0][1] * point[1] + closed[0][2],
+    closed[1][0] * point[0] + closed[1][1] * point[1] + closed[1][2],
+  ];
+  const [left, tip, right] = [[3, 8], [12, 17], [21, 8]]
+    .map(([x, y]) => place([x * 10 / 24, y * 10 / 24]));
+  assert.ok(tip![0] > left![0] && tip![0] > right![0],
+    'collapsed chevron points right');
+  assert.ok(Math.abs(tip![1] - (left![1] + right![1]) / 2) < 0.001,
+    'collapsed chevron remains centered');
+});
+
+test('Faint glyph tone replaces an inherited Variable binding after RGB normalization', () => {
+  const original = globalThis.figma;
+  globalThis.figma = { variables: { setBoundVariableForPaint(paint: SolidPaint,
+    _field: string, variable: Variable) {
+    return { ...paint, boundVariables: { color: { type: 'VARIABLE_ALIAS', id: variable.id } } };
+  } } } as unknown as typeof figma;
+  try {
+    const source = { id: 'icon-muted' } as Variable;
+    const faint = { id: 'disclosure-faint' } as Variable;
+    const vector = { strokes: [
+      { type: 'SOLID', color: { r: 0, g: 0, b: 0 },
+        boundVariables: { color: { type: 'VARIABLE_ALIAS', id: source.id } } },
+      { type: 'SOLID', color: { r: 1, g: 1, b: 1 }, visible: false },
+    ] } as unknown as VectorNode;
+    const instance = { findAll: () => [vector] } as unknown as InstanceNode;
+    assert.equal(rebindGlyphTone(instance, source, faint,
+      { r: 179 / 255, g: 179 / 255, b: 179 / 255 }), 1);
+    assert.equal((vector.strokes[0] as SolidPaint).boundVariables?.color?.id, faint.id);
+    assert.equal((vector.strokes[1] as SolidPaint).visible, false);
+    vector.strokes = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }];
+    (vector as VectorNode & { boundVariables: unknown }).boundVariables = {
+      strokes: [[{ type: 'VARIABLE_ALIAS', id: source.id }]],
+    };
+    assert.equal(rebindGlyphTone(instance, source, faint,
+      { r: 179 / 255, g: 179 / 255, b: 179 / 255 }), 1);
+    assert.equal((vector.strokes[0] as SolidPaint).boundVariables?.color?.id, faint.id);
+  } finally { globalThis.figma = original; }
 });

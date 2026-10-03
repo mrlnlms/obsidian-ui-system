@@ -58,6 +58,7 @@
     "matchHighlight": {
       "darkCss": "rgb(222, 222, 113)",
       "lightCss": "rgb(222, 172, 0)",
+      "opacity": 0.3,
       "source": "computed .search-result-file-matched-text background in Dark/Light, sampled through canvas at 30% opacity"
     },
     "selectedOverlay": {

@@ -1,6 +1,7 @@
 import { readFolderRowModels, type FolderRowModel } from './folder-row-data';
 import { fontFailure, requiredFont } from './font-resolution';
 import type { IconButtonLibrary } from './icon-button-generation';
+import { placeDisclosure } from './disclosure-rendering';
 
 /** Six independent Dark examples: two observed disclosure states at depths 0, 1 and 2. */
 export async function generateFolderRows(probe: unknown,
@@ -65,13 +66,11 @@ function createFolderRow(model: FolderRowModel, font: FontName, preview: FrameNo
   disclosure.strokes = [];
   disclosure.clipsContent = false;
   disclosure.constraints = { horizontal: 'MIN', vertical: 'MIN' };
-  const glyph = glyphs.createGlyph('right-triangle', 'Faint');
+  const glyph = glyphs.createGlyph('right-triangle', 'Faint', model.sample.svgSize.width);
   glyph.name = 'Right triangle';
   disclosure.appendChild(glyph);
-  glyph.resize(model.sample.svgSize.width, model.sample.svgSize.height);
-  glyph.rotation = model.disclosure.rotationDeg;
-  glyph.x = model.sample.svgOffset.x - model.sample.disclosureOffset.x;
-  glyph.y = model.sample.svgOffset.y - model.sample.disclosureOffset.y;
+  placeDisclosure(glyph, model.sample.svgOffset.x - model.sample.disclosureOffset.x,
+    model.sample.svgOffset.y - model.sample.disclosureOffset.y, model.disclosure.rotationDeg);
   glyph.constraints = { horizontal: 'MIN', vertical: 'MIN' };
 
   const label = figma.createText();

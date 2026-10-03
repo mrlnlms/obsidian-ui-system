@@ -48,6 +48,7 @@ test('paired Desktop and Package evidence covers the current kit palette', () =>
     { r: 152 / 255, g: 115 / 255, b: 247 / 255 });
   assert.deepEqual(evidence.roles.matchHighlight.light,
     { r: 222 / 255, g: 172 / 255, b: 0 });
+  assert.equal(evidence.roles.matchHighlight.opacity, 0.3);
   assert.equal(evidence.roles.selectedOverlay.opacity, 0.067);
 });
 
@@ -78,5 +79,8 @@ test('missing or unobserved values cannot silently create a Light mode', () => {
   assert.throws(() => readUiKitThemeEvidence(incomplete), /paleta Dark\/Light incompleta/);
   const wrongOpacity = structuredClone(evidenceJson);
   wrongOpacity.roles.selectedOverlay.opacity = 1;
+  assert.throws(() => readUiKitThemeEvidence(wrongOpacity), /opacidade/);
+  wrongOpacity.roles.selectedOverlay.opacity = 0.067;
+  wrongOpacity.roles.matchHighlight.opacity = 1;
   assert.throws(() => readUiKitThemeEvidence(wrongOpacity), /opacidade/);
 });

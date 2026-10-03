@@ -1,8 +1,10 @@
 import { fileExplorerBackgroundPaint } from './file-explorer-row-color';
+import { primitiveColorNames, primitiveRadiusNames } from './appearance-contract';
+import type { AppearanceRun } from './appearance-lifecycle';
 
 export type PrimitiveMode = 'dark' | 'light';
 export type PrimitiveColorKey = 'icon' | 'rowDefaultText' | 'rowSelectedText' | 'rowSelectedBackground' |
-  'disclosure' | 'metadata';
+  'disclosure' | 'metadata' | 'treeGuide';
 type RadiusKey = 'mediumRadius' | 'metadataRadius';
 
 export interface PrimitiveAppearance {
@@ -10,6 +12,7 @@ export interface PrimitiveAppearance {
   radii: Record<RadiusKey, number>;
   selectedOpacity: number;
   mutedOpacity: number;
+  treeGuideOpacity: number;
 }
 
 export interface PrimitiveThemeEvidence { dark: PrimitiveAppearance; light: PrimitiveAppearance }
@@ -64,12 +67,15 @@ export function readPrimitiveThemeEvidence(input: unknown): PrimitiveThemeEviden
       rowSelectedBackground: selected.color,
       disclosure: rgb(raw.disclosureColorCss),
       metadata: rgb(raw.metadataColorCss),
+      treeGuide: rgb(raw.treeGuideColorCss),
     }, radii: { mediumRadius: rowRadius, metadataRadius: radius(raw.metadataRadiusCss) },
-    selectedOpacity: selected.opacity ?? 1, mutedOpacity: opacity };
+    selectedOpacity: selected.opacity ?? 1, mutedOpacity: opacity,
+    treeGuideOpacity: Number(raw.treeGuideOpacity) };
   };
   const dark = parse('dark');
   const light = parse('light');
   if (dark.selectedOpacity !== light.selectedOpacity || dark.mutedOpacity !== light.mutedOpacity ||
+      dark.treeGuideOpacity !== 0.12 || light.treeGuideOpacity !== 0.12 ||
       dark.radii.mediumRadius !== light.radii.mediumRadius ||
       dark.radii.metadataRadius !== light.radii.metadataRadius) {
     throw new Error('Primitive theme: geometria ou opacidade diverge entre modos.');
@@ -78,47 +84,42 @@ export function readPrimitiveThemeEvidence(input: unknown): PrimitiveThemeEviden
 }
 
 /** The primitive foundation; full generation extends this same collection for the kit. */
-export function createPrimitiveVariables(evidence: PrimitiveThemeEvidence): PrimitiveVariables {
-  const collection = figma.variables.createVariableCollection('Obsidian UI / Navigation primitives');
-  try {
-    const dark = collection.modes[0]!.modeId;
-    collection.renameMode(dark, 'Dark');
-    const modeIds = { dark, light: collection.addMode('Light') };
-    const colors = {} as Record<PrimitiveColorKey, Variable>;
-    const radii = {} as Record<RadiusKey, Variable>;
-    const colorNames: Record<PrimitiveColorKey, [string, VariableScope[]]> = {
-      icon: ['icon-button/foreground', ['STROKE_COLOR', 'SHAPE_FILL']],
-      rowDefaultText: ['tree-row/text/default', ['TEXT_FILL']],
-      rowSelectedText: ['tree-row/text/selected', ['TEXT_FILL']],
-      rowSelectedBackground: ['tree-row/background/selected', ['FRAME_FILL']],
-      disclosure: ['tree-row/disclosure', ['STROKE_COLOR', 'SHAPE_FILL']],
-      metadata: ['tree-row/metadata/text', ['TEXT_FILL']],
-    };
-    for (const key of Object.keys(colorNames) as PrimitiveColorKey[]) {
-      const [name, scopes] = colorNames[key];
-      const variable = figma.variables.createVariable(name, collection, 'COLOR');
-      variable.scopes = scopes;
-      variable.description = 'Computed visual value observed in Obsidian Desktop for the two navigation primitives.';
-      variable.setVariableCodeSyntax('WEB', `var(--obsidian-ui-${name.replace(/\//g, '-')})`);
-      variable.setValueForMode(dark, evidence.dark.colors[key]);
-      variable.setValueForMode(modeIds.light, evidence.light.colors[key]);
-      colors[key] = variable;
-    }
-    for (const [key, name] of [['mediumRadius', 'radius/medium'],
-      ['metadataRadius', 'radius/metadata']] as const) {
-      const variable = figma.variables.createVariable(name, collection, 'FLOAT');
-      variable.scopes = ['CORNER_RADIUS'];
-      variable.description = 'Observed radius shared by the bounded navigation primitives.';
-      variable.setVariableCodeSyntax('WEB', `var(--obsidian-ui-${name.replace(/\//g, '-')})`);
-      variable.setValueForMode(dark, evidence.dark.radii[key]);
-      variable.setValueForMode(modeIds.light, evidence.light.radii[key]);
-      radii[key] = variable;
-    }
-    return { collection, modeIds, colors, radii, dark: evidence.dark, light: evidence.light };
-  } catch (error) {
-    collection.remove();
-    throw error;
+export function createPrimitiveVariables(evidence: PrimitiveThemeEvidence,
+  run: AppearanceRun): PrimitiveVariables {
+  const { collection, modeIds } = run;
+  const dark = modeIds.dark;
+  const colors = {} as Record<PrimitiveColorKey, Variable>;
+  const radii = {} as Record<RadiusKey, Variable>;
+  const colorNames: Record<PrimitiveColorKey, [string, VariableScope[]]> = {
+    icon: [primitiveColorNames.icon, ['STROKE_COLOR', 'SHAPE_FILL']],
+    rowDefaultText: [primitiveColorNames.rowDefaultText, ['TEXT_FILL']],
+    rowSelectedText: [primitiveColorNames.rowSelectedText, ['TEXT_FILL']],
+    rowSelectedBackground: [primitiveColorNames.rowSelectedBackground, ['FRAME_FILL']],
+    disclosure: [primitiveColorNames.disclosure, ['STROKE_COLOR', 'SHAPE_FILL']],
+    metadata: [primitiveColorNames.metadata, ['TEXT_FILL']],
+    treeGuide: [primitiveColorNames.treeGuide, ['FRAME_FILL', 'SHAPE_FILL']],
+  };
+  for (const key of Object.keys(colorNames) as PrimitiveColorKey[]) {
+    const [name, scopes] = colorNames[key];
+    const variable = run.upsertVariable(name, 'COLOR');
+    variable.scopes = scopes;
+    variable.description = 'Computed visual value observed in Obsidian Desktop for the two navigation primitives.';
+    variable.setVariableCodeSyntax('WEB', `var(--obsidian-ui-${name.replace(/\//g, '-')})`);
+    variable.setValueForMode(dark, evidence.dark.colors[key]);
+    variable.setValueForMode(modeIds.light, evidence.light.colors[key]);
+    colors[key] = variable;
   }
+  for (const [key, name] of [['mediumRadius', primitiveRadiusNames.mediumRadius],
+    ['metadataRadius', primitiveRadiusNames.metadataRadius]] as const) {
+    const variable = run.upsertVariable(name, 'FLOAT');
+    variable.scopes = ['CORNER_RADIUS'];
+    variable.description = 'Observed radius shared by the bounded navigation primitives.';
+    variable.setVariableCodeSyntax('WEB', `var(--obsidian-ui-${name.replace(/\//g, '-')})`);
+    variable.setValueForMode(dark, evidence.dark.radii[key]);
+    variable.setValueForMode(modeIds.light, evidence.light.radii[key]);
+    radii[key] = variable;
+  }
+  return { collection, modeIds, colors, radii, dark: evidence.dark, light: evidence.light };
 }
 
 export function boundColorPaint(color: RGB, variable: Variable, opacity = 1): SolidPaint {

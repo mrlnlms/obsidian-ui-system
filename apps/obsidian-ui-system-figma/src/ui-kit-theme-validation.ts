@@ -26,6 +26,15 @@ export function verifyUiKitThemeModes(theme: UiKitThemeVariables,
     Math.abs(consumer.width - consumer.parent.width) > 0.5)) {
     throw new Error('UI Kit theme: transparência ou largura da seleção divergente.');
   }
+  const highlights = bindings.filter((binding) => binding.role === 'matchHighlight');
+  if (!highlights.length || highlights.some(({ consumer }) =>
+    consumer.type !== 'RECTANGLE' || consumer.name !== 'Match highlight underlay' ||
+    consumer.parent?.name !== 'Matched title text' ||
+    Math.abs(consumer.opacity - theme.evidence.roles.matchHighlight.opacity!) > 0.001 ||
+    !consumer.parent || !('width' in consumer.parent) ||
+    Math.abs(consumer.width - consumer.parent.width) > 0.5)) {
+    throw new Error('UI Kit theme: transparência ou largura do destaque Search divergente.');
+  }
   const roots = [...new Set(bindings.map((binding) => binding.root))];
   for (const root of roots) {
     const before = structure(root);

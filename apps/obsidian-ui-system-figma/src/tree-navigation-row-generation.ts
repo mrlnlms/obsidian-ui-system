@@ -3,12 +3,15 @@ import { fontFailure, requiredFont } from './font-resolution';
 import { readTreeRowEvidence } from './tree-navigation-row-data';
 import { boundColorPaint, type PrimitiveVariables } from './primitive-theme';
 import type { IconButtonLibrary } from './icon-button-generation';
+import { placeDisclosure } from './disclosure-rendering';
 
 export interface TreeRowLibrary {
   set: ComponentSetNode;
+  guide: ComponentNode;
   labelProperty: string;
   metadataProperty: string;
   metadataVisibleProperty: string;
+  createGuide(height: number): InstanceNode;
   create(row: FilesRow): InstanceNode;
 }
 
@@ -94,14 +97,12 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
     labels.push(label);
     if ('disclosure' in spec && spec.disclosure) {
       const observed = spec.disclosure;
-      const icon = glyphs.createGlyph('right-triangle', 'Faint');
+      const icon = glyphs.createGlyph('right-triangle', 'Faint', observed.sample.svgSize.width);
       icon.name = 'Disclosure';
       row.appendChild(icon);
       icon.layoutPositioning = 'ABSOLUTE';
-      icon.resize(observed.sample.svgSize.width, observed.sample.svgSize.height);
-      icon.rotation = observed.disclosure.rotationDeg;
-      icon.x = observed.sample.svgOffset.x;
-      icon.y = observed.sample.svgOffset.y;
+      placeDisclosure(icon, observed.sample.svgOffset.x, observed.sample.svgOffset.y,
+        observed.disclosure.rotationDeg);
     }
     if (spec.kind === 'File' && spec.depth === 2) {
       const tag = figma.createFrame();
@@ -156,7 +157,22 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
       set.componentPropertyDefinitions[metadataVisibleProperty]?.type !== 'BOOLEAN') {
     throw new Error('Tree Row: propriedades do Component Set ausentes.');
   }
-  return { set, labelProperty, metadataProperty, metadataVisibleProperty,
+  const guide = figma.createComponent();
+  guide.name = 'Obsidian / Tree Navigation Guide';
+  guide.description = 'Borda vertical de 1 px do contêiner de filhos de pasta expandida; Dark/Light por Variable.';
+  guide.resize(1, files.body.rowHeight);
+  guide.fills = [boundColorPaint(theme.dark.colors.treeGuide,
+    theme.colors.treeGuide)];
+  guide.strokes = [];
+  guide.opacity = theme.dark.treeGuideOpacity;
+  guide.x = set.x + set.width + 64;
+  guide.y = 0;
+  return { set, guide, labelProperty, metadataProperty, metadataVisibleProperty,
+    createGuide(height) {
+      const instance = guide.createInstance();
+      instance.resize(1, height);
+      return instance;
+    },
     create(item) {
       const kind = item.kind === 'folder' ? 'Folder' : 'File';
       const state = item.kind === 'folder' ? item.state : 'Default';

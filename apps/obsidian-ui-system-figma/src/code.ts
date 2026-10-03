@@ -65,11 +65,19 @@ figma.ui.onmessage = async (message: unknown) => {
   }
   try {
     const result = await generateFullUiKit(importedPackage);
+    const appearanceNote = result.migration.error
+      ? ` Migração de Variables incompleta: ${result.migration.error}.`
+      : result.migration.retained || result.migration.unrecognized
+        ? ` Appearance reutilizada (${result.collectionId}); ` +
+          `${result.migration.retained} collection(s) ainda referenciadas e ` +
+          `${result.migration.unrecognized} homônima(s) não reconhecida(s) foram preservadas.`
+        : ` Appearance reutilizável (${result.collectionId}); ` +
+          `${result.migration.removed} duplicata(s) segura(s) removida(s).`;
     figma.ui.postMessage({ type: 'result', ok: true,
       text: `UI Kit criado: Button, Search, Icon Button e Tree Navigation Row (Variables Dark/Light), ` +
         `View Header, Workspace Tab, Side Panel, ${result.searchView.name} e ` +
         `${result.filesView.name} e ${result.bookmarksView.name}. ` +
-        `Search, Files e Bookmarks estão em previews separados do Side Panel.` });
+        `Search, Files e Bookmarks estão em previews separados do Side Panel.` + appearanceNote });
   } catch (error) {
     figma.ui.postMessage({ type: 'result', ok: false,
       text: error instanceof Error ? error.message : String(error) });

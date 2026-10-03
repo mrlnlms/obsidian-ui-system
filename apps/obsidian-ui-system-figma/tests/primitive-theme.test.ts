@@ -22,6 +22,9 @@ test('two observed modes share geometry but change primitive visual colors', () 
   assert.deepEqual(light.colors.rowSelectedBackground, { r: 0, g: 0, b: 0 });
   assert.notDeepEqual(dark.colors.rowSelectedText, light.colors.rowSelectedText);
   assert.notDeepEqual(dark.colors.disclosure, light.colors.disclosure);
+  assert.deepEqual(dark.colors.treeGuide, { r: 1, g: 1, b: 1 });
+  assert.deepEqual(light.colors.treeGuide, { r: 0, g: 0, b: 0 });
+  assert.equal(dark.treeGuideOpacity, 0.12);
 });
 
 test('missing Light evidence is rejected instead of inventing a mode', () => {

@@ -22,12 +22,14 @@ import { readSearchViewModel } from './search-view-data';
 import { readFileExplorerViewModel } from './file-explorer-view-data';
 import { readBookmarksViewModel } from './bookmarks-view-data';
 import { readTreeRowEvidence } from './tree-navigation-row-data';
-import { createPrimitiveVariables, readPrimitiveThemeEvidence,
-  type PrimitiveVariables } from './primitive-theme';
+import { createPrimitiveVariables, readPrimitiveThemeEvidence } from './primitive-theme';
 import { verifyPrimitiveThemeModes } from './primitive-theme-validation';
 import { bindUiKitTheme, extendUiKitThemeVariables, readUiKitThemeEvidence,
   renameThemedComponents } from './ui-kit-theme';
 import { verifyUiKitThemeModes } from './ui-kit-theme-validation';
+import { beginAppearanceRun, type AppearanceRun } from './appearance-lifecycle';
+import { reconcileAppearanceCollections,
+  type AppearanceMigrationReport } from './appearance-migration';
 import activeRowProbe from '../tests/fixtures/file-explorer-active-row-probe.json';
 import taggedRowsProbe from '../tests/fixtures/file-explorer-tagged-rows-probe.json';
 import folderRowsProbe from '../tests/fixtures/folder-rows-probe.json';
@@ -59,11 +61,15 @@ export function validateIncludedEvidence(): void {
 /** One Package v1, one action, one fresh composition on the current page. */
 export async function generateFullUiKit(input: ImportedPackage): Promise<{
   preview: FrameNode; searchView: ComponentNode; filesView: ComponentNode;
-  bookmarksView: ComponentNode;
+  bookmarksView: ComponentNode; collectionId: string;
+  migration: AppearanceMigrationReport & { error?: string };
 }> {
   validateIncludedEvidence();
   const originalRoots = new Set(figma.currentPage.children.map((node) => node.id));
-  let primitiveTheme: PrimitiveVariables | undefined;
+  let appearanceRun: AppearanceRun | undefined;
+  let previousPageMode: string | undefined;
+  let completed: { preview: FrameNode; searchView: ComponentNode;
+    filesView: ComponentNode; bookmarksView: ComponentNode } | undefined;
   try {
     const filesModel = readFileExplorerViewModel(filesViewProbe);
     const bookmarksModel = readBookmarksViewModel(bookmarksViewProbe);
@@ -74,9 +80,12 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     const iconSources = observedUiKitGlyphSources({ files: filesModel,
       bookmarks: bookmarksModel, header: headerModel, search: searchModel,
       side: sideModel, workspace: workspaceModel });
-    primitiveTheme = createPrimitiveVariables(readPrimitiveThemeEvidence(primitiveThemeProbe));
+    appearanceRun = await beginAppearanceRun();
+    previousPageMode = figma.currentPage.explicitVariableModes[appearanceRun.collection.id];
+    const primitiveTheme = createPrimitiveVariables(readPrimitiveThemeEvidence(primitiveThemeProbe),
+      appearanceRun);
     const uiKitTheme = extendUiKitThemeVariables(primitiveTheme,
-      readUiKitThemeEvidence(uiKitThemeProbe));
+      readUiKitThemeEvidence(uiKitThemeProbe), appearanceRun);
     const iconButtons = createIconButtonLibrary(iconSources, primitiveTheme);
     const button = await generateButton(input.components, input.layout);
     const search = await generateSearch(input.components, input.layout);
@@ -86,7 +95,8 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     await generateViewHeader(viewHeaderProbe, iconButtons);
     const workspaceTab = await generateWorkspaceTab(workspaceTabProbe, iconButtons);
     const sidePanel = await generateSidePanel(sidePanelProbe, workspaceTab.set, iconButtons);
-    const searchResult = await composeSearchInSidePanel(searchViewProbe, search, sidePanel, iconButtons);
+    const searchResult = await composeSearchInSidePanel(searchViewProbe, search, sidePanel,
+      iconButtons, uiKitTheme);
     const filesResult = await composeFilesInSidePanel(filesViewProbe, sidePanel, rows, iconButtons);
     const bookmarksResult = await composeBookmarksInSidePanel(bookmarksViewProbe, sidePanel,
       filesResult.actions, iconButtons, uiKitTheme);
@@ -103,18 +113,29 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
       primitiveTheme.modeIds.dark);
     figma.currentPage.selection = [bookmarksResult.preview];
     figma.viewport.scrollAndZoomIntoView([bookmarksResult.preview]);
-    return { preview: bookmarksResult.preview, searchView: searchResult.component,
+    completed = { preview: bookmarksResult.preview, searchView: searchResult.component,
       filesView: filesResult.component, bookmarksView: bookmarksResult.component };
   } catch (error) {
     for (const node of figma.currentPage.children) {
       if (!originalRoots.has(node.id) && !node.removed) node.remove();
     }
-    if (primitiveTheme) {
-      figma.currentPage.clearExplicitVariableModeForCollection(primitiveTheme.collection);
-      primitiveTheme.collection.remove();
+    if (appearanceRun) {
+      if (previousPageMode) figma.currentPage.setExplicitVariableModeForCollection(
+        appearanceRun.collection, previousPageMode);
+      else figma.currentPage.clearExplicitVariableModeForCollection(appearanceRun.collection);
+      appearanceRun.rollback();
     }
     throw error;
   }
+  if (!appearanceRun || !completed) throw new Error('Appearance: geração sem resultado.');
+  let migration: AppearanceMigrationReport & { error?: string };
+  try { migration = await reconcileAppearanceCollections(appearanceRun); }
+  catch (error) {
+    migration = { rebound: 0, removed: 0, retained: appearanceRun.duplicates.length,
+      unrecognized: appearanceRun.unrecognizedNames,
+      error: error instanceof Error ? error.message : String(error) };
+  }
+  return { ...completed, collectionId: appearanceRun.collection.id, migration };
 }
 
 async function generateButton(componentsJson: unknown, layoutJson: unknown): Promise<ComponentSetNode> {

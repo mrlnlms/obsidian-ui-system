@@ -1,7 +1,7 @@
 {
   "format": "obsidian-ui-primitive-theme-evidence",
   "version": 1,
-  "source": "primitive-theme-probe-2026-10-03.json; Obsidian Desktop 1.14.4; selected file row used temporary is-active class on the real DOM node, then restored",
+  "source": "primitive-theme-probe-2026-10-03.json plus focused live nav-folder-children CSS read; Obsidian Desktop 1.14.4; selected row and temporary Light body class restored after reading",
   "modes": {
     "dark": {
       "iconColorCss": "rgb(179, 179, 179)",
@@ -13,7 +13,9 @@
       "rowRadiusCss": "8px",
       "disclosureColorCss": "rgb(102, 102, 102)",
       "metadataColorCss": "rgb(102, 102, 102)",
-      "metadataRadiusCss": "4px"
+      "metadataRadiusCss": "4px",
+      "treeGuideColorCss": "rgb(255, 255, 255)",
+      "treeGuideOpacity": 0.12
     },
     "light": {
       "iconColorCss": "rgb(92, 92, 92)",
@@ -25,7 +27,9 @@
       "rowRadiusCss": "8px",
       "disclosureColorCss": "rgb(171, 171, 171)",
       "metadataColorCss": "rgb(171, 171, 171)",
-      "metadataRadiusCss": "4px"
+      "metadataRadiusCss": "4px",
+      "treeGuideColorCss": "rgb(0, 0, 0)",
+      "treeGuideOpacity": 0.12
     }
   }
 }

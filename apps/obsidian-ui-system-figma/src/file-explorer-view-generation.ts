@@ -1,6 +1,7 @@
 import { readFileExplorerViewModel, type FileExplorerViewModel } from './file-explorer-view-data';
 import type { IconButtonLibrary } from './icon-button-generation';
 import type { TreeRowLibrary } from './tree-navigation-row-generation';
+import { treeGuideSegments } from './tree-navigation-guides';
 
 interface SidePanelHost { panel: ComponentNode; group: ComponentSetNode; preview: FrameNode }
 
@@ -138,6 +139,16 @@ function createFilesView(model: FileExplorerViewModel, actionSet: ComponentSetNo
   body.fills = [];
   body.strokes = [];
   body.clipsContent = true;
+  for (const segment of treeGuideSegments(model.body.rows, model.body.rowHeight,
+    model.body.rowGap, model.body.paddingTop, model.body.paddingX)) {
+    const guide = rows.createGuide(segment.height);
+    guide.name = `Tree guide / Depth ${segment.depth}`;
+    body.appendChild(guide);
+    guide.layoutPositioning = 'ABSOLUTE';
+    guide.x = segment.x;
+    guide.y = segment.y;
+    guide.constraints = { horizontal: 'MIN', vertical: 'MIN' };
+  }
   for (const row of model.body.rows) {
     const instance = rows.create(row);
     body.appendChild(instance);
@@ -151,7 +162,8 @@ function createFilesView(model: FileExplorerViewModel, actionSet: ComponentSetNo
   }
   header.x = rightEdgeExcept(component) + 64;
   header.y = 0;
-  if (body.children.length !== model.body.rows.length ||
+  if (body.children.filter((node) => !node.name.startsWith('Tree guide /')).length !==
+      model.body.rows.length ||
       component.height !== model.height || headerInstance.height !== model.header.height) {
     throw new Error('Files View: composição inicial divergente.');
   }
@@ -179,13 +191,23 @@ async function verifyFilesHost(panel: InstanceNode, content: ComponentNode, file
   hosted.minWidth = 1;
   const header = hosted.findOne((node) => node.name === 'Files header');
   const body = hosted.findOne((node) => node.name === 'Files tree');
-  const rows = body?.type === 'FRAME' ? body.children : [];
+  const rows = body?.type === 'FRAME' ? body.children.filter((node) =>
+    node.type === 'INSTANCE' && !node.name.startsWith('Tree guide /')) : [];
+  const guides = body?.type === 'FRAME' ? body.children.filter((node) =>
+    node.type === 'INSTANCE' && node.name.startsWith('Tree guide /')) : [];
+  const expectedGuides = treeGuideSegments(model.body.rows, model.body.rowHeight,
+    model.body.rowGap, model.body.paddingTop, model.body.paddingX);
   const expectedRowWidth = panel.width - 2 * model.body.paddingX;
   if (Math.abs(hosted.width - panel.width) > 0.5 ||
       Math.abs(hosted.height - (panel.height - 40)) > 0.5 ||
       Math.abs((header?.width ?? 0) - hosted.width) > 0.5 ||
       Math.abs((body?.width ?? 0) - hosted.width) > 0.5 ||
       rows.length !== model.body.rows.length ||
+      guides.length !== expectedGuides.length ||
+      guides.some((guide, index) => Math.abs(guide.x - expectedGuides[index]!.x) > 0.5 ||
+        Math.abs(guide.y - expectedGuides[index]!.y) > 0.5 ||
+        Math.abs(guide.width - 1) > 0.05 ||
+        Math.abs(guide.height - expectedGuides[index]!.height) > 0.5) ||
       rows.some((row) => Math.abs(row.width - expectedRowWidth) > 0.5)) {
     throw new Error(`Files View: resize ou slots divergentes em ${panel.width} px. ` +
       JSON.stringify({ hosted: [hosted.width, hosted.height], header: header?.width,

@@ -1,10 +1,11 @@
 import { boundColorPaint, type PrimitiveThemeEvidence,
   type PrimitiveVariables } from './primitive-theme';
+import { uiKitColorRoles, uiKitVariableName, uiKitWebSyntax,
+  type UiKitColorRole } from './appearance-contract';
+import type { AppearanceRun } from './appearance-lifecycle';
 
-const roleNames = ['surfacePrimary', 'surfaceSecondary', 'formField', 'controlFill',
-  'controlBorder', 'textNormal', 'textMuted', 'textFaint', 'accentFill',
-  'matchHighlight', 'selectedOverlay'] as const;
-export type UiKitColorRole = typeof roleNames[number];
+const roleNames = uiKitColorRoles;
+export type { UiKitColorRole } from './appearance-contract';
 type PaintField = 'fills' | 'strokes';
 
 export interface UiKitThemeRole { dark: RGB; light: RGB; opacity?: number; source: string }
@@ -48,7 +49,9 @@ export function readUiKitThemeEvidence(input: unknown): UiKitThemeEvidence {
       throw new Error(`UI Kit theme: origem de ${name} ausente.`);
     }
     const opacity = source.opacity;
-    if (name === 'selectedOverlay' ? opacity !== 0.067 : opacity !== undefined) {
+    if ((name === 'selectedOverlay' && opacity !== 0.067) ||
+        (name === 'matchHighlight' && opacity !== 0.3) ||
+        (name !== 'selectedOverlay' && name !== 'matchHighlight' && opacity !== undefined)) {
       throw new Error(`UI Kit theme: opacidade de ${name} divergente.`);
     }
     roles[name] = { dark: rgb(source.darkCss), light: rgb(source.lightCss),
@@ -62,14 +65,6 @@ export function readUiKitThemeEvidence(input: unknown): UiKitThemeEvidence {
   }
   return { roles };
 }
-
-const syntax: Record<UiKitColorRole, string> = {
-  surfacePrimary: '--background-primary', surfaceSecondary: '--background-secondary',
-  formField: '--background-modifier-form-field', controlFill: '--interactive-normal',
-  controlBorder: '--background-modifier-border', textNormal: '--text-normal',
-  textMuted: '--text-muted', textFaint: '--text-faint', accentFill: '--interactive-accent',
-  matchHighlight: '--obsidian-ui-search-mark', selectedOverlay: '--background-modifier-hover',
-};
 
 const scopes: Record<UiKitColorRole, VariableScope[]> = {
   surfacePrimary: ['FRAME_FILL', 'SHAPE_FILL'],
@@ -90,7 +85,8 @@ export const primitiveRoleAliases = {
   icon: 'textMuted', rowDefaultText: 'textMuted', rowSelectedText: 'textNormal',
   rowSelectedBackground: 'selectedOverlay', disclosure: 'textFaint',
   metadata: 'textFaint',
-} as const satisfies Record<keyof PrimitiveVariables['colors'], UiKitColorRole>;
+} as const satisfies Record<Exclude<keyof PrimitiveVariables['colors'], 'treeGuide'>,
+  UiKitColorRole>;
 
 export function assertPrimitiveRoleAliases(primitive: PrimitiveThemeEvidence,
   kit: UiKitThemeEvidence): void {
@@ -114,15 +110,14 @@ export function assertPrimitiveRoleAliases(primitive: PrimitiveThemeEvidence,
 
 /** Extends the already validated primitive collection; there is one page mode for the kit. */
 export function extendUiKitThemeVariables(primitive: PrimitiveVariables,
-  evidence: UiKitThemeEvidence): UiKitThemeVariables {
+  evidence: UiKitThemeEvidence, run: AppearanceRun): UiKitThemeVariables {
   assertPrimitiveRoleAliases({ dark: primitive.dark, light: primitive.light }, evidence);
-  primitive.collection.name = 'Obsidian UI / Appearance';
   const colors = {} as Record<UiKitColorRole, Variable>;
   for (const role of roleNames) {
-    const variable = figma.variables.createVariable(`ui-kit/${role}`, primitive.collection, 'COLOR');
+    const variable = run.upsertVariable(uiKitVariableName(role), 'COLOR');
     variable.scopes = scopes[role];
     variable.description = `Dark/Light appearance observed in Obsidian Desktop: ${evidence.roles[role].source}.`;
-    variable.setVariableCodeSyntax('WEB', `var(${syntax[role]})`);
+    variable.setVariableCodeSyntax('WEB', `var(${uiKitWebSyntax[role]})`);
     variable.setValueForMode(primitive.modeIds.dark, evidence.roles[role].dark);
     variable.setValueForMode(primitive.modeIds.light, evidence.roles[role].light);
     colors[role] = variable;

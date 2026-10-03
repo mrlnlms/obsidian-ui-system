@@ -135,10 +135,9 @@ function createRowSet(model: BookmarksViewModel, font: FontName,
       selection.opacity = 0.067;
     }
     const glyph = glyphs.createGlyph(row.kind === 'Group' ?
-      'Bookmarks row / Disclosure' : 'Bookmarks row / File');
+      'Bookmarks row / Disclosure' : 'Bookmarks row / File', 'Muted', model.body.iconSize);
     glyph.name = row.kind === 'Group' ? 'Disclosure' : 'File icon';
     component.appendChild(glyph);
-    glyph.resize(model.body.iconSize, model.body.iconSize);
     glyph.opacity = 0.85;
     const label = figma.createText();
     label.name = 'Label';

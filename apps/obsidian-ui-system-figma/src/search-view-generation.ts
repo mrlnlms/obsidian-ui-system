@@ -1,6 +1,7 @@
 import { fontFailure, requiredFont } from './font-resolution';
 import { readSearchViewModel, type SearchViewGroup, type SearchViewModel } from './search-view-data';
 import type { IconButtonLibrary } from './icon-button-generation';
+import { boundUiKitPaint, type UiKitThemeVariables } from './ui-kit-theme';
 
 // Sort chevrons belong only to this existing Search composition; no observed SVG
 // for this drawing is present in the fixed canonical glyph evidence.
@@ -10,7 +11,7 @@ const SORT_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24
 export async function composeSearchInSidePanel(probe: unknown,
   searchSet: ComponentSetNode, host: {
     panel: ComponentNode; group: ComponentSetNode; preview: FrameNode;
-  }, iconButtons: IconButtonLibrary): Promise<{
+  }, iconButtons: IconButtonLibrary, theme: UiKitThemeVariables): Promise<{
   component: ComponentNode; preview: FrameNode;
 }> {
   const model = readSearchViewModel(probe);
@@ -18,7 +19,7 @@ export async function composeSearchInSidePanel(probe: unknown,
   const existingRoots = new Set(figma.currentPage.children.map((node) => node.id));
   let preview: FrameNode | undefined;
   try {
-    const component = await generateSearchView(probe, searchSet, iconButtons);
+    const component = await generateSearchView(probe, searchSet, iconButtons, theme);
 
     preview = target.preview.clone();
     preview.name = 'Side Panel / Dark resize preview / Search';
@@ -135,7 +136,8 @@ async function verifyHostedSearch(panelInstance: InstanceNode, content: Componen
 
 /** First bounded Dark Search View content; suitable for the Side Panel Hosted View slot. */
 export async function generateSearchView(probe: unknown,
-  searchSet: ComponentSetNode, iconButtons: IconButtonLibrary): Promise<ComponentNode> {
+  searchSet: ComponentSetNode, iconButtons: IconButtonLibrary,
+  theme: UiKitThemeVariables): Promise<ComponentNode> {
   const model = readSearchViewModel(probe);
   const search = findFilledSearch(searchSet);
   const available = (await figma.listAvailableFontsAsync()).map((item) => item.fontName);
@@ -172,7 +174,7 @@ export async function generateSearchView(probe: unknown,
 
     addSearchRow(component, model, field, parts, iconButtons);
     addResultsInfo(component, model, font, parts, iconButtons);
-    const results = addResults(component, model, font, parts, iconButtons);
+    const results = addResults(component, model, font, parts, iconButtons, theme);
     if (component.width !== model.width || results.width !== model.width) {
       throw new Error('Search View: propriedades ou largura da composição divergentes.');
     }
@@ -328,7 +330,7 @@ function addResultsInfo(parent: ComponentNode, model: SearchViewModel, font: Fon
 }
 
 function addResults(parent: ComponentNode, model: SearchViewModel, font: FontName,
-  parts: ComponentNode[], glyphs: IconButtonLibrary): FrameNode {
+  parts: ComponentNode[], glyphs: IconButtonLibrary, theme: UiKitThemeVariables): FrameNode {
   const g = model.geometry;
   const results = frame(parent, 'Grouped search results', model.width,
     model.height - g.searchRowTop - g.searchRowHeight - g.searchRowBottom - g.resultsInfoHeight);
@@ -347,7 +349,8 @@ function addResults(parent: ComponentNode, model: SearchViewModel, font: FontNam
     divider: createMatchComponent(model, font, true, parts),
     last: createMatchComponent(model, font, false, parts),
   };
-  for (const group of model.groups) addGroup(results, model, group, font, parts, matches, glyphs);
+  for (const group of model.groups) addGroup(results, model, group, font, parts, matches,
+    glyphs, theme);
   return results;
 }
 
@@ -388,7 +391,7 @@ function addGroup(parent: FrameNode, model: SearchViewModel, group: SearchViewGr
   font: FontName, parts: ComponentNode[], matches: {
     divider: ReturnType<typeof createMatchComponent>;
     last: ReturnType<typeof createMatchComponent>;
-  }, glyphs: IconButtonLibrary): void {
+  }, glyphs: IconButtonLibrary, theme: UiKitThemeVariables): void {
   const g = model.geometry;
   const node = figma.createComponent();
   node.name = `Obsidian / Search / File Group / Dark / ${group.title.toLowerCase().includes(model.query.toLowerCase()) ? 'Title match' : 'Plain title'}`;
@@ -426,20 +429,31 @@ function addGroup(parent: FrameNode, model: SearchViewModel, group: SearchViewGr
   } else {
     const before = group.title.slice(0, matchAt);
     if (before) {
-      const prefix = textNode(labelView, 'Title prefix', before, font, 13, 16.9, model.colors.normal);
+      labelView.itemSpacing = before.endsWith(' ') ? 3 : 0;
+      const prefix = textNode(labelView, 'Title prefix', before.trimEnd(), font, 13, 16.9,
+        model.colors.normal);
       prefix.componentPropertyReferences = { characters:
-        node.addComponentProperty('Title prefix', 'TEXT', before) };
+        node.addComponentProperty('Title prefix', 'TEXT', before.trimEnd()) };
     }
     const mark = frame(labelView, 'Matched title text', 1, 17);
     mark.layoutMode = 'HORIZONTAL';
     mark.primaryAxisSizingMode = 'AUTO';
     mark.counterAxisSizingMode = 'AUTO';
-    mark.fills = [{ type: 'SOLID', color: { r: 222 / 255, g: 222 / 255, b: 113 / 255 },
-      opacity: 0.3 }];
     const term = group.title.slice(matchAt, matchAt + model.query.length);
     const matchLabel = textNode(mark, 'Match', term, font, 13, 16.9, model.colors.normal);
     matchLabel.componentPropertyReferences = { characters:
       node.addComponentProperty('Matched title text', 'TEXT', term) };
+    const underlay = figma.createRectangle();
+    underlay.name = 'Match highlight underlay';
+    mark.insertChild(0, underlay);
+    underlay.layoutPositioning = 'ABSOLUTE';
+    underlay.resize(mark.width, mark.height);
+    underlay.x = 0;
+    underlay.y = 0;
+    underlay.constraints = { horizontal: 'STRETCH', vertical: 'STRETCH' };
+    underlay.fills = [boundUiKitPaint(theme, 'matchHighlight')];
+    underlay.strokes = [];
+    underlay.opacity = theme.evidence.roles.matchHighlight.opacity!;
   }
   if (group.matches.length) {
     const flair = textNode(title, 'Match count', String(group.matches.length), font, 12, 12,
@@ -472,8 +486,15 @@ function addGroup(parent: FrameNode, model: SearchViewModel, group: SearchViewGr
       throw new Error('Search View: texto da instância Match divergiu.');
     }
     const matchIndex = match.text.toLowerCase().indexOf(model.query.toLowerCase());
-    if (matchIndex >= 0) label.setRangeFills(matchIndex, matchIndex + model.query.length,
-      [paint(model.colors.normal)]);
+    if (matchIndex >= 0) {
+      const end = matchIndex + model.query.length;
+      label.setRangeFills(matchIndex, end, [boundUiKitPaint(theme, 'textNormal')]);
+      const fills = label.getRangeFills(matchIndex, end);
+      if (!Array.isArray(fills) || !fills.some((fill) => fill.type === 'SOLID' &&
+          fill.boundVariables?.color?.id === theme.colors.textNormal.id)) {
+        throw new Error('Search View: trecho destacado não manteve a Variable de texto.');
+      }
+    }
   }
   }
   const instance = node.createInstance();
@@ -525,10 +546,9 @@ function icon(parent: ComponentNode | FrameNode, name: string, svg: string,
 
 function observedIcon(parent: ComponentNode | FrameNode, name: string, use: string,
   glyphs: IconButtonLibrary, size: number, x: number, y: number): InstanceNode {
-  const node = glyphs.createGlyph(use);
+  const node = glyphs.createGlyph(use, 'Muted', size);
   node.name = name;
   parent.appendChild(node);
-  node.resize(size, size);
   node.x = x;
   node.y = y;
   return node;

@@ -2,7 +2,7 @@ import type { IconButtonLibrary } from './icon-button-generation';
 import type { TreeRowLibrary } from './tree-navigation-row-generation';
 import type { PrimitiveColorKey, PrimitiveVariables } from './primitive-theme';
 
-type PrimitiveRoot = ComponentSetNode | FrameNode;
+type PrimitiveRoot = ComponentSetNode | ComponentNode | FrameNode;
 
 function sameColor(actual: VariableValue, expected: RGB, tolerance = 1e-6): boolean {
   return typeof actual === 'object' && actual !== null && 'r' in actual &&
@@ -60,6 +60,8 @@ export function verifyPrimitiveThemeModes(theme: PrimitiveVariables, icons: Icon
       consumer: boundGlyph(rows.set, theme.colors.disclosure) },
     { root: rows.set, key: 'metadata', variable: theme.colors.metadata,
       consumer: boundText(rows.set, theme.colors.metadata) },
+    { root: rows.guide, key: 'treeGuide', variable: theme.colors.treeGuide,
+      consumer: rows.guide },
     { root: filesPreview, key: 'icon', variable: theme.colors.icon,
       consumer: boundGlyph(filesPreview, theme.colors.icon) },
     { root: filesPreview, key: 'rowDefaultText', variable: theme.colors.rowDefaultText,
@@ -67,7 +69,10 @@ export function verifyPrimitiveThemeModes(theme: PrimitiveVariables, icons: Icon
     { root: searchPreview, key: 'icon', variable: theme.colors.icon,
       consumer: boundGlyph(searchPreview, theme.colors.icon) },
   ];
-  const roots = [icons.set, rows.set, filesPreview, searchPreview];
+  const roots = [icons.set, rows.set, rows.guide, filesPreview, searchPreview];
+  if (Math.abs(rows.guide.opacity - theme.dark.treeGuideOpacity) > 0.001) {
+    throw new Error('Primitive theme: opacidade da guia da árvore divergiu.');
+  }
   const selection = boundFill(rows.set, theme.colors.rowSelectedBackground);
   if (selection.type !== 'RECTANGLE') {
     throw new Error(`Primitive theme: fundo da seleção não é Rectangle (${selection.type}).`);
