@@ -1,0 +1,84 @@
+{
+  "format": "obsidian-search-view-probe",
+  "version": 1,
+  "mode": "Dark",
+  "source": "search-view-probe-2026-10-02.json",
+  "width": 200,
+  "height": 840.109375,
+  "query": "probe",
+  "resultCount": "6 results",
+  "sortLabel": "File name (A to Z)",
+  "fontFamily": "\"??\", \"??\", \"??\", ui-sans-serif, -apple-system, \"system-ui\", system-ui, \"Segoe UI\", \"Google Sans Flex\", Roboto, \"Inter Variable\", Inter, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", sans-serif",
+  "geometry": {
+    "inset": 12,
+    "searchRowHeight": 30,
+    "searchRowTop": 12,
+    "searchRowBottom": 8,
+    "searchRowGap": 4,
+    "searchSettingsWidth": 28,
+    "inputTextLeft": 30,
+    "inputTextRight": 62,
+    "resultsInfoHeight": 33,
+    "resultsTopPadding": 12,
+    "titleHeight": 24.890625,
+    "titleTextLeft": 24,
+    "matchTopGap": 4,
+    "matchBottomGap": 8,
+    "matchHorizontalPadding": 12,
+    "matchVerticalPadding": 8
+  },
+  "colors": {
+    "background": "rgb(40, 40, 40)",
+    "input": "rgb(46, 46, 46)",
+    "inputBorder": "rgb(51, 51, 51)",
+    "normal": "rgb(218, 218, 218)",
+    "muted": "rgb(179, 179, 179)",
+    "subtle": "rgb(102, 102, 102)",
+    "matchBackground": "rgb(28, 28, 28)",
+    "highlight": "oklch(0.88004 0.131911 107.863 / 0.3)"
+  },
+  "icons": {
+    "matchCase": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"svg-icon uppercase-lowercase-a\"><path d=\"M10.5 14L4.5 14\"></path><path d=\"M12.5 18L7.5 6\"></path><path d=\"M3 18L7.5 6\"></path><path d=\"M15.9526 10.8322C15.9526 10.8322 16.6259 10 18.3832 10C20.1406 9.99999 20.9986 11.0587 20.9986 11.9682V16.7018C20.9986 17.1624 21.2815 17.7461 21.7151 18\"></path><path d=\"M20.7151 13.5C18.7151 13.5 15.7151 14.2837 15.7151 16C15.7151 17.7163 17.5908 18.2909 18.7151 18C19.5635 17.7804 20.5265 17.3116 20.889 16.6199\"></path></svg>",
+    "settings": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"svg-icon lucide-sliders-horizontal\"><path d=\"M10 5H3\"></path><path d=\"M12 19H3\"></path><path d=\"M14 3v4\"></path><path d=\"M16 17v4\"></path><path d=\"M21 12h-9\"></path><path d=\"M21 19h-5\"></path><path d=\"M21 5h-7\"></path><path d=\"M8 10v4\"></path><path d=\"M8 12H3\"></path></svg>",
+    "disclosure": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"svg-icon right-triangle\"><path d=\"M3 8L12 17L21 8\"></path></svg>",
+    "more": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"svg-icon lucide-more-horizontal\"><circle cx=\"12\" cy=\"12\" r=\"1\"></circle><circle cx=\"19\" cy=\"12\" r=\"1\"></circle><circle cx=\"5\" cy=\"12\" r=\"1\"></circle></svg>"
+  },
+  "groups": [
+    {
+      "title": "Outline probe",
+      "collapsed": true,
+      "matches": [],
+      "height": 24.890625
+    },
+    {
+      "title": "Properties probe",
+      "collapsed": false,
+      "matches": [
+        {
+          "text": "probe_status: ready",
+          "height": 32.59375
+        },
+        {
+          "text": "probe_done: false",
+          "height": 31.59375
+        }
+      ],
+      "height": 93.171875
+    },
+    {
+      "title": "README",
+      "collapsed": false,
+      "matches": [
+        {
+          "text": "`internal-observed-fixtures/Properties probe.md` is a tracked test note: its YAML exposes real Properties rows, and its folder exposes a header ...",
+          "height": 126.15625
+        },
+        {
+          "text": "...cts for the Figma importer and standalone diagnostic JSONs, including the first `internal-observed` probe. Keep or delete these local artifacts when they are no longer needed.",
+          "height": 156.34375
+        }
+      ],
+      "height": 311.484375
+    }
+  ]
+}

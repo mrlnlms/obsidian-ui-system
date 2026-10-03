@@ -81,6 +81,8 @@ Never write generated captures, inventories, diagnostics, or exports inside `dev
 
 Trate checkpoints commitados, validações concluídas e decisões explicitamente fechadas como estado confiável do projeto.
 
+**Antes de iniciar qualquer nova implementação, leia o que os commits já entregaram.** Confira `git status --short`, o `HEAD` e os commits recentes pertinentes com `git log`/`git show`, incluindo o diff dos arquivos da frente em questão. Identifique no código e na documentação o que foi entregue e validado no último checkpoint antes de usar um item do roadmap como próxima tarefa. Não refaça trabalho commitado por presumir que uma composição ou gerador está ausente; se o mapa divergir do checkpoint ou da confirmação do usuário, corrija o mapa primeiro.
+
 Não reabra uma decisão, repita caveats ou proponha validações adicionais apenas por cautela. Diferenças de hash, timestamp, origem ou contexto só devem virar problema quando houver um mecanismo concreto pelo qual possam alterar a evidência ou o resultado relevante.
 
 Proveniência serve para rastreabilidade, não para criar burocracia.
@@ -91,7 +93,15 @@ Ao continuar de um handoff:
 - avance pela menor mudança necessária;
 - só volte a uma etapa anterior diante de nova evidência concreta.
 
+Uma confirmação explícita do usuário de que uma peça do Figma está pronta prevalece sobre um marcador `NEXT` ou uma etapa futura em `docs/ui-system-map.md`. Antes de implementar o próximo item do mapa, confronte esse marcador com as confirmações da conversa e o estado documentado. Se apontar para uma frente já concluída, corrija o mapa e não gere outra versão, composição ou fluxo de carregamento para a mesma frente. A ausência de um artefato específico no repositório não invalida uma entrega que o usuário já montou e validou no Figma. Só reabra essa frente mediante pedido explícito ou defeito concreto apresentado pelo usuário.
+
 Prefira registrar uma limitação conhecida e seguir a transformar incertezas irrelevantes em trabalho preventivo.
+
+## Composição incremental no Figma
+
+Quando a próxima peça for conteúdo de um host já validado, como uma View dentro do Side Panel, trate o Component e suas regras de resize como contrato existente. Inspecione o host, seus slots/propriedades e o preview validado antes de gerar. Crie ou reutilize o conteúdo como dependência e acople-o pelo slot na composição; entregue uma cópia do preview com a nova peça e preserve o original como checkpoint. Um Component de conteúdo solto no canvas não conclui uma tarefa cuja entrega é a View hospedada.
+
+Valide a iteração na composição: tab/estado correspondente, alinhamento do conteúdo e comportamento nas larguras já demonstradas pelo host, mais um resize que exponha possíveis conflitos. Não crie outro host nem replique sua regra de resize dentro do conteúdo. Quando o Figma Desktop mostrar um desvio, corrija a peça ou seu acoplamento e peça nova validação apenas desse resultado. Uma confirmação explícita do usuário fecha o escopo observado.
 
 ## Internal-observed: escopo e fixtures
 

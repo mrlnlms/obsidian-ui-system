@@ -52,6 +52,10 @@
     <p>Side Panel Left Dark: usa o Workspace Tab já gerado nesta página e o probe observado embutido no plugin. Não precisa selecionar JSON nem Package ZIP.</p>
     <button id="generate-panel" type="button">Generate Side Panel</button>
   </div>
+  <div id="search-view">
+    <p>Search View Dark: requer o Side Panel / Dark resize preview nesta página. Reutiliza o conteúdo Search existente, corrige o campo de busca e duplica o preview com a View hospedada. Usa o probe embutido; não precisa selecionar JSON nem Package ZIP.</p>
+    <button id="generate-search-view" type="button">Generate Search in Side Panel</button>
+  </div>
   <div id="typography" role="status" aria-live="polite"></div>
   <div id="status" role="status" aria-live="polite"></div>
   <pre id="report"></pre>
@@ -71,6 +75,7 @@
     const tabProbe = document.getElementById('tab-probe');
     const generateTab = document.getElementById('generate-tab');
     const generatePanel = document.getElementById('generate-panel');
+    const generateSearchView = document.getElementById('generate-search-view');
     const summary = document.getElementById('summary');
     const typography = document.getElementById('typography');
     const status = document.getElementById('status');
@@ -90,6 +95,7 @@
       generateHeader.disabled = generating || !headerProbe.files[0];
       generateTab.disabled = generating || !tabProbe.files[0];
       generatePanel.disabled = generating;
+      generateSearchView.disabled = generating;
     }
     darkInput.onchange = updateActions;
     lightInput.onchange = updateActions;
@@ -249,6 +255,14 @@
       updateActions();
       show('Compondo Side Panel a partir do probe embutido…');
       parent.postMessage({ pluginMessage: { type: 'generate-side-panel' } }, '*');
+    };
+
+    generateSearchView.onclick = () => {
+      if (generating) return;
+      generating = true;
+      updateActions();
+      show('Duplicando o Side Panel validado e incluindo Search View…');
+      parent.postMessage({ pluginMessage: { type: 'generate-search-view' } }, '*');
     };
 
     onmessage = (event) => {

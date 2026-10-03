@@ -12,6 +12,8 @@ import { generateViewHeader } from './view-header-generation';
 import { generateWorkspaceTab } from './workspace-tab-generation';
 import { generateSidePanel } from './side-panel-generation';
 import sidePanelProbe from '../tests/fixtures/side-panel-probe.json';
+import { composeSearchInSidePanel } from './search-view-generation';
+import searchViewProbe from '../tests/fixtures/search-view-probe.json';
 import { planUiKitPlacement } from './ui-kit-layout';
 import { readFigmaPackage, type ImportedPackage } from './package-data';
 
@@ -22,6 +24,19 @@ let importedButtonV2: ButtonV2Package | undefined;
 let currentRequest = 0;
 
 figma.ui.onmessage = async (message: unknown) => {
+  if (isGenerateSearchViewMessage(message)) {
+    try {
+      const result = await composeSearchInSidePanel(searchViewProbe);
+      figma.ui.postMessage({ type: 'result', ok: true,
+        text: `Search View Dark ${result.reusedComponent ? 'reutilizada' : 'criada'}: ` +
+          `${result.component.name} (${result.component.id}). ${result.preview.name} ` +
+          `criado a partir do preview validado, com Search nas larguras 242 e 200 px.` });
+    } catch (error) {
+      figma.ui.postMessage({ type: 'result', ok: false,
+        text: error instanceof Error ? error.message : String(error) });
+    }
+    return;
+  }
   if (isGenerateSidePanelMessage(message)) {
     try {
       const result = await generateSidePanel(sidePanelProbe);
@@ -187,6 +202,11 @@ function isGenerateWorkspaceTabMessage(value: unknown): value is { type: 'genera
 function isGenerateSidePanelMessage(value: unknown): value is { type: 'generate-side-panel' } {
   return typeof value === 'object' && value !== null && 'type' in value &&
     value.type === 'generate-side-panel';
+}
+
+function isGenerateSearchViewMessage(value: unknown): value is { type: 'generate-search-view' } {
+  return typeof value === 'object' && value !== null && 'type' in value &&
+    value.type === 'generate-search-view';
 }
 
 async function generateButton(componentsJson: unknown, layoutJson: unknown): Promise<ComponentSetNode> {

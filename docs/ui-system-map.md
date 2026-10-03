@@ -193,7 +193,7 @@ Current Figma status:
 - Folder Row: validated for observed Expanded/Collapsed appearances and depths 0–2;
 - horizontal resize/ellipsis behavior: validated for the bounded observed cases.
 
-The next useful step is not another isolated File Explorer specimen. It is a **composed File Explorer View** that can visually contain realistic folders/files, indentation and tree guides using the already known row components.
+**This File Explorer front is closed for the current milestone.** The user confirmed that the existing Explorer work was already built and working in Figma. Do not reinterpret the roadmap's former "File Explorer View" item as permission to regenerate those pieces or add another composition. No separate native View component was part of the committed scope, and that absence does not create a task. Reopen Explorer only for an explicit request or a concrete defect reported by the user.
 
 Known production debt: Folder Row currently exists as six independent Components (2 observed states × 3 observed depths). During UI Kit consolidation, evaluate a Component Set with `State = Expanded | Collapsed` and `Depth = 0 | 1 | 2`. Do not invent unobserved states/depths merely to make the set look complete.
 
@@ -201,7 +201,7 @@ Known production debt: Folder Row currently exists as six independent Components
 
 These are hosted Views, not generic “sidebar rows”.
 
-- **Search:** the existing internal observation is only a match inside a result grouped by file. Do not mistake it for the complete Search result composition.
+- **Search:** the earlier internal inventory observed only one match inside a file-grouped result. A focused Dark Search View probe now covers the query/control row, count/sort bar, and three file groups. The Figma action reuses the existing Search content and duplicates the validated Side Panel resize preview with Search hosted at both widths. The user confirmed the corrected Figma Desktop result for this bounded Dark composition.
 - **Outline:** visual evidence already demonstrates a hierarchical list with wrapping/variable-height items. It is exploratory, not yet closed as a Figma family.
 - **All Properties:** a separate `all-properties` View exists; the in-document `.metadata-property` observation does not define this View.
 
@@ -259,7 +259,7 @@ Figma production      PARTIAL
 
 INTERNAL / HOST UI
 semantic architecture ESTABLISHED
-File Explorer         STRUCTURALLY SUFFICIENT
+File Explorer         USER-CONFIRMED COMPLETE for current scope
 View Header           FIGMA-VALIDATED (bounded sample)
 Breadcrumb            BUILT as nested Components
 Workspace Tab         FIGMA-VALIDATED (Dark only; Light pending)
@@ -267,8 +267,7 @@ WorkspaceTabs         FIGMA-VALIDATED (three Dark left tabs)
 Side Panel/Sidedock   FIGMA-VALIDATED (bounded Dark left host)
 
 VIEW CONTENT
-File Explorer View     NEXT composition target
-Search                 partial evidence
+Search                 FIGMA-VALIDATED (bounded Dark Side Panel composition)
 Outline                exploratory evidence
 All Properties         shallow evidence
 
@@ -295,12 +294,13 @@ The next work should optimize for **usable screen composition**, not evidence vo
 
 At the end of Phase A, the Figma library should be able to draw a recognizable Obsidian shell with tabs, a main View Header and a hosted side panel.
 
-### Phase B — turn proven rows into actual View compositions
+### Phase B — compose other hosted Views
 
-1. Compose a realistic **File Explorer View** from Folder/File/Tagged rows, including observed indentation/tree guides where visually necessary.
-2. Build the useful **Search View content** (query/control surface + grouped results), not just the previously observed match fragment.
-3. Build **Outline View content** from the already obvious hierarchical/wrapping behavior.
-4. Add **All Properties View content** only to the level needed to represent the real hosted View.
+File Explorer is closed for the current scope by user confirmation and is not an item in this phase.
+
+1. **Search View content — completed for the bounded Dark scene:** the query/control surface, count/sort bar and grouped results are swapped into a duplicate of the validated Side Panel resize preview; the user accepted the corrected Figma result.
+2. Build **Outline View content** from the already obvious hierarchical/wrapping behavior, coupled to the validated Side Panel host.
+3. Add **All Properties View content** only to the level needed to represent the real hosted View.
 
 At the end of Phase B, the UI Kit should support drawing the common side-panel Views shown in Obsidian.
 
@@ -327,10 +327,11 @@ This ordering deliberately favors **breadth and usable composition first**, then
 
 Before starting work, agents must ask only these questions:
 
-1. **Does the API/code already establish the semantic component?** If yes, use it. Do not re-prove it in DOM.
-2. **Is the required visual behavior already obvious in screenshots/runtime?** If yes, implement it.
-3. **Is there a concrete mismatch or missing technical value that blocks implementation?** Only then inspect DOM/CSSOM.
-4. **Does this work make the Figma UI Kit more composable?** Prefer screen-building capability over another isolated diagnostic specimen.
+1. **Has the user already confirmed this front is complete?** That confirmation overrides a stale "next" marker. Correct the map and stop that front unless the user requests a new deliverable or identifies a concrete defect.
+2. **Does the API/code already establish the semantic component?** If yes, use it. Do not re-prove it in DOM.
+3. **Is the required visual behavior already obvious in screenshots/runtime?** If yes, implement it.
+4. **Is there a concrete mismatch or missing technical value that blocks implementation?** Only then inspect DOM/CSSOM.
+5. **Does this work make the Figma UI Kit more composable?** Prefer screen-building capability over another isolated diagnostic specimen.
 
 Do not open adjacent investigation merely because another class or state was noticed.
 
