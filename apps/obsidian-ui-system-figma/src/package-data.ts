@@ -12,6 +12,7 @@ const MAX_ENTRY_BYTES = 8 * 1024 * 1024;
 export interface ImportedPackage {
   components: unknown;
   layout: unknown;
+  mode: 'dark' | 'light';
   summary: { obsidianVersion: string; specimens: number; tokens: number };
 }
 
@@ -120,7 +121,7 @@ export function readFigmaPackage(bytes: Uint8Array): ImportedPackage {
   // The proven component readers are also the preflight for required evidence.
   readButtonImport(components, layout);
   readSearchImport(components, layout);
-  return { components, layout, summary: {
+  return { components, layout, mode: manifest.mode as 'dark' | 'light', summary: {
     obsidianVersion: manifest.obsidianVersion as string,
     specimens: components.length,
     tokens: Object.keys(tokenValues).length,

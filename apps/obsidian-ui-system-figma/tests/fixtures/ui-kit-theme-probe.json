@@ -1,0 +1,70 @@
+{
+  "format": "obsidian-ui-kit-theme-evidence",
+  "version": 1,
+  "source": {
+    "desktop": "Obsidian Desktop 1.14.4 Dark/Light CLI eval 2026-10-03",
+    "packages": [
+      "obsidian-ui-package-2026-10-03T17-04-24-930Z.zip (Dark)",
+      "obsidian-ui-package-2026-10-03T17-05-38-029Z.zip (Light); matched by id + variant"
+    ],
+    "rawProbe": "ui-kit-theme-probe-2026-10-03.json"
+  },
+  "roles": {
+    "surfacePrimary": {
+      "darkCss": "rgb(28, 28, 28)",
+      "lightCss": "rgb(255, 255, 255)",
+      "source": "--background-primary"
+    },
+    "surfaceSecondary": {
+      "darkCss": "rgb(40, 40, 40)",
+      "lightCss": "rgb(246, 246, 246)",
+      "source": "--background-secondary"
+    },
+    "formField": {
+      "darkCss": "rgb(46, 46, 46)",
+      "lightCss": "rgb(255, 255, 255)",
+      "source": "--background-modifier-form-field and .search-input-container input"
+    },
+    "controlFill": {
+      "darkCss": "rgb(51, 51, 51)",
+      "lightCss": "rgb(228, 228, 228)",
+      "source": "Package v1 obsidian.button/normal and /disabled"
+    },
+    "controlBorder": {
+      "darkCss": "rgb(51, 51, 51)",
+      "lightCss": "rgb(228, 228, 228)",
+      "source": "--background-modifier-border and .search-input-container input"
+    },
+    "textNormal": {
+      "darkCss": "rgb(218, 218, 218)",
+      "lightCss": "rgb(34, 34, 34)",
+      "source": "--text-normal and .view-header"
+    },
+    "textMuted": {
+      "darkCss": "rgb(179, 179, 179)",
+      "lightCss": "rgb(92, 92, 92)",
+      "source": "--text-muted and .view-header-title"
+    },
+    "textFaint": {
+      "darkCss": "rgb(102, 102, 102)",
+      "lightCss": "rgb(171, 171, 171)",
+      "source": "--text-faint and .nav-file-tag"
+    },
+    "accentFill": {
+      "darkCss": "rgb(138, 92, 245)",
+      "lightCss": "rgb(152, 115, 247)",
+      "source": "Package v1 obsidian.button/cta"
+    },
+    "matchHighlight": {
+      "darkCss": "rgb(222, 222, 113)",
+      "lightCss": "rgb(222, 172, 0)",
+      "source": "computed .search-result-file-matched-text background in Dark/Light, sampled through canvas at 30% opacity"
+    },
+    "selectedOverlay": {
+      "darkCss": "rgb(255, 255, 255)",
+      "lightCss": "rgb(0, 0, 0)",
+      "opacity": 0.067,
+      "source": "computed selected tree row and sidedock tab backgrounds"
+    }
+  }
+}

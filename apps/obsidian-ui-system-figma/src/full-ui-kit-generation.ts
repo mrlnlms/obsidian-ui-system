@@ -24,6 +24,9 @@ import { readTreeRowEvidence } from './tree-navigation-row-data';
 import { createPrimitiveVariables, readPrimitiveThemeEvidence,
   type PrimitiveVariables } from './primitive-theme';
 import { verifyPrimitiveThemeModes } from './primitive-theme-validation';
+import { bindUiKitTheme, extendUiKitThemeVariables, readUiKitThemeEvidence,
+  renameThemedComponents } from './ui-kit-theme';
+import { verifyUiKitThemeModes } from './ui-kit-theme-validation';
 import activeRowProbe from '../tests/fixtures/file-explorer-active-row-probe.json';
 import taggedRowsProbe from '../tests/fixtures/file-explorer-tagged-rows-probe.json';
 import folderRowsProbe from '../tests/fixtures/folder-rows-probe.json';
@@ -34,6 +37,7 @@ import searchViewProbe from '../tests/fixtures/search-view-probe.json';
 import filesViewProbe from '../tests/fixtures/file-explorer-view-probe.json';
 import bookmarksViewProbe from '../tests/fixtures/bookmarks-view-probe.json';
 import primitiveThemeProbe from '../tests/fixtures/primitive-theme-probe.json';
+import uiKitThemeProbe from '../tests/fixtures/ui-kit-theme-probe.json';
 
 /** Checks every included observed fixture before a Figma node is created. */
 export function validateIncludedEvidence(): void {
@@ -48,6 +52,7 @@ export function validateIncludedEvidence(): void {
   readBookmarksViewModel(bookmarksViewProbe);
   readTreeRowEvidence(folderRowsProbe, activeRowProbe, taggedRowsProbe, filesViewProbe);
   readPrimitiveThemeEvidence(primitiveThemeProbe);
+  readUiKitThemeEvidence(uiKitThemeProbe);
 }
 
 /** One Package v1, one action, one fresh composition on the current page. */
@@ -76,6 +81,8 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
       { name: 'Sidedock / Collapse', svg: sideModel.toggleSvg, color: sideModel.toggleIconColor },
     ];
     primitiveTheme = createPrimitiveVariables(readPrimitiveThemeEvidence(primitiveThemeProbe));
+    const uiKitTheme = extendUiKitThemeVariables(primitiveTheme,
+      readUiKitThemeEvidence(uiKitThemeProbe));
     const iconButtons = createIconButtonLibrary(iconSources, primitiveTheme);
     const button = await generateButton(input.components, input.layout);
     const search = await generateSearch(input.components, input.layout);
@@ -91,6 +98,13 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
       filesResult.actions, iconButtons);
     verifyPrimitiveThemeModes(primitiveTheme, iconButtons, rows,
       filesResult.preview, searchResult.preview);
+    const newRoots = figma.currentPage.children.filter((node) => !originalRoots.has(node.id));
+    const bindings = bindUiKitTheme(newRoots, uiKitTheme, (root) =>
+      root.type === 'SECTION' && (root.name === 'Actions' || root.name === 'Inputs')
+        ? input.mode : 'dark');
+    verifyUiKitThemeModes(uiKitTheme, bindings,
+      [searchResult.preview, filesResult.preview, bookmarksResult.preview]);
+    renameThemedComponents(newRoots);
     figma.currentPage.setExplicitVariableModeForCollection(primitiveTheme.collection,
       primitiveTheme.modeIds.dark);
     figma.currentPage.selection = [bookmarksResult.preview];

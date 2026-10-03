@@ -76,7 +76,7 @@ export function readPrimitiveThemeEvidence(input: unknown): PrimitiveThemeEviden
   return { dark, light };
 }
 
-/** One collection shared by the two primitives; the kit's other components stay unthemed. */
+/** The primitive foundation; full generation extends this same collection for the kit. */
 export function createPrimitiveVariables(evidence: PrimitiveThemeEvidence): PrimitiveVariables {
   const collection = figma.variables.createVariableCollection('Obsidian UI / Navigation primitives');
   try {

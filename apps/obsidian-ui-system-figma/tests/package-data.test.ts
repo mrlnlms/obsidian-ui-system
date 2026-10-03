@@ -17,6 +17,7 @@ function changed(name: string, value: unknown): Uint8Array {
 
 test('imports the real Obsidian package and preflights Button and Search evidence', () => {
   const result = readFigmaPackage(fixture);
+  assert.equal(result.mode, 'dark');
   assert.deepEqual(result.summary, { obsidianVersion: '1.14.3', specimens: 59, tokens: 945 });
   assert.equal((result.layout as { experimentalFormat: string }).experimentalFormat, LEGACY_LAYOUT_MODEL);
 });

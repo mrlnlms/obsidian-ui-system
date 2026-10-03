@@ -154,9 +154,8 @@ function createTab(model: TabVariant, font: FontName, lineHeight: number,
     component.description = `${model.context} ${model.state}; Dark desktop observation.`;
     component.resize(model.size.width, model.size.height);
     component.layoutMode = 'NONE';
-    component.fills = model.background === 'rgba(0, 0, 0, 0)' ? [] :
-      model.background.startsWith('oklch(') ? [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 }, opacity: 0.067 }] :
-        [paint(model.background)];
+    component.fills = model.background === 'rgba(0, 0, 0, 0)' ||
+      model.background.startsWith('oklch(') ? [] : [paint(model.background)];
     component.strokes = [];
     if (model.context === 'Main') {
       component.topLeftRadius = model.radius;
@@ -167,6 +166,20 @@ function createTab(model: TabVariant, font: FontName, lineHeight: number,
       // The Main tab keeps absolute children for observed right-anchored Close and title stretch;
       // its Auto Layout host applies the observed 320 px maximum to each instance.
     } else component.cornerRadius = model.radius;
+
+    if (model.background.startsWith('oklch(')) {
+      const selection = figma.createRectangle();
+      selection.name = 'Selection background';
+      component.appendChild(selection);
+      selection.resize(component.width, component.height);
+      selection.x = 0;
+      selection.y = 0;
+      selection.constraints = { horizontal: 'STRETCH', vertical: 'STRETCH' };
+      selection.cornerRadius = model.radius;
+      selection.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
+      selection.strokes = [];
+      selection.opacity = 0.067;
+    }
 
     const label = figma.createText();
     label.name = 'Title';

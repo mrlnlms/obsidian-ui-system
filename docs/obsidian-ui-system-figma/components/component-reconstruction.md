@@ -13,6 +13,8 @@ Para um primitive com Dark/Light observados, use modes de uma mesma Variable col
 
 No readback de opacidade, compare com tolerância para a precisão numérica do Figma. Para confirmar resize, redimensione uma instância e confira as dimensões do underlay; o valor literal de `constraints` não substitui essa verificação de comportamento.
 
+Ao estender modes a composições já geradas, vincule os paints dos Components de origem e os fundos próprios dos previews. Não escreva overrides nos descendentes de uma Instance: a cor deve chegar por herança do Component principal. Se o Package usado como entrada foi capturado em Light, classifique Button/Search a partir dos valores Light dessa entrada antes de criar o vínculo; os probes internos Dark preservam sua própria base observada. Cores Dark idênticas podem ter papéis distintos, como fill de Button e border de Search; use a propriedade e a anatomia para escolher a Variable. Uma cor que não foi associada a evidência pareada não deve receber conversão automática.
+
 ## Sizing, posicionamento e texto
 
 | Regra inferida | Evidência necessária | Tradução Figma |

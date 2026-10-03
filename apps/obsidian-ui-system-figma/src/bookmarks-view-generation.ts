@@ -115,8 +115,22 @@ function createRowSet(model: BookmarksViewModel, font: FontName): ComponentSetNo
     component.itemSpacing = 4;
     component.counterAxisAlignItems = 'MIN';
     component.cornerRadius = 8;
-    component.fills = row.state === 'Selected' ? [{ ...paint('rgb(255, 255, 255)'), opacity: 0.067 }] : [];
+    component.fills = [];
     component.strokes = [];
+    if (row.state === 'Selected') {
+      const selection = figma.createRectangle();
+      selection.name = 'Selection background';
+      component.appendChild(selection);
+      selection.layoutPositioning = 'ABSOLUTE';
+      selection.resize(component.width, component.height);
+      selection.x = 0;
+      selection.y = 0;
+      selection.constraints = { horizontal: 'STRETCH', vertical: 'STRETCH' };
+      selection.cornerRadius = 8;
+      selection.fills = [paint('rgb(255, 255, 255)')];
+      selection.strokes = [];
+      selection.opacity = 0.067;
+    }
     const glyph = figma.createNodeFromSvg(
       (row.kind === 'Group' ? model.icons.group : model.icons.file)
         .replace(/currentColor/g, 'rgb(179, 179, 179)'));
