@@ -1,8 +1,9 @@
 import { fontFailure, requiredFont } from './font-resolution';
 import { readWorkspaceTabModel, type TabVariant } from './workspace-tab-data';
+import type { IconButtonLibrary } from './icon-button-generation';
 
 /** A bounded Dark Workspace Tab set, using the observed main and sidedock anatomy. */
-export async function generateWorkspaceTab(probe: unknown): Promise<{
+export async function generateWorkspaceTab(probe: unknown, glyphs: IconButtonLibrary): Promise<{
   set: ComponentSetNode; preview: FrameNode; icons: ComponentNode[];
 }> {
   const model = readWorkspaceTabModel(probe);
@@ -20,14 +21,14 @@ export async function generateWorkspaceTab(probe: unknown): Promise<{
   try {
     const sideActive = model.variants.find((item) => item.context === 'Sidedock' && item.state === 'Active')!;
     const sideInactive = model.variants.find((item) => item.context === 'Sidedock' && item.state === 'Inactive')!;
-    // One observed Files glyph, with the two observed state paints. Both remain swappable instances.
-    icons.push(createIcon('Active', sideInactive.icon!.svg, sideActive.icon!));
-    icons.push(createIcon('Inactive', sideInactive.icon!.svg, sideInactive.icon!));
+    // State stays on the consumer; both wrappers contain an instance of one Files glyph.
+    icons.push(createIcon('Active', sideActive.icon!, glyphs));
+    icons.push(createIcon('Inactive', sideInactive.icon!, glyphs));
     const labels: TextNode[] = [];
     const sideIcons: InstanceNode[] = [];
     for (const variant of model.variants) {
       const { component, label, iconInstance } = createTab(variant, font, model.lineHeight,
-        variant.state === 'Active' ? icons[0]! : icons[1]!);
+        variant.state === 'Active' ? icons[0]! : icons[1]!, glyphs);
       components.push(component);
       labels.push(label);
       if (iconInstance) sideIcons.push(iconInstance);
@@ -147,7 +148,8 @@ export async function generateWorkspaceTab(probe: unknown): Promise<{
 }
 
 function createTab(model: TabVariant, font: FontName, lineHeight: number,
-  icon: ComponentNode): { component: ComponentNode; label: TextNode; iconInstance?: InstanceNode } {
+  icon: ComponentNode, glyphs: IconButtonLibrary): {
+    component: ComponentNode; label: TextNode; iconInstance?: InstanceNode } {
   const component = figma.createComponent();
   try {
     component.name = `Context=${model.context}, State=${model.state}`;
@@ -221,7 +223,7 @@ function createTab(model: TabVariant, font: FontName, lineHeight: number,
       close.fills = [];
       close.cornerRadius = 8;
       close.constraints = { horizontal: 'MAX', vertical: 'MIN' };
-      const glyph = figma.createNodeFromSvg(colorSvg(model.close.svg, model.close.color));
+      const glyph = glyphs.createGlyph('Workspace tab / Close');
       glyph.name = 'Close icon';
       close.appendChild(glyph);
       glyph.resize(16, 16);
@@ -240,15 +242,16 @@ function createTab(model: TabVariant, font: FontName, lineHeight: number,
   }
 }
 
-function createIcon(state: 'Active' | 'Inactive', svg: string,
-  model: NonNullable<TabVariant['icon']>): ComponentNode {
+function createIcon(state: 'Active' | 'Inactive',
+  model: NonNullable<TabVariant['icon']>, glyphs: IconButtonLibrary): ComponentNode {
   const component = figma.createComponent();
   try {
     component.name = `Obsidian / Workspace Tab Icon / Files / ${state}`;
     component.description = `Ícone Files observado; cor e opacidade ${state} no sidedock Dark.`;
     component.resize(16, 16);
     component.fills = [];
-    const glyph = figma.createNodeFromSvg(colorSvg(svg, model.color));
+    const glyph = glyphs.createGlyph(`Workspace tab / ${state}`,
+      state === 'Active' ? 'Selected' : 'Muted');
     glyph.name = 'Glyph';
     component.appendChild(glyph);
     glyph.resize(16, 16);
@@ -260,14 +263,6 @@ function createIcon(state: 'Active' | 'Inactive', svg: string,
     if (!component.removed) component.remove();
     throw error;
   }
-}
-
-function colorSvg(svg: string, color: string): string {
-  if (!/^rgb\(\d{1,3}, \d{1,3}, \d{1,3}\)$/.test(color)) {
-    throw new Error('Workspace Tab: cor de SVG não suportada.');
-  }
-  return svg.replace('width="24"', 'width="16"').replace('height="24"', 'height="16"')
-    .replace('stroke="currentColor"', `stroke="${color}"`);
 }
 
 function paint(css: string): SolidPaint {

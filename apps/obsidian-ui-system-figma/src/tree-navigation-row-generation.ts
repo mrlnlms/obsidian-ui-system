@@ -1,9 +1,8 @@
-import { readFolderRowModels } from './folder-row-data';
 import { type FilesRow } from './file-explorer-view-data';
 import { fontFailure, requiredFont } from './font-resolution';
 import { readTreeRowEvidence } from './tree-navigation-row-data';
-import { bindObservedGlyphPaint, boundColorPaint, observedGlyphPaint,
-  type PrimitiveVariables } from './primitive-theme';
+import { boundColorPaint, type PrimitiveVariables } from './primitive-theme';
+import type { IconButtonLibrary } from './icon-button-generation';
 
 export interface TreeRowLibrary {
   set: ComponentSetNode;
@@ -15,7 +14,8 @@ export interface TreeRowLibrary {
 
 /** One native anatomy for the observed Folder/File rows; metadata is content. */
 export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: unknown,
-  taggedProbe: unknown, filesProbe: unknown, theme: PrimitiveVariables): Promise<TreeRowLibrary> {
+  taggedProbe: unknown, filesProbe: unknown, theme: PrimitiveVariables,
+  glyphs: IconButtonLibrary): Promise<TreeRowLibrary> {
   const { folders, active, tagged, files } = readTreeRowEvidence(folderProbe, activeProbe,
     taggedProbe, filesProbe);
   const available = (await figma.listAvailableFontsAsync()).map((item) => item.fontName);
@@ -94,33 +94,14 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
     labels.push(label);
     if ('disclosure' in spec && spec.disclosure) {
       const observed = spec.disclosure;
-      const icon = figma.createNodeFromSvg(disclosureSvg(observed));
+      const icon = glyphs.createGlyph('right-triangle', 'Faint');
       icon.name = 'Disclosure';
       row.appendChild(icon);
       icon.layoutPositioning = 'ABSOLUTE';
       icon.resize(observed.sample.svgSize.width, observed.sample.svgSize.height);
+      icon.rotation = observed.disclosure.rotationDeg;
       icon.x = observed.sample.svgOffset.x;
       icon.y = observed.sample.svgOffset.y;
-      let disclosureBindings = 0;
-      for (const node of [icon, ...icon.findAll(() => true)]) {
-        if ('fills' in node && node.fills !== figma.mixed) {
-          const paints = node.fills as readonly Paint[];
-          disclosureBindings += paints.filter((paint) =>
-            observedGlyphPaint(paint, theme.dark.colors.disclosure)).length;
-          node.fills = paints.map((paint) => observedGlyphPaint(paint, theme.dark.colors.disclosure)
-            ? bindObservedGlyphPaint(paint, theme.colors.disclosure)
-            : paint);
-        }
-        if ('strokes' in node) {
-          const paints = node.strokes as readonly Paint[];
-          disclosureBindings += paints.filter((paint) =>
-            observedGlyphPaint(paint, theme.dark.colors.disclosure)).length;
-          node.strokes = paints.map((paint) => observedGlyphPaint(paint, theme.dark.colors.disclosure)
-            ? bindObservedGlyphPaint(paint, theme.colors.disclosure)
-            : paint);
-        }
-      }
-      if (!disclosureBindings) throw new Error('Tree Row: disclosure sem paint vinculável.');
     }
     if (spec.kind === 'File' && spec.depth === 2) {
       const tag = figma.createFrame();
@@ -194,14 +175,4 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
       instance.name = `${kind} / ${item.label}`;
       return instance;
     } };
-}
-
-function disclosureSvg(row: ReturnType<typeof readFolderRowModels>[number]): string {
-  const d = row.disclosure;
-  const color = row.appearance.disclosureColorCss;
-  const transform = d.rotationDeg === -90 ? ' transform="rotate(-90 12 12)"' : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="${d.viewBox}" ` +
-    `fill="none" stroke="${color}" stroke-width="${d.strokeWidth}" ` +
-    `stroke-linecap="${d.strokeLinecap}" stroke-linejoin="${d.strokeLinejoin}">` +
-    `<g${transform}><path d="${d.path}"/></g></svg>`;
 }

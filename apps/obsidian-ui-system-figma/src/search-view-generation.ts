@@ -2,6 +2,8 @@ import { fontFailure, requiredFont } from './font-resolution';
 import { readSearchViewModel, type SearchViewGroup, type SearchViewModel } from './search-view-data';
 import type { IconButtonLibrary } from './icon-button-generation';
 
+// Sort chevrons belong only to this existing Search composition; no observed SVG
+// for this drawing is present in the fixed canonical glyph evidence.
 const SORT_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>';
 
 /** Creates a new reusable Search composition and duplicates the validated Side Panel preview. */
@@ -169,8 +171,8 @@ export async function generateSearchView(probe: unknown,
     component.clipsContent = true;
 
     addSearchRow(component, model, field, parts, iconButtons);
-    addResultsInfo(component, model, font, parts);
-    const results = addResults(component, model, font, parts);
+    addResultsInfo(component, model, font, parts, iconButtons);
+    const results = addResults(component, model, font, parts, iconButtons);
     if (component.width !== model.width || results.width !== model.width) {
       throw new Error('Search View: propriedades ou largura da composição divergentes.');
     }
@@ -271,7 +273,7 @@ function addSearchRow(parent: ComponentNode, model: SearchViewModel,
 }
 
 function addResultsInfo(parent: ComponentNode, model: SearchViewModel, font: FontName,
-  parts: ComponentNode[]): void {
+  parts: ComponentNode[], glyphs: IconButtonLibrary): void {
   const g = model.geometry;
   const info = figma.createComponent();
   info.name = 'Obsidian / Search / Results Toolbar / Dark';
@@ -297,7 +299,7 @@ function addResultsInfo(parent: ComponentNode, model: SearchViewModel, font: Fon
   const count = textNode(countButton, 'Count', model.resultCount, font, 12, 15.6, model.colors.muted);
   count.x = 6;
   count.y = 4;
-  icon(countButton, 'More options', model.icons.more, model.colors.muted, 16, 56, 4);
+  observedIcon(countButton, 'More options', 'Search / More', glyphs, 16, 56, 4);
 
   const sort = frame(info, 'Sort order', model.width - 2 * g.inset - 78, 24);
   sort.layoutGrow = 1;
@@ -326,7 +328,7 @@ function addResultsInfo(parent: ComponentNode, model: SearchViewModel, font: Fon
 }
 
 function addResults(parent: ComponentNode, model: SearchViewModel, font: FontName,
-  parts: ComponentNode[]): FrameNode {
+  parts: ComponentNode[], glyphs: IconButtonLibrary): FrameNode {
   const g = model.geometry;
   const results = frame(parent, 'Grouped search results', model.width,
     model.height - g.searchRowTop - g.searchRowHeight - g.searchRowBottom - g.resultsInfoHeight);
@@ -345,7 +347,7 @@ function addResults(parent: ComponentNode, model: SearchViewModel, font: FontNam
     divider: createMatchComponent(model, font, true, parts),
     last: createMatchComponent(model, font, false, parts),
   };
-  for (const group of model.groups) addGroup(results, model, group, font, parts, matches);
+  for (const group of model.groups) addGroup(results, model, group, font, parts, matches, glyphs);
   return results;
 }
 
@@ -386,7 +388,7 @@ function addGroup(parent: FrameNode, model: SearchViewModel, group: SearchViewGr
   font: FontName, parts: ComponentNode[], matches: {
     divider: ReturnType<typeof createMatchComponent>;
     last: ReturnType<typeof createMatchComponent>;
-  }): void {
+  }, glyphs: IconButtonLibrary): void {
   const g = model.geometry;
   const node = figma.createComponent();
   node.name = `Obsidian / Search / File Group / Dark / ${group.title.toLowerCase().includes(model.query.toLowerCase()) ? 'Title match' : 'Plain title'}`;
@@ -405,7 +407,7 @@ function addGroup(parent: FrameNode, model: SearchViewModel, group: SearchViewGr
   title.layoutSizingHorizontal = 'FILL';
   title.cornerRadius = 8;
   if (!group.collapsed) {
-    const triangle = icon(title, 'Disclosure', model.icons.disclosure, model.colors.muted, 10, 7, 7);
+    const triangle = observedIcon(title, 'Disclosure', 'Search / Disclosure', glyphs, 10, 7, 7);
     triangle.opacity = 0.85;
   }
   const labelView = frame(title, 'File name', title.width - g.titleTextLeft - (group.matches.length ? 24 : 8), 17);
@@ -513,6 +515,17 @@ function icon(parent: ComponentNode | FrameNode, name: string, svg: string,
     .replace(/height="24"/, `height="${size}"`).replace(/width="12"/, `width="${size}"`)
     .replace(/height="12"/, `height="${size}"`);
   const node = figma.createNodeFromSvg(recolored);
+  node.name = name;
+  parent.appendChild(node);
+  node.resize(size, size);
+  node.x = x;
+  node.y = y;
+  return node;
+}
+
+function observedIcon(parent: ComponentNode | FrameNode, name: string, use: string,
+  glyphs: IconButtonLibrary, size: number, x: number, y: number): InstanceNode {
+  const node = glyphs.createGlyph(use);
   node.name = name;
   parent.appendChild(node);
   node.resize(size, size);

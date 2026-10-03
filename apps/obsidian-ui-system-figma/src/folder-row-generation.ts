@@ -1,8 +1,10 @@
 import { readFolderRowModels, type FolderRowModel } from './folder-row-data';
 import { fontFailure, requiredFont } from './font-resolution';
+import type { IconButtonLibrary } from './icon-button-generation';
 
 /** Six independent Dark examples: two observed disclosure states at depths 0, 1 and 2. */
-export async function generateFolderRows(probe: unknown): Promise<ComponentNode[]> {
+export async function generateFolderRows(probe: unknown,
+  glyphs: IconButtonLibrary): Promise<ComponentNode[]> {
   const models = readFolderRowModels(probe);
   const first = models[0]!;
   const available = (await figma.listAvailableFontsAsync()).map((item) => item.fontName);
@@ -20,7 +22,7 @@ export async function generateFolderRows(probe: unknown): Promise<ComponentNode[
     preview.fills = [{ type: 'SOLID', color: { r: 40 / 255, g: 40 / 255, b: 40 / 255 } }];
     preview.clipsContent = false;
     const components = models.map((model, index) =>
-      createFolderRow(model, font, preview!, 24 + index * (model.sample.height + 8)));
+      createFolderRow(model, font, preview!, 24 + index * (model.sample.height + 8), glyphs));
     const bounds = figma.currentPage.children.filter((node) => node !== preview)
       .map((node) => node.absoluteBoundingBox).filter((box): box is Rect => box !== null);
     preview.x = bounds.reduce((right, box) => Math.max(right, box.x + box.width), 0) + 64;
@@ -34,7 +36,8 @@ export async function generateFolderRows(probe: unknown): Promise<ComponentNode[
   }
 }
 
-function createFolderRow(model: FolderRowModel, font: FontName, preview: FrameNode, y: number): ComponentNode {
+function createFolderRow(model: FolderRowModel, font: FontName, preview: FrameNode, y: number,
+  glyphs: IconButtonLibrary): ComponentNode {
   if (model.appearance.backgroundCss !== 'rgba(0, 0, 0, 0)') {
     throw new Error('Folder row: background observado não suportado.');
   }
@@ -62,9 +65,11 @@ function createFolderRow(model: FolderRowModel, font: FontName, preview: FrameNo
   disclosure.strokes = [];
   disclosure.clipsContent = false;
   disclosure.constraints = { horizontal: 'MIN', vertical: 'MIN' };
-  const glyph = figma.createNodeFromSvg(disclosureSvg(model));
+  const glyph = glyphs.createGlyph('right-triangle', 'Faint');
   glyph.name = 'Right triangle';
   disclosure.appendChild(glyph);
+  glyph.resize(model.sample.svgSize.width, model.sample.svgSize.height);
+  glyph.rotation = model.disclosure.rotationDeg;
   glyph.x = model.sample.svgOffset.x - model.sample.disclosureOffset.x;
   glyph.y = model.sample.svgOffset.y - model.sample.disclosureOffset.y;
   glyph.constraints = { horizontal: 'MIN', vertical: 'MIN' };
@@ -110,20 +115,6 @@ function createFolderRow(model: FolderRowModel, font: FontName, preview: FrameNo
   ].filter((item): item is string => item !== null);
   if (mismatches.length) throw new Error(`Folder row: Figma alterou ${mismatches.join('; ')}.`);
   return component;
-}
-
-function disclosureSvg(model: FolderRowModel): string {
-  const d = model.disclosure;
-  const color = model.appearance.disclosureColorCss;
-  if (d.viewBox !== '0 0 24 24' || d.path !== 'M3 8L12 17L21 8' ||
-      (d.rotationDeg !== 0 && d.rotationDeg !== -90)) throw new Error('Folder row: SVG não suportado.');
-  const rgb = opaqueRgb(color);
-  const stroke = `rgb(${Math.round(rgb.r * 255)}, ${Math.round(rgb.g * 255)}, ${Math.round(rgb.b * 255)})`;
-  const transform = d.rotationDeg === -90 ? ' transform="rotate(-90 12 12)"' : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${model.sample.svgSize.width}" ` +
-    `height="${model.sample.svgSize.height}" viewBox="${d.viewBox}" fill="none" ` +
-    `stroke="${stroke}" stroke-width="${d.strokeWidth}" stroke-linecap="${d.strokeLinecap}" ` +
-    `stroke-linejoin="${d.strokeLinejoin}"><g${transform}><path d="${d.path}"/></g></svg>`;
 }
 
 function opaqueRgb(css: string): RGB {

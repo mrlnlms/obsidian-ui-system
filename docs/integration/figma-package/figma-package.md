@@ -48,7 +48,7 @@ Os pacotes ficam locais e ignorados por Git. O teste `npm run test:package --wor
 
 ## Projeção experimental de tokens para Figma Variables
 
-A fonte canônica continua sendo `tokens.json` do Package v2. O módulo puro `apps/obsidian-ui-system-figma/src/variable-projection.ts` registra uma decisão para cada identidade sem alterar o package. A ação principal **Generate UI Kit** continua usando v1 e não cria Variables. A ação v2 restrita usa `--button-radius`, `--interactive-normal` e o alias de escopo `--text-color` no Button normal.
+A fonte canônica do diagnóstico causal v2 continua sendo `tokens.json` do Package v2. O módulo puro `apps/obsidian-ui-system-figma/src/variable-projection.ts` registra uma decisão para cada identidade sem alterar o package. A ação principal **Generate UI Kit** usa Package v1 para Button/Search e cria sua própria collection `Obsidian UI / Appearance`, com Variables Dark/Light derivadas da evidência visual pareada dos componentes implementados. Essa collection não substitui o diagnóstico causal de tokens v2. A ação v2 restrita usa `--button-radius`, `--interactive-normal` e o alias de escopo `--text-color` no Button normal.
 
 A análise usou o ZIP local `dev-vault/obsidian-ui-exports/figma-packages/obsidian-ui-package-v2-2026-10-01T21-31-26-285Z.zip` (SHA-256 `718ba4062b001be12d0284263b2de565f05b25b0ff2f5a62651ed1df9d9450a3`). Das 1.181 identidades, 940 resolvem em ambos os modes, 5 somente no Dark, 3 somente no Light e 233 em nenhum. Esses 233 permanecem evidência válida e podem ganhar contexto em capturas futuras.
 
@@ -83,4 +83,4 @@ Para uma comparação reproduzível atual, gere dois novos exports individuais e
 
 ## Limites atuais do importer
 
-No fluxo v1, o pré-voo do ZIP e a geração chamam os leitores de Button e Search separadamente. Os validadores de campos são locais a cada leitor, e a geração remove os sets parciais se uma etapa falhar. Esse fluxo não atualiza Component Sets anteriores nem cria Variables. A ação v2 separada cria somente as três Variables do Button normal descritas acima.
+No fluxo v1, o pré-voo do ZIP e a geração chamam os leitores de Button e Search separadamente. Os validadores de campos são locais a cada leitor. **Generate UI Kit** cria novos Component Sets e a collection `Obsidian UI / Appearance` em uma página vazia; não atualiza nodes anteriores e remove os roots e a collection criados se a execução falhar. A ação v2 separada permanece como regressão da evidência causal e cria somente as três Variables do Button normal descritas acima.

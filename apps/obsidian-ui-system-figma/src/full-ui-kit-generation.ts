@@ -82,9 +82,9 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     const search = await generateSearch(input.components, input.layout);
     organizePublicSets(button, search);
     const rows = await createTreeRowLibrary(folderRowsProbe, activeRowProbe, taggedRowsProbe,
-      filesViewProbe, primitiveTheme);
+      filesViewProbe, primitiveTheme, iconButtons);
     await generateViewHeader(viewHeaderProbe, iconButtons);
-    const workspaceTab = await generateWorkspaceTab(workspaceTabProbe);
+    const workspaceTab = await generateWorkspaceTab(workspaceTabProbe, iconButtons);
     const sidePanel = await generateSidePanel(sidePanelProbe, workspaceTab.set, iconButtons);
     const searchResult = await composeSearchInSidePanel(searchViewProbe, search, sidePanel, iconButtons);
     const filesResult = await composeFilesInSidePanel(filesViewProbe, sidePanel, rows, iconButtons);

@@ -8,6 +8,8 @@ export interface IconButtonLibrary {
   set: ComponentSetNode;
   icons: Map<string, ComponentNode>;
   iconProperty: string;
+  /** Resolve an observed use, or a canonical glyph name for a shared drawing. */
+  createGlyph(name: string, tone?: 'Muted' | 'Selected' | 'Faint'): InstanceNode;
   create(name: string, context?: 'Toolbar' | 'Sidedock' | 'Input',
     state?: 'Default' | 'Disabled', tone?: 'Muted' | 'Opaque'): InstanceNode;
 }
@@ -39,6 +41,7 @@ export function createIconButtonLibrary(sources: IconSource[], theme: PrimitiveV
     vector.resize(16, 16);
     vector.x = 0;
     vector.y = 0;
+    vector.constraints = { horizontal: 'SCALE', vertical: 'SCALE' };
     let bindings = 0;
     for (const node of [vector, ...vector.findAll(() => true)]) {
       if ('fills' in node && node.fills !== figma.mixed) {
@@ -106,13 +109,41 @@ export function createIconButtonLibrary(sources: IconSource[], theme: PrimitiveV
   }
   let x = set.x + set.width + 64;
   for (const icon of icons.values()) { icon.x = x; icon.y = 0; x += 48; }
+  function glyphForUse(name: string): ComponentNode {
+    const icon = icons.get(catalog.byUse.get(name) ?? name);
+    if (!icon) throw new Error(`Glyph: uso ${name} ausente da biblioteca canônica.`);
+    return icon;
+  }
   return { set, icons, iconProperty,
+    createGlyph(name, tone = 'Muted') {
+      const instance = glyphForUse(name).createInstance();
+      if (tone !== 'Muted') {
+        const variable = tone === 'Selected' ? theme.colors.rowSelectedText : theme.colors.disclosure;
+        let bindings = 0;
+        for (const node of instance.findAll(() => true)) {
+          if ('fills' in node && node.fills !== figma.mixed) {
+            const paints = node.fills as readonly Paint[];
+            bindings += paints.filter((paint) => observedGlyphPaint(paint, theme.dark.colors.icon)).length;
+            node.fills = paints.map((paint) => observedGlyphPaint(paint, theme.dark.colors.icon)
+              ? bindObservedGlyphPaint(paint, variable) : paint);
+          }
+          if ('strokes' in node) {
+            const paints = node.strokes as readonly Paint[];
+            bindings += paints.filter((paint) => observedGlyphPaint(paint, theme.dark.colors.icon)).length;
+            node.strokes = paints.map((paint) => observedGlyphPaint(paint, theme.dark.colors.icon)
+              ? bindObservedGlyphPaint(paint, variable) : paint);
+          }
+        }
+        if (!bindings) throw new Error(`Glyph: cor ${tone} não vinculada em ${name}.`);
+      }
+      return instance;
+    },
     create(name, context = 'Toolbar', state = 'Default', tone = 'Muted') {
-      const icon = icons.get(catalog.byUse.get(name) ?? '');
+      const icon = glyphForUse(name);
       const variant = set.children.find((node): node is ComponentNode => node.type === 'COMPONENT' &&
         node.variantProperties?.Context === context && node.variantProperties?.State === state &&
         node.variantProperties?.Tone === tone);
-      if (!icon || !variant) throw new Error(`Icon Button: ${name}/${context}/${state}/${tone} ausente.`);
+      if (!variant) throw new Error(`Icon Button: ${name}/${context}/${state}/${tone} ausente.`);
       const instance = variant.createInstance();
       instance.setProperties({ [iconProperty]: icon.id });
       instance.name = name;

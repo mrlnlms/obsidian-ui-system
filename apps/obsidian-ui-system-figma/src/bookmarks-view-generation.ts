@@ -28,7 +28,7 @@ export async function composeBookmarksInSidePanel(probe: unknown, host: Host,
   try {
     const font = await loadFont(model);
     const actions = createNewActions(model, iconButtons);
-    const rows = createRowSet(model, font, theme);
+    const rows = createRowSet(model, font, theme, iconButtons);
     const component = createView(model, actions, fileActions, rows);
     place([actions, rows, component]);
     const preview = host.preview.clone();
@@ -101,7 +101,7 @@ function createNewActions(model: BookmarksViewModel, iconButtons: IconButtonLibr
 }
 
 function createRowSet(model: BookmarksViewModel, font: FontName,
-  theme: UiKitThemeVariables): ComponentSetNode {
+  theme: UiKitThemeVariables, glyphs: IconButtonLibrary): ComponentSetNode {
   const labels: TextNode[] = [];
   const variants = model.rows.map((row) => {
     const component = figma.createComponent();
@@ -134,9 +134,8 @@ function createRowSet(model: BookmarksViewModel, font: FontName,
       selection.strokes = [];
       selection.opacity = 0.067;
     }
-    const glyph = figma.createNodeFromSvg(
-      (row.kind === 'Group' ? model.icons.group : model.icons.file)
-        .replace(/currentColor/g, 'rgb(179, 179, 179)'));
+    const glyph = glyphs.createGlyph(row.kind === 'Group' ?
+      'Bookmarks row / Disclosure' : 'Bookmarks row / File');
     glyph.name = row.kind === 'Group' ? 'Disclosure' : 'File icon';
     component.appendChild(glyph);
     glyph.resize(model.body.iconSize, model.body.iconSize);

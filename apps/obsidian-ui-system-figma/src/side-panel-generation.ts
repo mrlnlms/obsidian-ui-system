@@ -33,7 +33,7 @@ export async function generateSidePanel(probe: unknown,
     const iconByName = new Map<string, ComponentNode>();
     for (const tab of model.tabs.filter((item) => item.title !== 'Files')) {
       for (const state of ['Active', 'Inactive'] as const) {
-        const icon = createIcon(tab, state);
+        const icon = createIcon(tab, state, iconButtons);
         icons.push(icon);
         iconByName.set(`${tab.title}/${state}`, icon);
       }
@@ -214,15 +214,16 @@ function findProperty(set: ComponentSetNode, name: string, type: 'INSTANCE_SWAP'
   return key;
 }
 
-function createIcon(tab: SidePanelTab, state: TabState): ComponentNode {
+function createIcon(tab: SidePanelTab, state: TabState,
+  glyphs: IconButtonLibrary): ComponentNode {
   const component = figma.createComponent();
   try {
     component.name = `Obsidian / Workspace Tab Icon / ${tab.title} / ${state}`;
     component.description = `Glifo ${tab.title} observado no Sidedock Dark; cor e opacidade ${state}.`;
     component.resize(16, 16);
     component.fills = [];
-    const color = state === 'Active' ? 'rgb(218, 218, 218)' : 'rgb(179, 179, 179)';
-    const glyph = figma.createNodeFromSvg(colorSvg(tab.svg, color, 16));
+    const glyph = glyphs.createGlyph(`Sidedock tab / ${tab.title}`,
+      state === 'Active' ? 'Selected' : 'Muted');
     glyph.name = 'Glyph';
     component.appendChild(glyph);
     glyph.resize(16, 16);
@@ -251,11 +252,6 @@ function verifyPreview(instance: InstanceNode, width: number, model: SidePanelMo
       `(esperado ${expectedToggleX}), View=${view ? `${view.width}×${view.height}` : 'ausente'} ` +
       `(esperado ${width}×${expectedViewHeight}).`);
   }
-}
-
-function colorSvg(svg: string, color: string, size: number): string {
-  return svg.replace('width="24"', `width="${size}"`)
-    .replace('height="24"', `height="${size}"`).replace(/currentColor/g, color);
 }
 
 function paint(css: string): SolidPaint {
