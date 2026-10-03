@@ -1,0 +1,31 @@
+{
+  "format": "obsidian-ui-primitive-theme-evidence",
+  "version": 1,
+  "source": "primitive-theme-probe-2026-10-03.json; Obsidian Desktop 1.14.4; selected file row used temporary is-active class on the real DOM node, then restored",
+  "modes": {
+    "dark": {
+      "iconColorCss": "rgb(179, 179, 179)",
+      "iconRadiusCss": "8px",
+      "iconMutedOpacity": 0.85,
+      "rowDefaultTextCss": "rgb(179, 179, 179)",
+      "rowSelectedTextCss": "rgb(218, 218, 218)",
+      "rowSelectedBackgroundCss": "oklch(0.999994 0.0000497986 none / 0.067)",
+      "rowRadiusCss": "8px",
+      "disclosureColorCss": "rgb(102, 102, 102)",
+      "metadataColorCss": "rgb(102, 102, 102)",
+      "metadataRadiusCss": "4px"
+    },
+    "light": {
+      "iconColorCss": "rgb(92, 92, 92)",
+      "iconRadiusCss": "8px",
+      "iconMutedOpacity": 0.85,
+      "rowDefaultTextCss": "rgb(92, 92, 92)",
+      "rowSelectedTextCss": "rgb(34, 34, 34)",
+      "rowSelectedBackgroundCss": "oklch(0 0 none / 0.067)",
+      "rowRadiusCss": "8px",
+      "disclosureColorCss": "rgb(171, 171, 171)",
+      "metadataColorCss": "rgb(171, 171, 171)",
+      "metadataRadiusCss": "4px"
+    }
+  }
+}

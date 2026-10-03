@@ -1,8 +1,9 @@
 import { readFolderRowModels } from './folder-row-data';
 import { type FilesRow } from './file-explorer-view-data';
 import { fontFailure, requiredFont } from './font-resolution';
-import { fileExplorerBackgroundPaint } from './file-explorer-row-color';
 import { readTreeRowEvidence } from './tree-navigation-row-data';
+import { bindObservedGlyphPaint, boundColorPaint, observedGlyphPaint,
+  type PrimitiveVariables } from './primitive-theme';
 
 export interface TreeRowLibrary {
   set: ComponentSetNode;
@@ -14,7 +15,7 @@ export interface TreeRowLibrary {
 
 /** One native anatomy for the observed Folder/File rows; metadata is content. */
 export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: unknown,
-  taggedProbe: unknown, filesProbe: unknown): Promise<TreeRowLibrary> {
+  taggedProbe: unknown, filesProbe: unknown, theme: PrimitiveVariables): Promise<TreeRowLibrary> {
   const { folders, active, tagged, files } = readTreeRowEvidence(folderProbe, activeProbe,
     taggedProbe, filesProbe);
   const available = (await figma.listAvailableFontsAsync()).map((item) => item.fontName);
@@ -40,7 +41,7 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
   const variants = specs.map((spec) => {
     const row = figma.createComponent();
     row.name = `Kind=${spec.kind}, Depth=${spec.depth}, State=${spec.state}`;
-    row.description = 'Dark observado. Label editável, ellipsis, indentação e metadata opcional.';
+    row.description = 'Dark/Light por Variables. Label editável, ellipsis, indentação e metadata opcional.';
     const sampleWidth = 'disclosure' in spec && spec.disclosure ? spec.disclosure.sample.width :
       spec.state === 'Selected' ? active.sizePx.width :
       spec.depth === 2 ? tagged[0]!.sample.width : files.width - files.body.paddingX * 2;
@@ -52,18 +53,35 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
     row.paddingLeft = 24 + 17 * spec.depth;
     row.paddingRight = 8;
     row.itemSpacing = 0;
-    row.cornerRadius = 8;
-    row.fills = spec.state === 'Selected' ? [fileExplorerBackgroundPaint(active.appearance.backgroundCss)] : [];
+    row.cornerRadius = theme.dark.radii.mediumRadius;
+    row.setBoundVariable('cornerRadius', theme.radii.mediumRadius);
+    row.fills = [];
     row.strokes = [];
     row.constraints = { horizontal: 'STRETCH', vertical: 'MIN' };
+    if (spec.state === 'Selected') {
+      const selection = figma.createRectangle();
+      selection.name = 'Selection background';
+      row.appendChild(selection);
+      selection.layoutPositioning = 'ABSOLUTE';
+      selection.resize(row.width, row.height);
+      selection.x = 0;
+      selection.y = 0;
+      selection.constraints = { horizontal: 'STRETCH', vertical: 'STRETCH' };
+      selection.cornerRadius = theme.dark.radii.mediumRadius;
+      selection.setBoundVariable('cornerRadius', theme.radii.mediumRadius);
+      selection.fills = [boundColorPaint(theme.dark.colors.rowSelectedBackground,
+        theme.colors.rowSelectedBackground)];
+      selection.strokes = [];
+      selection.opacity = theme.dark.selectedOpacity;
+    }
     const label = figma.createText();
     label.name = 'Label';
     row.appendChild(label);
     label.fontName = font;
     label.fontSize = files.body.fontSize;
     label.lineHeight = { unit: 'PIXELS', value: files.body.lineHeight };
-    label.fills = [cssPaint(spec.state === 'Selected' ? active.appearance.labelColorCss :
-      files.body.defaultColor)];
+    const textKey = spec.state === 'Selected' ? 'rowSelectedText' : 'rowDefaultText';
+    label.fills = [boundColorPaint(theme.dark.colors[textKey], theme.colors[textKey])];
     label.characters = spec.label;
     label.textAutoResize = 'NONE';
     label.resize(Math.max(1, row.width - row.paddingLeft - row.paddingRight), files.body.lineHeight);
@@ -83,6 +101,26 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
       icon.resize(observed.sample.svgSize.width, observed.sample.svgSize.height);
       icon.x = observed.sample.svgOffset.x;
       icon.y = observed.sample.svgOffset.y;
+      let disclosureBindings = 0;
+      for (const node of [icon, ...icon.findAll(() => true)]) {
+        if ('fills' in node && node.fills !== figma.mixed) {
+          const paints = node.fills as readonly Paint[];
+          disclosureBindings += paints.filter((paint) =>
+            observedGlyphPaint(paint, theme.dark.colors.disclosure)).length;
+          node.fills = paints.map((paint) => observedGlyphPaint(paint, theme.dark.colors.disclosure)
+            ? bindObservedGlyphPaint(paint, theme.colors.disclosure)
+            : paint);
+        }
+        if ('strokes' in node) {
+          const paints = node.strokes as readonly Paint[];
+          disclosureBindings += paints.filter((paint) =>
+            observedGlyphPaint(paint, theme.dark.colors.disclosure)).length;
+          node.strokes = paints.map((paint) => observedGlyphPaint(paint, theme.dark.colors.disclosure)
+            ? bindObservedGlyphPaint(paint, theme.colors.disclosure)
+            : paint);
+        }
+      }
+      if (!disclosureBindings) throw new Error('Tree Row: disclosure sem paint vinculável.');
     }
     if (spec.kind === 'File' && spec.depth === 2) {
       const tag = figma.createFrame();
@@ -94,7 +132,8 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
       tag.counterAxisAlignItems = 'CENTER';
       tag.paddingLeft = tagged[0]!.appearance.tagPaddingX;
       tag.paddingRight = tagged[0]!.appearance.tagPaddingX;
-      tag.cornerRadius = tagged[0]!.appearance.tagRadius;
+      tag.cornerRadius = theme.dark.radii.metadataRadius;
+      tag.setBoundVariable('cornerRadius', theme.radii.metadataRadius);
       tag.fills = [];
       tag.strokes = [];
       const text = figma.createText();
@@ -104,7 +143,7 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
       text.fontSize = tagged[0]!.tagTypography.fontSize;
       text.lineHeight = { unit: 'PIXELS', value: tagged[0]!.tagTypography.lineHeight };
       text.letterSpacing = { unit: 'PIXELS', value: tagged[0]!.tagTypography.letterSpacing };
-      text.fills = [cssPaint(tagged[0]!.appearance.tagColorCss)];
+      text.fills = [boundColorPaint(theme.dark.colors.metadata, theme.colors.metadata)];
       text.characters = 'JSON';
       text.textAutoResize = 'WIDTH_AND_HEIGHT';
       metadataFrame = tag;
@@ -113,8 +152,8 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
     return row;
   });
   const set = figma.combineAsVariants(variants, figma.currentPage);
-  set.name = 'Obsidian / Tree Navigation Row / Dark';
-  set.description = 'Folder/File compartilham altura, seleção, radius, tipografia, ellipsis e indentação. Extensão é metadata opcional.';
+  set.name = 'Obsidian / Tree Navigation Row';
+  set.description = 'Folder/File compartilham altura, seleção, radius, tipografia, ellipsis e indentação. Dark/Light por Variables; extensão é metadata opcional.';
   const labelProperty = set.addComponentProperty('Label', 'TEXT', specs[0]!.label);
   labels.forEach((label) => { label.componentPropertyReferences = { characters: labelProperty }; });
   const metadataProperty = set.addComponentProperty('Metadata', 'TEXT', 'JSON');
@@ -165,10 +204,4 @@ function disclosureSvg(row: ReturnType<typeof readFolderRowModels>[number]): str
     `fill="none" stroke="${color}" stroke-width="${d.strokeWidth}" ` +
     `stroke-linecap="${d.strokeLinecap}" stroke-linejoin="${d.strokeLinejoin}">` +
     `<g${transform}><path d="${d.path}"/></g></svg>`;
-}
-
-function cssPaint(css: string): SolidPaint {
-  const rgb = /^rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)$/.exec(css)?.slice(1).map(Number);
-  if (!rgb || rgb.some((n) => n > 255)) throw new Error(`Tree Row: cor inválida: ${css}.`);
-  return { type: 'SOLID', color: { r: rgb[0]! / 255, g: rgb[1]! / 255, b: rgb[2]! / 255 } };
 }

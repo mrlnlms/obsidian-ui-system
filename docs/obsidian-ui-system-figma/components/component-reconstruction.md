@@ -9,6 +9,10 @@ Esta é a referência de trabalho para os próximos componentes. Consulte-a junt
 3. Valide raiz e descendentes por eixo. `display:flex` sozinho não demonstra Hug, e uma largura medida em um viewport não demonstra Fixed. Use variação de host e de conteúdo para distinguir os casos; não introduza exceções por ID de componente na inferência genérica.
 4. Obtenha ícones de SVG, máscara ou geometria observável. Se a origem ou geometria não puder ser reconstruída com confiança, registre a lacuna antes de gerar o componente. Não desenhe um substituto aproximado.
 
+Para um primitive com Dark/Light observados, use modes de uma mesma Variable collection para cor e radius compartilhados. Mantenha estado, contexto, profundidade, conteúdo e instance swap como propriedades do Component. Ao importar SVG com `currentColor`, preserve a geometria observada e vincule apenas paints visíveis que tenham a cor observada do glyph; o import pode conter paints invisíveis para os limites do SVG. Preserve `visible`, `opacity` e `blendMode` ao vincular o paint. Não mantenha a cor de um tema gravada no glyph nem duplique o SVG por mode. Se o Figma não preservar a transparência de um fundo selecionado com fill vinculado, use um underlay com `opacity` no node e cor vinculada no fill. Uma composição já validada pode continuar Dark enquanto apenas os primitives vinculados respondem ao mode aplicado à sua instância ancestral. O teste no Figma deve conferir Dark → Light → Dark no Component e na composição, com propriedades, largura e slots preservados.
+
+No readback de opacidade, compare com tolerância para a precisão numérica do Figma. Para confirmar resize, redimensione uma instância e confira as dimensões do underlay; o valor literal de `constraints` não substitui essa verificação de comportamento.
+
 ## Sizing, posicionamento e texto
 
 | Regra inferida | Evidência necessária | Tradução Figma |

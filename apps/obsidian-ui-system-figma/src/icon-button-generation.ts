@@ -1,4 +1,7 @@
-/** Observed SVGs are content; geometry and visual state belong to the button. */
+import { bindObservedGlyphPaint, observedGlyphPaint,
+  type PrimitiveVariables } from './primitive-theme';
+
+/** Observed SVGs are geometry; the shared icon Variable owns their appearance. */
 export interface IconSource { name: string; svg: string; color: string }
 
 export interface IconButtonLibrary {
@@ -9,12 +12,17 @@ export interface IconButtonLibrary {
     state?: 'Default' | 'Disabled', tone?: 'Muted' | 'Opaque'): InstanceNode;
 }
 
-export function createIconButtonLibrary(sources: IconSource[], inputBackground: string): IconButtonLibrary {
+export function createIconButtonLibrary(sources: IconSource[], theme: PrimitiveVariables): IconButtonLibrary {
   if (!sources.length) throw new Error('Icon Button: nenhum SVG observado.');
+  const darkIconCss = `rgb(${Math.round(theme.dark.colors.icon.r * 255)}, ` +
+    `${Math.round(theme.dark.colors.icon.g * 255)}, ${Math.round(theme.dark.colors.icon.b * 255)})`;
   const icons = new Map<string, ComponentNode>();
   for (const source of sources) {
     if (icons.has(source.name) || !source.svg.startsWith('<svg ') ||
-        !source.svg.includes('viewBox="0 0 24 24"') ||
+        !source.svg.includes('viewBox="0 0 24 24"') || !source.svg.includes('currentColor') ||
+        source.color !== darkIconCss ||
+        [...source.svg.matchAll(/\b(?:stroke|fill)="([^"]+)"/g)]
+          .some((match) => match[1] !== 'none' && match[1] !== 'currentColor') ||
         /<script|<foreignObject|\son\w+=|\shref=|\sxlink:href=/i.test(source.svg)) {
       throw new Error(`Icon Button: SVG inválido ou duplicado: ${source.name}.`);
     }
@@ -29,6 +37,28 @@ export function createIconButtonLibrary(sources: IconSource[], inputBackground: 
     vector.resize(16, 16);
     vector.x = 0;
     vector.y = 0;
+    let bindings = 0;
+    for (const node of [vector, ...vector.findAll(() => true)]) {
+      if ('fills' in node && node.fills !== figma.mixed) {
+        const paints = node.fills as readonly Paint[];
+        const count = paints.filter((paint) => observedGlyphPaint(paint, theme.dark.colors.icon)).length;
+        if (count) {
+          node.fills = paints.map((paint) => observedGlyphPaint(paint, theme.dark.colors.icon)
+            ? bindObservedGlyphPaint(paint, theme.colors.icon) : paint);
+          bindings += count;
+        }
+      }
+      if ('strokes' in node) {
+        const paints = node.strokes as readonly Paint[];
+        const count = paints.filter((paint) => observedGlyphPaint(paint, theme.dark.colors.icon)).length;
+        if (count) {
+          node.strokes = paints.map((paint) => observedGlyphPaint(paint, theme.dark.colors.icon)
+            ? bindObservedGlyphPaint(paint, theme.colors.icon) : paint);
+          bindings += count;
+        }
+      }
+    }
+    if (!bindings) throw new Error(`Icon Button: glyph sem paint vinculável: ${source.name}.`);
     icons.set(source.name, icon);
   }
   const first = icons.values().next().value as ComponentNode;
@@ -43,20 +73,21 @@ export function createIconButtonLibrary(sources: IconSource[], inputBackground: 
     const button = figma.createComponent();
     button.name = `Context=${spec.context}, State=${spec.state}, Tone=${spec.tone}`;
     button.resize(spec.width, spec.height);
-    button.fills = spec.context === 'Input' ? [paint(inputBackground)] : [];
+    button.fills = [];
     button.strokes = [];
+    if (spec.context !== 'Sidedock') button.setBoundVariable('cornerRadius', theme.radii.mediumRadius);
     const glyph = first.createInstance();
     glyph.name = 'Icon';
     button.appendChild(glyph);
     glyph.x = spec.iconX;
     glyph.y = spec.iconY;
-    glyph.opacity = spec.tone === 'Muted' ? 0.85 : 1;
+    glyph.opacity = spec.tone === 'Muted' ? theme.dark.mutedOpacity : 1;
     glyph.constraints = { horizontal: 'CENTER', vertical: 'CENTER' };
     return { button, glyph };
   });
   const set = figma.combineAsVariants(variants.map((item) => item.button), figma.currentPage);
-  set.name = 'Obsidian / Icon Button / Dark';
-  set.description = 'Área clicável observada. Context controla geometria; State/Tone controlam o botão; Icon troca o SVG observado.';
+  set.name = 'Obsidian / Icon Button';
+  set.description = 'Área clicável observada. Dark/Light por Variables; Context controla geometria; State/Tone controlam o botão; Icon troca o SVG observado.';
   const iconProperty = set.addComponentProperty('Icon', 'INSTANCE_SWAP', first.id);
   variants.forEach(({ button, glyph }, index) => {
     glyph.componentPropertyReferences = { mainComponent: iconProperty };
@@ -84,10 +115,4 @@ export function createIconButtonLibrary(sources: IconSource[], inputBackground: 
       instance.name = name;
       return instance;
     } };
-}
-
-function paint(css: string): SolidPaint {
-  const rgb = /^rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)$/.exec(css)?.slice(1).map(Number);
-  if (!rgb || rgb.some((n) => n > 255)) throw new Error('Icon Button: cor de Input inválida.');
-  return { type: 'SOLID', color: { r: rgb[0]! / 255, g: rgb[1]! / 255, b: rgb[2]! / 255 } };
 }

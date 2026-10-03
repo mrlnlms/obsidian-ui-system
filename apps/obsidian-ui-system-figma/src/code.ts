@@ -66,7 +66,7 @@ figma.ui.onmessage = async (message: unknown) => {
   try {
     const result = await generateFullUiKit(importedPackage);
     figma.ui.postMessage({ type: 'result', ok: true,
-      text: `UI Kit Dark criado: Button, Search, Icon Button, Tree Navigation Row, ` +
+      text: `UI Kit criado: Button, Search, Icon Button e Tree Navigation Row (Variables Dark/Light), ` +
         `View Header, Workspace Tab, Side Panel, ${result.searchView.name} e ` +
         `${result.filesView.name} e ${result.bookmarksView.name}. ` +
         `Search, Files e Bookmarks estão em previews separados do Side Panel.` });

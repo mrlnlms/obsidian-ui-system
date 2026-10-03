@@ -21,6 +21,9 @@ import { readSearchViewModel } from './search-view-data';
 import { readFileExplorerViewModel } from './file-explorer-view-data';
 import { readBookmarksViewModel } from './bookmarks-view-data';
 import { readTreeRowEvidence } from './tree-navigation-row-data';
+import { createPrimitiveVariables, readPrimitiveThemeEvidence,
+  type PrimitiveVariables } from './primitive-theme';
+import { verifyPrimitiveThemeModes } from './primitive-theme-validation';
 import activeRowProbe from '../tests/fixtures/file-explorer-active-row-probe.json';
 import taggedRowsProbe from '../tests/fixtures/file-explorer-tagged-rows-probe.json';
 import folderRowsProbe from '../tests/fixtures/folder-rows-probe.json';
@@ -30,6 +33,7 @@ import sidePanelProbe from '../tests/fixtures/side-panel-probe.json';
 import searchViewProbe from '../tests/fixtures/search-view-probe.json';
 import filesViewProbe from '../tests/fixtures/file-explorer-view-probe.json';
 import bookmarksViewProbe from '../tests/fixtures/bookmarks-view-probe.json';
+import primitiveThemeProbe from '../tests/fixtures/primitive-theme-probe.json';
 
 /** Checks every included observed fixture before a Figma node is created. */
 export function validateIncludedEvidence(): void {
@@ -43,6 +47,7 @@ export function validateIncludedEvidence(): void {
   readFileExplorerViewModel(filesViewProbe);
   readBookmarksViewModel(bookmarksViewProbe);
   readTreeRowEvidence(folderRowsProbe, activeRowProbe, taggedRowsProbe, filesViewProbe);
+  readPrimitiveThemeEvidence(primitiveThemeProbe);
 }
 
 /** One Package v1, one action, one fresh composition on the current page. */
@@ -52,6 +57,7 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
 }> {
   validateIncludedEvidence();
   const originalRoots = new Set(figma.currentPage.children.map((node) => node.id));
+  let primitiveTheme: PrimitiveVariables | undefined;
   try {
     const filesModel = readFileExplorerViewModel(filesViewProbe);
     const bookmarksModel = readBookmarksViewModel(bookmarksViewProbe);
@@ -69,11 +75,13 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
       { name: 'Search / Match case', svg: searchModel.icons.matchCase, color: searchModel.colors.muted },
       { name: 'Sidedock / Collapse', svg: sideModel.toggleSvg, color: sideModel.toggleIconColor },
     ];
-    const iconButtons = createIconButtonLibrary(iconSources, searchModel.colors.input);
+    primitiveTheme = createPrimitiveVariables(readPrimitiveThemeEvidence(primitiveThemeProbe));
+    const iconButtons = createIconButtonLibrary(iconSources, primitiveTheme);
     const button = await generateButton(input.components, input.layout);
     const search = await generateSearch(input.components, input.layout);
     organizePublicSets(button, search);
-    const rows = await createTreeRowLibrary(folderRowsProbe, activeRowProbe, taggedRowsProbe, filesViewProbe);
+    const rows = await createTreeRowLibrary(folderRowsProbe, activeRowProbe, taggedRowsProbe,
+      filesViewProbe, primitiveTheme);
     await generateViewHeader(viewHeaderProbe, iconButtons);
     const workspaceTab = await generateWorkspaceTab(workspaceTabProbe);
     const sidePanel = await generateSidePanel(sidePanelProbe, workspaceTab.set, iconButtons);
@@ -81,6 +89,10 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     const filesResult = await composeFilesInSidePanel(filesViewProbe, sidePanel, rows, iconButtons);
     const bookmarksResult = await composeBookmarksInSidePanel(bookmarksViewProbe, sidePanel,
       filesResult.actions, iconButtons);
+    verifyPrimitiveThemeModes(primitiveTheme, iconButtons, rows,
+      filesResult.preview, searchResult.preview);
+    figma.currentPage.setExplicitVariableModeForCollection(primitiveTheme.collection,
+      primitiveTheme.modeIds.dark);
     figma.currentPage.selection = [bookmarksResult.preview];
     figma.viewport.scrollAndZoomIntoView([bookmarksResult.preview]);
     return { preview: bookmarksResult.preview, searchView: searchResult.component,
@@ -88,6 +100,10 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
   } catch (error) {
     for (const node of figma.currentPage.children) {
       if (!originalRoots.has(node.id) && !node.removed) node.remove();
+    }
+    if (primitiveTheme) {
+      figma.currentPage.clearExplicitVariableModeForCollection(primitiveTheme.collection);
+      primitiveTheme.collection.remove();
     }
     throw error;
   }

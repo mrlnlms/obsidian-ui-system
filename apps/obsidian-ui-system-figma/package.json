@@ -10,6 +10,7 @@
     "test:file-explorer-row": "esbuild tests/file-explorer-row-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/file-explorer-row-data.test.cjs && node --test ../../.build/file-explorer-row-data.test.cjs",
     "test:folder-row": "esbuild tests/folder-row-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/folder-row-data.test.cjs && node --test ../../.build/folder-row-data.test.cjs",
     "test:tree-row": "esbuild tests/tree-navigation-row-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/tree-navigation-row-data.test.cjs && node --test ../../.build/tree-navigation-row-data.test.cjs",
+    "test:primitive-theme": "esbuild tests/primitive-theme.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/primitive-theme.test.cjs && node --test ../../.build/primitive-theme.test.cjs",
     "test:view-header": "esbuild tests/view-header-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/view-header-data.test.cjs && node --test ../../.build/view-header-data.test.cjs",
     "test:workspace-tab": "esbuild tests/workspace-tab-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/workspace-tab-data.test.cjs && node --test ../../.build/workspace-tab-data.test.cjs",
     "test:side-panel": "esbuild tests/side-panel-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/side-panel-data.test.cjs && node --test ../../.build/side-panel-data.test.cjs",

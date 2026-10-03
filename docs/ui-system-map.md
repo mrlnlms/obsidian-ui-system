@@ -193,7 +193,7 @@ Current Figma status:
 - Folder Row: validated for observed Expanded/Collapsed appearances and depths 0–2;
 - horizontal resize/ellipsis behavior: validated for the bounded observed cases.
 
-The previously validated Explorer rows remain closed. The user requested an incremental Files composition from the scene open in Obsidian on 2026-10-02. Its original version used separate Folder, Default File, and tagged JSON/ZIP Components in the validated Side Panel; the user accepted it in Figma Desktop on 2026-10-03. The current consolidation projects the same bounded states into `Obsidian / Tree Navigation Row / Dark`: `Kind=Folder|File`, only observed depths/states, and editable optional metadata for JSON/ZIP. Files now composes those variants. The user confirmed the new structure in Figma Desktop on 2026-10-03.
+The previously validated Explorer rows remain closed. The user requested an incremental Files composition from the scene open in Obsidian on 2026-10-02. Its original version used separate Folder, Default File, and tagged JSON/ZIP Components in the validated Side Panel; the user accepted it in Figma Desktop on 2026-10-03. The consolidation projects the same bounded states into `Obsidian / Tree Navigation Row`: `Kind=Folder|File`, only observed depths/states, and editable optional metadata for JSON/ZIP. Files composes those variants. The user confirmed the new structure in Figma Desktop on 2026-10-03. A later focused Dark/Light Variable projection is prepared but awaits Desktop mode-switch validation.
 
 The six Folder combinations are variants in that shared set (`State=Expanded|Collapsed`, `Depth=0|1|2`). File Default depths 0/2/3 and Selected depth 0 use the same anatomy. Do not invent unobserved states/depths merely to fill a matrix. The older individual generators remain available for diagnostics but are no longer called by full generation.
 
@@ -208,9 +208,13 @@ These are hosted Views, not generic “sidebar rows”. Bookmarks is also a host
 
 These should be built as **View content systems** placed inside the same workspace/sidedock hosting structure.
 
-The Figma plugin offers one normal Dark generation action on a blank page: select a Package v1 ZIP and click **Generate UI Kit**. The ZIP supplies Button/Search; versioned tracked probes supply the implemented internal Components. The action calls their existing generators in dependency order, passes new Components and the Side Panel host explicitly into Search, Files and Bookmarks View compositions, and places each View in a duplicate of the validated Side Panel preview. No prior Component Set, standalone JSON selection, or individual generator click is required. A failed run removes the new page roots. The bounded Package v2 Button normal Variables pilot keeps its distinct diagnostic inputs. The user accepted the unified flow and Search component-reuse revision on 2026-10-02 and the Files and Bookmarks compositions on 2026-10-03. Each next Component should reuse finished pieces and be added to this full generation path.
+The Figma plugin offers one generation action on a blank page: select a Package v1 ZIP and click **Generate UI Kit**. The ZIP supplies Button/Search; versioned tracked probes supply the implemented internal Components. The action calls their existing generators in dependency order, passes new Components and the Side Panel host explicitly into Search, Files and Bookmarks View compositions, and places each View in a duplicate of the validated Dark Side Panel preview. No prior Component Set, standalone JSON selection, or individual generator click is required. A failed run removes the new page roots and the newly created primitive Variable collection. The bounded Package v2 Button normal Variables pilot keeps its distinct diagnostic inputs. The user accepted the unified flow and Search component-reuse revision on 2026-10-02 and the Files and Bookmarks compositions on 2026-10-03. Each next Component should reuse finished pieces and be added to this full generation path.
 
-Before the next sidebar/ribbon surface, the full action now builds `Obsidian / Icon Button / Dark` and `Obsidian / Tree Navigation Row / Dark` from the already tracked evidence. Icon Button owns the observed 28×24 toolbar geometry, 28×39 Sidedock context and 24×20 Search Match case context, button `State`/`Tone`, and a swappable observed SVG. `Tone=Muted|Opaque` preserves the recorded glyph opacity. Files/Bookmarks header actions, View Header controls, Search settings/Match case and the Side Panel collapse control use instances. Tree Navigation Row owns the common File/Folder row geometry, selection, typography, ellipsis and indent; a trailing tag is optional metadata. The user validated the generated result in Figma Desktop on 2026-10-03; this checkpoint adds no Light, hover or Variables work.
+Before the next sidebar/ribbon surface, the full action builds `Obsidian / Icon Button` and `Obsidian / Tree Navigation Row` from tracked evidence. Icon Button owns the observed 28×24 toolbar geometry, 28×39 Sidedock context and 24×20 Search Match case context, button `State`/`Tone`, and a swappable observed SVG. `Tone=Muted|Opaque` preserves the recorded glyph opacity. Files/Bookmarks header actions, View Header controls, Search settings/Match case and the Side Panel collapse control use instances. Tree Navigation Row owns the common File/Folder row geometry, selection, typography, ellipsis and indent; a trailing tag is optional metadata. The user validated this structure in Figma Desktop on 2026-10-03.
+
+The bounded appearance pass captured these two primitives in real Obsidian Desktop Dark and Light modes; `tests/fixtures/primitive-theme-probe.json` is the focused tracked projection, and the raw runtime probe remains beside the Package ZIPs. One Figma Variable collection owns both modes for icon foreground, row default/selected text, selected background, disclosure and metadata colors, and the observed 8/4 px radii. The icon components retain one canonical observed SVG geometry each; only visible paints matching the observed glyph color bind to the icon Variable, preserving the SVG import's hidden paints and instance swap. State, Context, Kind, Depth, Label and metadata remain Component properties. Default rows and buttons stay transparent; selected background uses a separate bound underlay with 6.7% node opacity so its transparency survives paint binding. Unobserved hover is not added. The generated page explicitly starts in Dark; its Page variable mode controls both sets and their nested instances. The action performs a Dark → Light → Dark readback on the two sets and nested Files/Search previews, including structure and instance-property stability. The first Desktop run exposed opaque SVG bounds and selected fill; the next run stopped at a combined underlay assertion without per-property readback. That check now tolerates numeric opacity normalization, tests actual resize on a temporary selected instance at 200 and 300 px, and reports the measured value if it diverges. **Desktop visual revalidation is pending**. Other components and host backgrounds remain the validated Dark projection.
+
+**Session handoff (2026-10-03):** the Dark structure of both primitives and its reuse in existing Views remain user-validated. The Variable-enabled version is a code checkpoint, not a Figma-validated closure: the latest underlay assertion change has passed local checks but has not been rerun in Figma Desktop. The user reports further errors without details yet; record their exact message or readback at the next run before changing code. Resume with the current **Generate UI Kit** action and a Package v1 ZIP on a blank page; inspect the two Component Sets and Files/Search previews in Dark, switch the page mode to Light and back to Dark, then check selected-row transparency, resize and icon geometry. Resolve only concrete primitive-theme defects found there before starting Outline.
 
 ### 4.5 Document/editor-embedded UI
 
@@ -274,8 +278,8 @@ Side Panel/Sidedock   FIGMA-VALIDATED (bounded Dark left host)
 VIEW CONTENT
 Search                 FIGMA-VALIDATED (bounded Dark Side Panel composition)
 Bookmarks              FIGMA-VALIDATED (bounded Dark Side Panel composition)
-Icon Button            FIGMA-VALIDATED (bounded Dark contexts)
-Tree Navigation Row    FIGMA-VALIDATED (bounded Dark combinations)
+Icon Button            Dark structure FIGMA-VALIDATED; Dark/Light Variables awaiting Desktop check
+Tree Navigation Row    Dark structure FIGMA-VALIDATED; Dark/Light Variables awaiting Desktop check
 Outline                exploratory evidence
 All Properties         shallow evidence
 
@@ -307,9 +311,9 @@ At the end of Phase A, the Figma library should be able to draw a recognizable O
 The validated File Explorer rows remain closed. The user requested a separate hosted Files View composition after that checkpoint.
 
 1. **Search View content — closed for the bounded Dark composition and unified generation:** it reuses Search Filled, editable result Components and the validated Side Panel host. The user accepted the revision on 2026-10-02.
-2. **Files View composition — closed for the bounded Dark excerpt:** its original Folder, Default File, tagged rows and Header Actions were accepted on 2026-10-03. The new primitive-based composition requires comparison with that accepted appearance.
+2. **Files View composition — closed for the bounded Dark excerpt:** its original Folder, Default File, tagged rows and Header Actions were accepted on 2026-10-03. The user also confirmed the primitive-based structure in Figma Desktop on 2026-10-03.
 3. **Bookmarks View content — closed for the bounded Dark composition:** it uses the existing Bookmarks tab and Side Panel host. Its header reuses the Files action Components for the identical New group and Collapse all icons; its own action and row sets cover the observed Dark scene with a group, selected nested bookmark, and a multiline root bookmark. The user accepted the generated result on 2026-10-03.
-4. **Next: Outline View content.** Build it from the already obvious hierarchical/wrapping behavior, couple it to the validated Side Panel host, and add it to the one-action UI Kit generation.
+4. **Next after primitive mode validation: Outline View content.** Build it from the already obvious hierarchical/wrapping behavior, couple it to the validated Side Panel host, and add it to the one-action UI Kit generation.
 5. Add **All Properties View content** only to the level needed to represent the real hosted View.
 
 At the end of Phase B, the UI Kit should support drawing the common side-panel Views shown in Obsidian.
@@ -326,7 +330,7 @@ After the useful component vocabulary exists in Figma:
 
 - consolidate observed states into Component Sets;
 - close important hover/active/disabled gaps;
-- project Dark/Light Variables where evidence exists;
+- project Dark/Light Variables where evidence exists (the Icon Button and Tree Navigation Row subset is prepared; Desktop validation is pending);
 - capture and implement the Workspace Tab Light appearance; the validated Dark set does not establish Light colors or states;
 - normalize naming/sections/properties;
 - only then treat the library as publication-ready.
