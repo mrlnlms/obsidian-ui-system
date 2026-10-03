@@ -2,7 +2,8 @@ import { readButtonImport } from './button-data';
 import { createButtonComponent, loadButtonFont } from './button-component';
 import { generateSearch } from './search-generation';
 import { createTreeRowLibrary } from './tree-navigation-row-generation';
-import { createIconButtonLibrary, type IconSource } from './icon-button-generation';
+import { createIconButtonLibrary } from './icon-button-generation';
+import { observedUiKitGlyphSources } from './glyph-library';
 import { generateViewHeader } from './view-header-generation';
 import { generateWorkspaceTab } from './workspace-tab-generation';
 import { generateSidePanel } from './side-panel-generation';
@@ -69,17 +70,10 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     const headerModel = readViewHeaderModel(viewHeaderProbe);
     const sideModel = readSidePanelModel(sidePanelProbe);
     const searchModel = readSearchViewModel(searchViewProbe);
-    const iconSources: IconSource[] = [
-      ...filesModel.header.actions.map((action) => ({ name: `Files / ${action.name}`,
-        svg: action.svg, color: action.color })),
-      ...bookmarksModel.actions.filter((action) => action.svg).map((action) => ({
-        name: `Bookmarks / ${action.name}`, svg: action.svg!, color: 'rgb(179, 179, 179)' })),
-      ...[...headerModel.navigation, ...headerModel.actions].map((icon) => ({
-        name: `View Header / ${icon.name}`, svg: icon.svgMarkup, color: icon.colorCss })),
-      { name: 'Search / Settings', svg: searchModel.icons.settings, color: searchModel.colors.muted },
-      { name: 'Search / Match case', svg: searchModel.icons.matchCase, color: searchModel.colors.muted },
-      { name: 'Sidedock / Collapse', svg: sideModel.toggleSvg, color: sideModel.toggleIconColor },
-    ];
+    const workspaceModel = readWorkspaceTabModel(workspaceTabProbe);
+    const iconSources = observedUiKitGlyphSources({ files: filesModel,
+      bookmarks: bookmarksModel, header: headerModel, search: searchModel,
+      side: sideModel, workspace: workspaceModel });
     primitiveTheme = createPrimitiveVariables(readPrimitiveThemeEvidence(primitiveThemeProbe));
     const uiKitTheme = extendUiKitThemeVariables(primitiveTheme,
       readUiKitThemeEvidence(uiKitThemeProbe));
@@ -95,7 +89,7 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     const searchResult = await composeSearchInSidePanel(searchViewProbe, search, sidePanel, iconButtons);
     const filesResult = await composeFilesInSidePanel(filesViewProbe, sidePanel, rows, iconButtons);
     const bookmarksResult = await composeBookmarksInSidePanel(bookmarksViewProbe, sidePanel,
-      filesResult.actions, iconButtons);
+      filesResult.actions, iconButtons, uiKitTheme);
     verifyPrimitiveThemeModes(primitiveTheme, iconButtons, rows,
       filesResult.preview, searchResult.preview);
     const newRoots = figma.currentPage.children.filter((node) => !originalRoots.has(node.id));

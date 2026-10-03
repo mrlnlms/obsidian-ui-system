@@ -1,12 +1,12 @@
 import { fileExplorerBackgroundPaint } from './file-explorer-row-color';
 
 export type PrimitiveMode = 'dark' | 'light';
-type ColorKey = 'icon' | 'rowDefaultText' | 'rowSelectedText' | 'rowSelectedBackground' |
+export type PrimitiveColorKey = 'icon' | 'rowDefaultText' | 'rowSelectedText' | 'rowSelectedBackground' |
   'disclosure' | 'metadata';
 type RadiusKey = 'mediumRadius' | 'metadataRadius';
 
 export interface PrimitiveAppearance {
-  colors: Record<ColorKey, RGB>;
+  colors: Record<PrimitiveColorKey, RGB>;
   radii: Record<RadiusKey, number>;
   selectedOpacity: number;
   mutedOpacity: number;
@@ -17,9 +17,10 @@ export interface PrimitiveThemeEvidence { dark: PrimitiveAppearance; light: Prim
 export interface PrimitiveVariables {
   collection: VariableCollection;
   modeIds: Record<PrimitiveMode, string>;
-  colors: Record<ColorKey, Variable>;
+  colors: Record<PrimitiveColorKey, Variable>;
   radii: Record<RadiusKey, Variable>;
   dark: PrimitiveAppearance;
+  light: PrimitiveAppearance;
 }
 
 function rgb(css: unknown): RGB {
@@ -83,9 +84,9 @@ export function createPrimitiveVariables(evidence: PrimitiveThemeEvidence): Prim
     const dark = collection.modes[0]!.modeId;
     collection.renameMode(dark, 'Dark');
     const modeIds = { dark, light: collection.addMode('Light') };
-    const colors = {} as Record<ColorKey, Variable>;
+    const colors = {} as Record<PrimitiveColorKey, Variable>;
     const radii = {} as Record<RadiusKey, Variable>;
-    const colorNames: Record<ColorKey, [string, VariableScope[]]> = {
+    const colorNames: Record<PrimitiveColorKey, [string, VariableScope[]]> = {
       icon: ['icon-button/foreground', ['STROKE_COLOR', 'SHAPE_FILL']],
       rowDefaultText: ['tree-row/text/default', ['TEXT_FILL']],
       rowSelectedText: ['tree-row/text/selected', ['TEXT_FILL']],
@@ -93,7 +94,7 @@ export function createPrimitiveVariables(evidence: PrimitiveThemeEvidence): Prim
       disclosure: ['tree-row/disclosure', ['STROKE_COLOR', 'SHAPE_FILL']],
       metadata: ['tree-row/metadata/text', ['TEXT_FILL']],
     };
-    for (const key of Object.keys(colorNames) as ColorKey[]) {
+    for (const key of Object.keys(colorNames) as PrimitiveColorKey[]) {
       const [name, scopes] = colorNames[key];
       const variable = figma.variables.createVariable(name, collection, 'COLOR');
       variable.scopes = scopes;
@@ -113,7 +114,7 @@ export function createPrimitiveVariables(evidence: PrimitiveThemeEvidence): Prim
       variable.setValueForMode(modeIds.light, evidence.light.radii[key]);
       radii[key] = variable;
     }
-    return { collection, modeIds, colors, radii, dark: evidence.dark };
+    return { collection, modeIds, colors, radii, dark: evidence.dark, light: evidence.light };
   } catch (error) {
     collection.remove();
     throw error;

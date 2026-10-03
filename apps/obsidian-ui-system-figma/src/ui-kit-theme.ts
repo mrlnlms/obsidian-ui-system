@@ -1,4 +1,5 @@
-import type { PrimitiveVariables } from './primitive-theme';
+import { boundColorPaint, type PrimitiveThemeEvidence,
+  type PrimitiveVariables } from './primitive-theme';
 
 const roleNames = ['surfacePrimary', 'surfaceSecondary', 'formField', 'controlFill',
   'controlBorder', 'textNormal', 'textMuted', 'textFaint', 'accentFill',
@@ -84,9 +85,37 @@ const scopes: Record<UiKitColorRole, VariableScope[]> = {
   selectedOverlay: ['FRAME_FILL', 'SHAPE_FILL'],
 };
 
+/** Paired values and bounded Obsidian roles justify these aliases; future divergence may split them. */
+export const primitiveRoleAliases = {
+  icon: 'textMuted', rowDefaultText: 'textMuted', rowSelectedText: 'textNormal',
+  rowSelectedBackground: 'selectedOverlay', disclosure: 'textFaint',
+  metadata: 'textFaint',
+} as const satisfies Record<keyof PrimitiveVariables['colors'], UiKitColorRole>;
+
+export function assertPrimitiveRoleAliases(primitive: PrimitiveThemeEvidence,
+  kit: UiKitThemeEvidence): void {
+  for (const [key, role] of Object.entries(primitiveRoleAliases) as
+    Array<[keyof PrimitiveVariables['colors'], UiKitColorRole]>) {
+    for (const mode of ['dark', 'light'] as const) {
+      const actual = primitive[mode].colors[key];
+      const expected = kit.roles[role][mode];
+      // The selected background came from computed Oklch; its near-white
+      // conversion differs from the RGB overlay by less than one RGB step.
+      const tolerance = key === 'rowSelectedBackground' ? 1 / 255 : 1e-6;
+      if (Math.max(Math.abs(actual.r - expected.r), Math.abs(actual.g - expected.g),
+        Math.abs(actual.b - expected.b)) > tolerance ||
+        (key === 'rowSelectedBackground' &&
+          primitive[mode].selectedOpacity !== kit.roles.selectedOverlay.opacity)) {
+        throw new Error(`UI Kit theme: ${key} e ${role} divergem em ${mode}.`);
+      }
+    }
+  }
+}
+
 /** Extends the already validated primitive collection; there is one page mode for the kit. */
 export function extendUiKitThemeVariables(primitive: PrimitiveVariables,
   evidence: UiKitThemeEvidence): UiKitThemeVariables {
+  assertPrimitiveRoleAliases({ dark: primitive.dark, light: primitive.light }, evidence);
   primitive.collection.name = 'Obsidian UI / Appearance';
   const colors = {} as Record<UiKitColorRole, Variable>;
   for (const role of roleNames) {
@@ -98,7 +127,27 @@ export function extendUiKitThemeVariables(primitive: PrimitiveVariables,
     variable.setValueForMode(primitive.modeIds.light, evidence.roles[role].light);
     colors[role] = variable;
   }
+  for (const [key, role] of Object.entries(primitiveRoleAliases) as
+    Array<[keyof PrimitiveVariables['colors'], UiKitColorRole]>) {
+    const alias: VariableAlias = { type: 'VARIABLE_ALIAS', id: colors[role].id };
+    primitive.colors[key].description = `Primitive role; alias of ${colors[role].name}.`;
+    primitive.colors[key].setValueForMode(primitive.modeIds.dark, alias);
+    primitive.colors[key].setValueForMode(primitive.modeIds.light, alias);
+    for (const modeId of [primitive.modeIds.dark, primitive.modeIds.light]) {
+      const stored = primitive.colors[key].valuesByMode[modeId];
+      if (!stored || typeof stored !== 'object' || !('type' in stored) ||
+          stored.type !== 'VARIABLE_ALIAS' || stored.id !== colors[role].id) {
+        throw new Error(`UI Kit theme: alias ${key} → ${role} não persistiu.`);
+      }
+    }
+  }
   return { primitive, evidence, colors };
+}
+
+/** New generators name the visual role before creating the paint. */
+export function boundUiKitPaint(theme: UiKitThemeVariables, role: UiKitColorRole,
+  opacity = 1): SolidPaint {
+  return boundColorPaint(theme.evidence.roles[role].dark, theme.colors[role], opacity);
 }
 
 /** Classifies only currently observed colors; hidden SVG bounds and already bound paints stay intact. */
@@ -149,6 +198,12 @@ export function bindUiKitTheme(roots: readonly SceneNode[], theme: UiKitThemeVar
       const paints = paintNode[field] as readonly Paint[];
       let changed = false;
       const next = paints.map((paint) => {
+        if (paint.type === 'SOLID' && paint.boundVariables?.color) {
+          const role = roleNames.find((candidate) =>
+            theme.colors[candidate].id === paint.boundVariables?.color?.id);
+          if (role) bindings.push({ role, root, consumer: node });
+          return paint;
+        }
         const role = classifyUiKitPaint(paint, field, theme.evidence, sourceMode(root), node);
         if (!role || paint.type !== 'SOLID') return paint;
         changed = true;

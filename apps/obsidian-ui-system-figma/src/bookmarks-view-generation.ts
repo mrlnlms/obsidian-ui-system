@@ -1,12 +1,14 @@
 import { fontFailure, requiredFont } from './font-resolution';
 import { readBookmarksViewModel, type BookmarksViewModel, type BookmarkRow } from './bookmarks-view-data';
 import type { IconButtonLibrary } from './icon-button-generation';
+import { boundUiKitPaint, type UiKitThemeVariables } from './ui-kit-theme';
 
 interface Host { panel: ComponentNode; group: ComponentSetNode; preview: FrameNode }
 
 /** Adds Bookmarks content to a copy of the validated Side Panel preview. */
 export async function composeBookmarksInSidePanel(probe: unknown, host: Host,
-  fileActions: ComponentSetNode, iconButtons: IconButtonLibrary): Promise<{
+  fileActions: ComponentSetNode, iconButtons: IconButtonLibrary,
+  theme: UiKitThemeVariables): Promise<{
     component: ComponentNode; preview: FrameNode }> {
   const model = readBookmarksViewModel(probe);
   const tab = host.group.children.find((node): node is ComponentNode =>
@@ -26,7 +28,7 @@ export async function composeBookmarksInSidePanel(probe: unknown, host: Host,
   try {
     const font = await loadFont(model);
     const actions = createNewActions(model, iconButtons);
-    const rows = createRowSet(model, font);
+    const rows = createRowSet(model, font, theme);
     const component = createView(model, actions, fileActions, rows);
     place([actions, rows, component]);
     const preview = host.preview.clone();
@@ -98,7 +100,8 @@ function createNewActions(model: BookmarksViewModel, iconButtons: IconButtonLibr
   return set;
 }
 
-function createRowSet(model: BookmarksViewModel, font: FontName): ComponentSetNode {
+function createRowSet(model: BookmarksViewModel, font: FontName,
+  theme: UiKitThemeVariables): ComponentSetNode {
   const labels: TextNode[] = [];
   const variants = model.rows.map((row) => {
     const component = figma.createComponent();
@@ -127,7 +130,7 @@ function createRowSet(model: BookmarksViewModel, font: FontName): ComponentSetNo
       selection.y = 0;
       selection.constraints = { horizontal: 'STRETCH', vertical: 'STRETCH' };
       selection.cornerRadius = 8;
-      selection.fills = [paint('rgb(255, 255, 255)')];
+      selection.fills = [boundUiKitPaint(theme, 'selectedOverlay')];
       selection.strokes = [];
       selection.opacity = 0.067;
     }
@@ -144,7 +147,8 @@ function createRowSet(model: BookmarksViewModel, font: FontName): ComponentSetNo
     label.fontName = font;
     label.fontSize = model.body.fontSize;
     label.lineHeight = { unit: 'PIXELS', value: model.body.lineHeight };
-    label.fills = [paint(row.state === 'Selected' ? 'rgb(218, 218, 218)' : 'rgb(179, 179, 179)')];
+    label.fills = [boundUiKitPaint(theme,
+      row.state === 'Selected' ? 'textNormal' : 'textMuted')];
     label.characters = row.label;
     label.textAutoResize = 'HEIGHT';
     label.resize(component.width - row.labelOffset - 8, model.body.lineHeight);

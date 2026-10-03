@@ -1,13 +1,13 @@
 import type { IconButtonLibrary } from './icon-button-generation';
 import type { TreeRowLibrary } from './tree-navigation-row-generation';
-import type { PrimitiveVariables } from './primitive-theme';
+import type { PrimitiveColorKey, PrimitiveVariables } from './primitive-theme';
 
 type PrimitiveRoot = ComponentSetNode | FrameNode;
 
-function sameColor(actual: VariableValue, expected: RGB): boolean {
+function sameColor(actual: VariableValue, expected: RGB, tolerance = 1e-6): boolean {
   return typeof actual === 'object' && actual !== null && 'r' in actual &&
-    Math.abs(actual.r - expected.r) < 1e-6 && Math.abs(actual.g - expected.g) < 1e-6 &&
-    Math.abs(actual.b - expected.b) < 1e-6;
+    Math.abs(actual.r - expected.r) < tolerance && Math.abs(actual.g - expected.g) < tolerance &&
+    Math.abs(actual.b - expected.b) < tolerance;
 }
 
 function boundText(root: PrimitiveRoot, variable: Variable): TextNode {
@@ -46,24 +46,25 @@ function structure(root: PrimitiveRoot): string {
 /** In-plugin readback: variables resolve through existing nested instances without changing anatomy. */
 export function verifyPrimitiveThemeModes(theme: PrimitiveVariables, icons: IconButtonLibrary,
   rows: TreeRowLibrary, filesPreview: FrameNode, searchPreview: FrameNode): void {
-  const cases = [
-    { root: icons.set, variable: theme.colors.icon,
+  const cases: Array<{ root: PrimitiveRoot; key: PrimitiveColorKey;
+    variable: Variable; consumer: SceneNode }> = [
+    { root: icons.set, key: 'icon', variable: theme.colors.icon,
       consumer: boundGlyph(icons.set, theme.colors.icon) },
-    { root: rows.set, variable: theme.colors.rowDefaultText,
+    { root: rows.set, key: 'rowDefaultText', variable: theme.colors.rowDefaultText,
       consumer: boundText(rows.set, theme.colors.rowDefaultText) },
-    { root: rows.set, variable: theme.colors.rowSelectedText,
+    { root: rows.set, key: 'rowSelectedText', variable: theme.colors.rowSelectedText,
       consumer: boundText(rows.set, theme.colors.rowSelectedText) },
-    { root: rows.set, variable: theme.colors.rowSelectedBackground,
+    { root: rows.set, key: 'rowSelectedBackground', variable: theme.colors.rowSelectedBackground,
       consumer: boundFill(rows.set, theme.colors.rowSelectedBackground) },
-    { root: rows.set, variable: theme.colors.disclosure,
+    { root: rows.set, key: 'disclosure', variable: theme.colors.disclosure,
       consumer: boundGlyph(rows.set, theme.colors.disclosure) },
-    { root: rows.set, variable: theme.colors.metadata,
+    { root: rows.set, key: 'metadata', variable: theme.colors.metadata,
       consumer: boundText(rows.set, theme.colors.metadata) },
-    { root: filesPreview, variable: theme.colors.icon,
+    { root: filesPreview, key: 'icon', variable: theme.colors.icon,
       consumer: boundGlyph(filesPreview, theme.colors.icon) },
-    { root: filesPreview, variable: theme.colors.rowDefaultText,
+    { root: filesPreview, key: 'rowDefaultText', variable: theme.colors.rowDefaultText,
       consumer: boundText(filesPreview, theme.colors.rowDefaultText) },
-    { root: searchPreview, variable: theme.colors.icon,
+    { root: searchPreview, key: 'icon', variable: theme.colors.icon,
       consumer: boundGlyph(searchPreview, theme.colors.icon) },
   ];
   const roots = [icons.set, rows.set, filesPreview, searchPreview];
@@ -84,8 +85,9 @@ export function verifyPrimitiveThemeModes(theme: PrimitiveVariables, icons: Icon
       for (const mode of ['dark', 'light', 'dark'] as const) {
         root.setExplicitVariableModeForCollection(theme.collection, theme.modeIds[mode]);
         for (const item of cases.filter((candidate) => candidate.root === root)) {
-          const expected = item.variable.valuesByMode[theme.modeIds[mode]];
-          if (!expected || !sameColor(item.variable.resolveForConsumer(item.consumer).value, expected as RGB) ||
+          const actual = item.variable.resolveForConsumer(item.consumer).value;
+          if (!sameColor(actual, theme[mode].colors[item.key],
+            item.key === 'rowSelectedBackground' ? 1 / 255 : 1e-6) ||
               item.consumer.resolvedVariableModes[theme.collection.id] !== theme.modeIds[mode]) {
             throw new Error(`Primitive theme: ${item.root.name}/${item.variable.name} não propagou ${mode}.`);
           }

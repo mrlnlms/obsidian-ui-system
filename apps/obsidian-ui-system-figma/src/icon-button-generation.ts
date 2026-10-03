@@ -1,8 +1,8 @@
 import { bindObservedGlyphPaint, observedGlyphPaint,
   type PrimitiveVariables } from './primitive-theme';
+import { canonicalGlyphs, type IconSource } from './glyph-library';
 
-/** Observed SVGs are geometry; the shared icon Variable owns their appearance. */
-export interface IconSource { name: string; svg: string; color: string }
+export type { IconSource } from './glyph-library';
 
 export interface IconButtonLibrary {
   set: ComponentSetNode;
@@ -14,10 +14,11 @@ export interface IconButtonLibrary {
 
 export function createIconButtonLibrary(sources: IconSource[], theme: PrimitiveVariables): IconButtonLibrary {
   if (!sources.length) throw new Error('Icon Button: nenhum SVG observado.');
+  const catalog = canonicalGlyphs(sources);
   const darkIconCss = `rgb(${Math.round(theme.dark.colors.icon.r * 255)}, ` +
     `${Math.round(theme.dark.colors.icon.g * 255)}, ${Math.round(theme.dark.colors.icon.b * 255)})`;
   const icons = new Map<string, ComponentNode>();
-  for (const source of sources) {
+  for (const source of catalog.glyphs) {
     if (icons.has(source.name) || !source.svg.startsWith('<svg ') ||
         !source.svg.includes('viewBox="0 0 24 24"') || !source.svg.includes('currentColor') ||
         source.color !== darkIconCss ||
@@ -27,7 +28,8 @@ export function createIconButtonLibrary(sources: IconSource[], theme: PrimitiveV
       throw new Error(`Icon Button: SVG inválido ou duplicado: ${source.name}.`);
     }
     const icon = figma.createComponent();
-    icon.name = `Obsidian / Icon / ${source.name}`;
+    icon.name = `Obsidian / Glyph / ${source.name}`;
+    icon.description = 'Geometria SVG observada; identidade do glyph independe da ação. Cor pelo papel de ícone.';
     icon.resize(16, 16);
     icon.fills = [];
     icon.strokes = [];
@@ -61,7 +63,8 @@ export function createIconButtonLibrary(sources: IconSource[], theme: PrimitiveV
     if (!bindings) throw new Error(`Icon Button: glyph sem paint vinculável: ${source.name}.`);
     icons.set(source.name, icon);
   }
-  const first = icons.values().next().value as ComponentNode;
+  const first = icons.get(catalog.byUse.get('Files / New note') ?? '') ??
+    icons.values().next().value as ComponentNode;
   const specs = [
     { context: 'Toolbar', state: 'Default', tone: 'Muted', width: 28, height: 24, iconX: 6, iconY: 4 },
     { context: 'Toolbar', state: 'Disabled', tone: 'Muted', width: 28, height: 24, iconX: 6, iconY: 4 },
@@ -87,7 +90,7 @@ export function createIconButtonLibrary(sources: IconSource[], theme: PrimitiveV
   });
   const set = figma.combineAsVariants(variants.map((item) => item.button), figma.currentPage);
   set.name = 'Obsidian / Icon Button';
-  set.description = 'Área clicável observada. Dark/Light por Variables; Context controla geometria; State/Tone controlam o botão; Icon troca o SVG observado.';
+  set.description = 'Área clicável observada. Dark/Light por Variables; Context controla geometria; State/Tone controlam o botão; Icon troca um glyph canônico. A ação pertence ao consumidor.';
   const iconProperty = set.addComponentProperty('Icon', 'INSTANCE_SWAP', first.id);
   variants.forEach(({ button, glyph }, index) => {
     glyph.componentPropertyReferences = { mainComponent: iconProperty };
@@ -105,7 +108,7 @@ export function createIconButtonLibrary(sources: IconSource[], theme: PrimitiveV
   for (const icon of icons.values()) { icon.x = x; icon.y = 0; x += 48; }
   return { set, icons, iconProperty,
     create(name, context = 'Toolbar', state = 'Default', tone = 'Muted') {
-      const icon = icons.get(name);
+      const icon = icons.get(catalog.byUse.get(name) ?? '');
       const variant = set.children.find((node): node is ComponentNode => node.type === 'COMPONENT' &&
         node.variantProperties?.Context === context && node.variantProperties?.State === state &&
         node.variantProperties?.Tone === tone);

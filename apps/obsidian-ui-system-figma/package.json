@@ -11,6 +11,7 @@
     "test:folder-row": "esbuild tests/folder-row-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/folder-row-data.test.cjs && node --test ../../.build/folder-row-data.test.cjs",
     "test:tree-row": "esbuild tests/tree-navigation-row-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/tree-navigation-row-data.test.cjs && node --test ../../.build/tree-navigation-row-data.test.cjs",
     "test:primitive-theme": "esbuild tests/primitive-theme.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/primitive-theme.test.cjs && node --test ../../.build/primitive-theme.test.cjs",
+    "test:glyph-library": "esbuild tests/glyph-library.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/glyph-library.test.cjs && node --test ../../.build/glyph-library.test.cjs",
     "test:ui-kit-theme": "esbuild tests/ui-kit-theme.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/ui-kit-theme.test.cjs && node --test ../../.build/ui-kit-theme.test.cjs",
     "test:view-header": "esbuild tests/view-header-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/view-header-data.test.cjs && node --test ../../.build/view-header-data.test.cjs",
     "test:workspace-tab": "esbuild tests/workspace-tab-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/workspace-tab-data.test.cjs && node --test ../../.build/workspace-tab-data.test.cjs",
