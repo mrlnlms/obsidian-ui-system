@@ -30,6 +30,7 @@ import { verifyUiKitThemeModes } from './ui-kit-theme-validation';
 import { beginAppearanceRun, type AppearanceRun } from './appearance-lifecycle';
 import { reconcileAppearanceCollections,
   type AppearanceMigrationReport } from './appearance-migration';
+import { beginUiKitNodeRun, verifyGeneratedRootsRetained } from './ui-kit-node-lifecycle';
 import activeRowProbe from '../tests/fixtures/file-explorer-active-row-probe.json';
 import taggedRowsProbe from '../tests/fixtures/file-explorer-tagged-rows-probe.json';
 import folderRowsProbe from '../tests/fixtures/folder-rows-probe.json';
@@ -58,18 +59,22 @@ export function validateIncludedEvidence(): void {
   readUiKitThemeEvidence(uiKitThemeProbe);
 }
 
-/** One Package v1, one action, one fresh composition on the current page. */
+/** One Package v1, one action, one file-wide managed composition. */
 export async function generateFullUiKit(input: ImportedPackage): Promise<{
   preview: FrameNode; searchView: ComponentNode; filesView: ComponentNode;
   bookmarksView: ComponentNode; collectionId: string;
+  nodes: { replaced: number; rebound: number; adopted: number };
   migration: AppearanceMigrationReport & { error?: string };
 }> {
   validateIncludedEvidence();
-  const originalRoots = new Set(figma.currentPage.children.map((node) => node.id));
+  const nodeRun = await beginUiKitNodeRun();
+  const originalRoots = nodeRun.originalRootIds;
   let appearanceRun: AppearanceRun | undefined;
   let previousPageMode: string | undefined;
   let completed: { preview: FrameNode; searchView: ComponentNode;
     filesView: ComponentNode; bookmarksView: ComponentNode } | undefined;
+  let generatedRoots: SceneNode[] = [];
+  let nodes: { replaced: number; rebound: number; adopted: number } | undefined;
   try {
     const filesModel = readFileExplorerViewModel(filesViewProbe);
     const bookmarksModel = readBookmarksViewModel(bookmarksViewProbe);
@@ -103,6 +108,7 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     verifyPrimitiveThemeModes(primitiveTheme, iconButtons, rows,
       filesResult.preview, searchResult.preview);
     const newRoots = figma.currentPage.children.filter((node) => !originalRoots.has(node.id));
+    generatedRoots = newRoots;
     const bindings = bindUiKitTheme(newRoots, uiKitTheme, (root) =>
       root.type === 'SECTION' && (root.name === 'Actions' || root.name === 'Inputs')
         ? input.mode : 'dark');
@@ -111,23 +117,24 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     renameThemedComponents(newRoots);
     figma.currentPage.setExplicitVariableModeForCollection(primitiveTheme.collection,
       primitiveTheme.modeIds.dark);
-    figma.currentPage.selection = [bookmarksResult.preview];
-    figma.viewport.scrollAndZoomIntoView([bookmarksResult.preview]);
     completed = { preview: bookmarksResult.preview, searchView: searchResult.component,
       filesView: filesResult.component, bookmarksView: bookmarksResult.component };
+    nodes = await nodeRun.commit(newRoots);
   } catch (error) {
-    for (const node of figma.currentPage.children) {
-      if (!originalRoots.has(node.id) && !node.removed) node.remove();
-    }
-    if (appearanceRun) {
-      if (previousPageMode) figma.currentPage.setExplicitVariableModeForCollection(
-        appearanceRun.collection, previousPageMode);
-      else figma.currentPage.clearExplicitVariableModeForCollection(appearanceRun.collection);
-      appearanceRun.rollback();
+    if (!nodeRun.committed) {
+      for (const node of figma.currentPage.children) {
+        if (!originalRoots.has(node.id) && !node.removed) node.remove();
+      }
+      if (appearanceRun) {
+        if (previousPageMode) figma.currentPage.setExplicitVariableModeForCollection(
+          appearanceRun.collection, previousPageMode);
+        else figma.currentPage.clearExplicitVariableModeForCollection(appearanceRun.collection);
+        appearanceRun.rollback();
+      }
     }
     throw error;
   }
-  if (!appearanceRun || !completed) throw new Error('Appearance: geração sem resultado.');
+  if (!appearanceRun || !completed || !nodes) throw new Error('UI Kit: geração sem resultado.');
   let migration: AppearanceMigrationReport & { error?: string };
   try { migration = await reconcileAppearanceCollections(appearanceRun); }
   catch (error) {
@@ -135,7 +142,10 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
       unrecognized: appearanceRun.unrecognizedNames,
       error: error instanceof Error ? error.message : String(error) };
   }
-  return { ...completed, collectionId: appearanceRun.collection.id, migration };
+  verifyGeneratedRootsRetained(figma.currentPage, generatedRoots);
+  figma.currentPage.selection = [completed.preview];
+  figma.viewport.scrollAndZoomIntoView([completed.preview]);
+  return { ...completed, nodes, collectionId: appearanceRun.collection.id, migration };
 }
 
 async function generateButton(componentsJson: unknown, layoutJson: unknown): Promise<ComponentSetNode> {
