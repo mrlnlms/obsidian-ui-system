@@ -12,6 +12,7 @@ import { readSearchViewModel } from '../src/search-view-data';
 import { readSidePanelModel } from '../src/side-panel-data';
 import { readViewHeaderModel } from '../src/view-header-data';
 import { readWorkspaceTabModel } from '../src/workspace-tab-data';
+import { readOutlineViewModel } from '../src/outline-view-data';
 import bookmarks from './fixtures/bookmarks-view-probe.json';
 import sidePanel from './fixtures/side-panel-probe.json';
 import search from './fixtures/search-view-probe.json';
@@ -19,12 +20,13 @@ import files from './fixtures/file-explorer-view-probe.json';
 import folders from './fixtures/folder-rows-probe.json';
 import header from './fixtures/view-header-probe.json';
 import workspace from './fixtures/workspace-tab-probe.json';
+import outline from './fixtures/outline-view-probe.json';
 
 test('the full generated kit has one canonical glyph per observed geometry', () => {
   const sources = observedUiKitGlyphSources({ files: readFileExplorerViewModel(files),
     bookmarks: readBookmarksViewModel(bookmarks), header: readViewHeaderModel(header),
     search: readSearchViewModel(search), side: readSidePanelModel(sidePanel),
-    workspace: readWorkspaceTabModel(workspace) });
+    workspace: readWorkspaceTabModel(workspace), outline: readOutlineViewModel(outline) });
   const catalog = canonicalGlyphs(sources);
   assert.equal(catalog.byUse.size, sources.length);
   assert.equal(catalog.glyphs.length, new Set(sources.map((source) =>
@@ -34,6 +36,8 @@ test('the full generated kit has one canonical glyph per observed geometry', () 
   assert.equal(catalog.byUse.get('Workspace tab / Inactive'),
     catalog.byUse.get('Sidedock tab / Files'));
   assert.equal(catalog.byUse.get('Search / Disclosure'), 'right-triangle');
+  assert.equal(catalog.byUse.get('Outline / Disclosure'), 'right-triangle');
+  assert.equal(catalog.byUse.get('Outline / Tab'), 'lucide-list');
 });
 
 test('observed SVG geometry is shared across unrelated consumer actions', () => {
@@ -72,7 +76,7 @@ test('fixed glyph consumers do not recreate the catalogued SVG locally', () => {
   const source = (name: string): string => readFileSync(
     join(__dirname, '../apps/obsidian-ui-system-figma/src', name), 'utf8');
   for (const name of ['workspace-tab-generation.ts', 'side-panel-generation.ts',
-    'bookmarks-view-generation.ts', 'tree-navigation-row-generation.ts',
+    'bookmarks-view-generation.ts', 'outline-view-generation.ts', 'tree-navigation-row-generation.ts',
     'folder-row-generation.ts']) {
     assert.doesNotMatch(source(name), /createNodeFromSvg\(/, name);
     assert.match(source(name), /createGlyph\(/, name);

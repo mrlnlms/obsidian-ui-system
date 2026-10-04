@@ -10,6 +10,7 @@ import { generateSidePanel } from './side-panel-generation';
 import { composeSearchInSidePanel } from './search-view-generation';
 import { composeFilesInSidePanel } from './file-explorer-view-generation';
 import { composeBookmarksInSidePanel } from './bookmarks-view-generation';
+import { composeOutlineInSidePanel } from './outline-view-generation';
 import { planUiKitPlacement } from './ui-kit-layout';
 import type { ImportedPackage } from './package-data';
 import { readFileExplorerRowImport } from './file-explorer-row-data';
@@ -21,6 +22,7 @@ import { readSidePanelModel } from './side-panel-data';
 import { readSearchViewModel } from './search-view-data';
 import { readFileExplorerViewModel } from './file-explorer-view-data';
 import { readBookmarksViewModel } from './bookmarks-view-data';
+import { readOutlineViewModel } from './outline-view-data';
 import { readTreeRowEvidence } from './tree-navigation-row-data';
 import { createPrimitiveVariables, readPrimitiveThemeEvidence } from './primitive-theme';
 import { verifyPrimitiveThemeModes } from './primitive-theme-validation';
@@ -41,6 +43,7 @@ import sidePanelProbe from '../tests/fixtures/side-panel-probe.json';
 import searchViewProbe from '../tests/fixtures/search-view-probe.json';
 import filesViewProbe from '../tests/fixtures/file-explorer-view-probe.json';
 import bookmarksViewProbe from '../tests/fixtures/bookmarks-view-probe.json';
+import outlineViewProbe from '../tests/fixtures/outline-view-probe.json';
 import primitiveThemeProbe from '../tests/fixtures/primitive-theme-probe.json';
 import uiKitThemeProbe from '../tests/fixtures/ui-kit-theme-probe.json';
 import publicControlsProbe from '../tests/fixtures/public-toggle-tooltip-probe.json';
@@ -56,6 +59,7 @@ export function validateIncludedEvidence(): void {
   readSearchViewModel(searchViewProbe);
   readFileExplorerViewModel(filesViewProbe);
   readBookmarksViewModel(bookmarksViewProbe);
+  readOutlineViewModel(outlineViewProbe);
   readTreeRowEvidence(folderRowsProbe, activeRowProbe, taggedRowsProbe, filesViewProbe);
   readPrimitiveThemeEvidence(primitiveThemeProbe);
   readUiKitThemeEvidence(uiKitThemeProbe);
@@ -66,6 +70,7 @@ export function validateIncludedEvidence(): void {
 export async function generateFullUiKit(input: ImportedPackage): Promise<{
   preview: FrameNode; searchView: ComponentNode; filesView: ComponentNode;
   bookmarksView: ComponentNode; collectionId: string;
+  outlineView: ComponentNode;
   nodes: { replaced: number; rebound: number; adopted: number };
   migration: AppearanceMigrationReport & { error?: string };
 }> {
@@ -75,19 +80,21 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
   let appearanceRun: AppearanceRun | undefined;
   let previousPageMode: string | undefined;
   let completed: { preview: FrameNode; searchView: ComponentNode;
-    filesView: ComponentNode; bookmarksView: ComponentNode } | undefined;
+    filesView: ComponentNode; bookmarksView: ComponentNode;
+    outlineView: ComponentNode } | undefined;
   let generatedRoots: SceneNode[] = [];
   let nodes: { replaced: number; rebound: number; adopted: number } | undefined;
   try {
     const filesModel = readFileExplorerViewModel(filesViewProbe);
     const bookmarksModel = readBookmarksViewModel(bookmarksViewProbe);
+    const outlineModel = readOutlineViewModel(outlineViewProbe);
     const headerModel = readViewHeaderModel(viewHeaderProbe);
     const sideModel = readSidePanelModel(sidePanelProbe);
     const searchModel = readSearchViewModel(searchViewProbe);
     const workspaceModel = readWorkspaceTabModel(workspaceTabProbe);
     const iconSources = observedUiKitGlyphSources({ files: filesModel,
       bookmarks: bookmarksModel, header: headerModel, search: searchModel,
-      side: sideModel, workspace: workspaceModel });
+      side: sideModel, workspace: workspaceModel, outline: outlineModel });
     appearanceRun = await beginAppearanceRun();
     previousPageMode = figma.currentPage.explicitVariableModes[appearanceRun.collection.id];
     const primitiveTheme = createPrimitiveVariables(readPrimitiveThemeEvidence(primitiveThemeProbe),
@@ -101,7 +108,7 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     const search = await generateSearch(input.components, input.layout);
     organizePublicSets(button, search);
     const rows = await createTreeRowLibrary(folderRowsProbe, activeRowProbe, taggedRowsProbe,
-      filesViewProbe, primitiveTheme, iconButtons);
+      filesViewProbe, primitiveTheme, iconButtons, outlineViewProbe);
     await generateViewHeader(viewHeaderProbe, iconButtons);
     const workspaceTab = await generateWorkspaceTab(workspaceTabProbe, iconButtons);
     const sidePanel = await generateSidePanel(sidePanelProbe, workspaceTab.set, iconButtons);
@@ -110,6 +117,8 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     const filesResult = await composeFilesInSidePanel(filesViewProbe, sidePanel, rows, iconButtons);
     const bookmarksResult = await composeBookmarksInSidePanel(bookmarksViewProbe, sidePanel,
       filesResult.actions, iconButtons, uiKitTheme);
+    const outlineResult = await composeOutlineInSidePanel(outlineViewProbe, sidePanel,
+      workspaceTab.set, bookmarksResult.actions, rows, iconButtons, uiKitTheme);
     verifyPrimitiveThemeModes(primitiveTheme, iconButtons, rows,
       filesResult.preview, searchResult.preview);
     const newRoots = figma.currentPage.children.filter((node) => !originalRoots.has(node.id));
@@ -118,12 +127,13 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
       root.type === 'SECTION' && (root.name === 'Actions' || root.name === 'Inputs')
         ? input.mode : 'dark');
     verifyUiKitThemeModes(uiKitTheme, bindings,
-      [searchResult.preview, filesResult.preview, bookmarksResult.preview]);
+      [searchResult.preview, filesResult.preview, bookmarksResult.preview, outlineResult.preview]);
     renameThemedComponents(newRoots);
     figma.currentPage.setExplicitVariableModeForCollection(primitiveTheme.collection,
       primitiveTheme.modeIds.dark);
     completed = { preview: bookmarksResult.preview, searchView: searchResult.component,
-      filesView: filesResult.component, bookmarksView: bookmarksResult.component };
+      filesView: filesResult.component, bookmarksView: bookmarksResult.component,
+      outlineView: outlineResult.component };
     nodes = await nodeRun.commit(newRoots);
   } catch (error) {
     if (!nodeRun.committed) {

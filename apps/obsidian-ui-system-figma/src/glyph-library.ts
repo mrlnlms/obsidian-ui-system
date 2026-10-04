@@ -5,6 +5,7 @@ import type { SearchViewModel } from './search-view-data';
 import type { SidePanelModel } from './side-panel-data';
 import type { ViewHeaderModel } from './view-header-data';
 import type { WorkspaceTabModel } from './workspace-tab-data';
+import type { OutlineViewModel } from './outline-view-data';
 
 export interface IconSource {
   name: string;
@@ -22,8 +23,9 @@ export interface CanonicalGlyphs {
 export function observedUiKitGlyphSources(models: {
   files: FileExplorerViewModel; bookmarks: BookmarksViewModel; header: ViewHeaderModel;
   search: SearchViewModel; side: SidePanelModel; workspace: WorkspaceTabModel;
+  outline?: OutlineViewModel;
 }): IconSource[] {
-  const { files, bookmarks, header, search, side, workspace } = models;
+  const { files, bookmarks, header, search, side, workspace, outline } = models;
   const muted = 'rgb(179, 179, 179)';
   const anonymousActionGlyph: Record<string, string> = {
     'Bookmark the active tab...': 'bookmark-plus',
@@ -55,6 +57,12 @@ export function observedUiKitGlyphSources(models: {
     { name: 'Search / Settings', svg: search.icons.settings, color: search.colors.muted },
     { name: 'Search / Match case', svg: search.icons.matchCase, color: search.colors.muted },
     { name: 'Sidedock / Collapse', svg: side.toggleSvg, color: side.toggleIconColor },
+    ...(outline ? [
+      ...outline.actions.filter((action) => action.svg).map((action) => ({
+        name: `Outline / ${action.name}`, svg: action.svg!, color: muted })),
+      { name: 'Outline / Tab', svg: outline.tab.svg, color: muted },
+      { name: 'Outline / Disclosure', svg: outline.body.disclosureSvg, color: muted },
+    ] : []),
   ];
 }
 

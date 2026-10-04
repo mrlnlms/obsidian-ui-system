@@ -9,7 +9,7 @@ interface Host { panel: ComponentNode; group: ComponentSetNode; preview: FrameNo
 export async function composeBookmarksInSidePanel(probe: unknown, host: Host,
   fileActions: ComponentSetNode, iconButtons: IconButtonLibrary,
   theme: UiKitThemeVariables): Promise<{
-    component: ComponentNode; preview: FrameNode }> {
+    component: ComponentNode; preview: FrameNode; actions: ComponentSetNode }> {
   const model = readBookmarksViewModel(probe);
   const tab = host.group.children.find((node): node is ComponentNode =>
     node.type === 'COMPONENT' && node.variantProperties?.Active === 'Bookmarks');
@@ -51,7 +51,7 @@ export async function composeBookmarksInSidePanel(probe: unknown, host: Host,
     } finally { resized.remove(); }
     figma.currentPage.selection = [preview];
     figma.viewport.scrollAndZoomIntoView([preview]);
-    return { component, preview };
+    return { component, preview, actions };
   } catch (error) {
     for (const node of figma.currentPage.children) {
       if (!roots.has(node.id) && !node.removed) node.remove();

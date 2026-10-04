@@ -37,6 +37,8 @@ Registre cada SVG observado pelo desenho, separado da ação que o usa. `Obsidia
 
 Para preservar a espessura aparente do traço, importe o SVG no viewBox observado e use `rescale` até o tamanho real do glyph canônico (24 → 16 px no kit), incluindo o stroke. Ao usar o mesmo glyph a 10 px, escale a instância com `rescale`; `resize` de limites mantém o traço grosso. O disclosure observado aponta para baixo em Expanded e usa rotação CSS −90° para apontar à direita em Collapsed; a matriz no Figma deve reproduzir essa direção em torno do centro, pois a convenção de ângulo do Figma tem sinal oposto. O X de Close conserva os dois paths observados e recebe a mesma escala de traço na fonte canônica. A guia de `.nav-folder-children` é um Component separado de 1 px, vinculado ao token Dark/Light próprio e composto por intervalo de descendentes no Files; não pertence ao SVG de disclosure nem a uma row isolada. Confirme a aparência óptica no Figma Desktop, porque testes de código não renderizam o canvas.
 
+Outline reutiliza esse mesmo Component de guia em `.tree-item-children`, cuja borda observada também tem 1 px e 12% de opacidade. Como suas linhas têm altura variável, a instância da guia fica dentro de um Frame de filhos com altura Hug e constraint vertical Stretch. Não calcule a altura da guia por número de linhas quando o texto puder quebrar ou ser editado.
+
 ## Sizing, posicionamento e texto
 
 | Regra inferida | Evidência necessária | Tradução Figma |

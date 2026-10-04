@@ -76,8 +76,8 @@ figma.ui.onmessage = async (message: unknown) => {
     figma.ui.postMessage({ type: 'result', ok: true,
       text: `UI Kit gerenciado: Button, Search, Icon Button e Tree Navigation Row (Variables Dark/Light), ` +
         `View Header, Workspace Tab, Side Panel, ${result.searchView.name} e ` +
-        `${result.filesView.name} e ${result.bookmarksView.name}. ` +
-        `Search, Files e Bookmarks estão em previews separados do Side Panel. ` +
+        `${result.filesView.name}, ${result.bookmarksView.name} e ${result.outlineView.name}. ` +
+        `Search, Files, Bookmarks e Outline estão em previews separados do Side Panel. ` +
         `${result.nodes.adopted} geração(ões) legada(s) adotada(s); ` +
         `${result.nodes.replaced} raiz(es) anteriores substituídas; ` +
         `${result.nodes.rebound} instância(s) externa(s) migrada(s).` + appearanceNote });

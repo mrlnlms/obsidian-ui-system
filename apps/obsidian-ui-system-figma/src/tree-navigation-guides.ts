@@ -2,6 +2,9 @@ import type { FilesRow } from './file-explorer-view-data';
 
 export interface TreeGuideSegment { x: number; y: number; height: number; depth: number }
 
+/** Inset of a children-container border from the tree's content origin. */
+export function treeGuideInset(depth: number): number { return 12 + 17 * depth; }
+
 /** A guide is the left border of an expanded folder's children container. */
 export function treeGuideSegments(rows: readonly FilesRow[], rowHeight: number, rowGap: number,
   paddingTop: number, paddingX: number): TreeGuideSegment[] {
@@ -14,7 +17,7 @@ export function treeGuideSegments(rows: readonly FilesRow[], rowHeight: number, 
     const descendants = end - index - 1;
     if (!descendants) continue;
     segments.push({ depth: row.depth,
-      x: paddingX + 12 + 17 * row.depth,
+      x: paddingX + treeGuideInset(row.depth),
       y: paddingTop + (index + 1) * (rowHeight + rowGap),
       height: descendants * rowHeight + (descendants - 1) * rowGap });
   }

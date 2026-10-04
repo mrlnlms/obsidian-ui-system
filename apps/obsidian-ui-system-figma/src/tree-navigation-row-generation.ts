@@ -4,6 +4,7 @@ import { readTreeRowEvidence } from './tree-navigation-row-data';
 import { boundColorPaint, type PrimitiveVariables } from './primitive-theme';
 import type { IconButtonLibrary } from './icon-button-generation';
 import { placeDisclosure } from './disclosure-rendering';
+import { readOutlineViewModel, type OutlineRow } from './outline-view-data';
 
 export interface TreeRowLibrary {
   set: ComponentSetNode;
@@ -13,14 +14,16 @@ export interface TreeRowLibrary {
   metadataVisibleProperty: string;
   createGuide(height: number): InstanceNode;
   create(row: FilesRow): InstanceNode;
+  createOutline(row: OutlineRow): InstanceNode;
 }
 
 /** One native anatomy for the observed Folder/File rows; metadata is content. */
 export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: unknown,
   taggedProbe: unknown, filesProbe: unknown, theme: PrimitiveVariables,
-  glyphs: IconButtonLibrary): Promise<TreeRowLibrary> {
+  glyphs: IconButtonLibrary, outlineProbe?: unknown): Promise<TreeRowLibrary> {
   const { folders, active, tagged, files } = readTreeRowEvidence(folderProbe, activeProbe,
     taggedProbe, filesProbe);
+  const outline = outlineProbe === undefined ? undefined : readOutlineViewModel(outlineProbe);
   const available = (await figma.listAvailableFontsAsync()).map((item) => item.fontName);
   const font = requiredFont({ cssStack: files.body.fontFamily, platform: 'macos', weight: 400,
     style: 'normal' }, available);
@@ -37,6 +40,9 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
     { kind: 'File' as const, depth: 0, state: 'Default', label: 'File' },
     { kind: 'File' as const, depth: 2, state: 'Default', label: tagged[0]!.label },
     { kind: 'File' as const, depth: 3, state: 'Default', label: 'File' },
+    ...(outline?.body.rows.map((row) => ({ kind: 'Outline' as const, depth: row.depth,
+      state: row.hasChildren ? 'Expanded' as const : row.state,
+      label: row.label, outline: true as const, hasChildren: row.hasChildren })) ?? []),
   ];
   const labels: TextNode[] = [];
   let metadataText: TextNode | undefined;
@@ -44,17 +50,22 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
   const variants = specs.map((spec) => {
     const row = figma.createComponent();
     row.name = `Kind=${spec.kind}, Depth=${spec.depth}, State=${spec.state}`;
-    row.description = 'Dark/Light por Variables. Label editável, ellipsis, indentação e metadata opcional.';
+    const wraps = 'outline' in spec && spec.outline;
+    row.description = wraps
+      ? 'Mesma anatomia de navegação; Label editável quebra linhas e a altura acompanha o texto.'
+      : 'Dark/Light por Variables. Label editável, ellipsis, indentação e metadata opcional.';
     const sampleWidth = 'disclosure' in spec && spec.disclosure ? spec.disclosure.sample.width :
       spec.state === 'Selected' ? active.sizePx.width :
-      spec.depth === 2 ? tagged[0]!.sample.width : files.width - files.body.paddingX * 2;
+      spec.kind === 'File' && spec.depth === 2 ? tagged[0]!.sample.width :
+      files.width - files.body.paddingX * 2;
     row.resize(sampleWidth, files.body.rowHeight);
     row.layoutMode = 'HORIZONTAL';
     row.primaryAxisSizingMode = 'FIXED';
-    row.counterAxisSizingMode = 'FIXED';
+    row.counterAxisSizingMode = wraps ? 'AUTO' : 'FIXED';
     row.counterAxisAlignItems = 'CENTER';
     row.paddingLeft = 24 + 17 * spec.depth;
     row.paddingRight = 8;
+    if (wraps) { row.paddingTop = 4; row.paddingBottom = 4; }
     row.itemSpacing = 0;
     row.cornerRadius = theme.dark.radii.mediumRadius;
     row.setBoundVariable('cornerRadius', theme.radii.mediumRadius);
@@ -86,10 +97,17 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
     const textKey = spec.state === 'Selected' ? 'rowSelectedText' : 'rowDefaultText';
     label.fills = [boundColorPaint(theme.dark.colors[textKey], theme.colors[textKey])];
     label.characters = spec.label;
-    label.textAutoResize = 'NONE';
+    label.textAutoResize = wraps ? 'HEIGHT' : 'NONE';
     label.resize(Math.max(1, row.width - row.paddingLeft - row.paddingRight), files.body.lineHeight);
-    label.textTruncation = 'ENDING';
-    label.layoutGrow = 1;
+    label.textTruncation = wraps ? 'DISABLED' : 'ENDING';
+    if (wraps) {
+      // Height auto-resize on the TextNode alone does not make its containing
+      // instance hug when the View later narrows it. Both axes need a layout
+      // contract so the next tree row is placed below the wrapped label.
+      label.layoutSizingHorizontal = 'FILL';
+      label.layoutSizingVertical = 'HUG';
+      row.layoutSizingVertical = 'HUG';
+    } else label.layoutGrow = 1;
     label.minWidth = 1;
     if (label.hasMissingFont || label.width <= 0 || label.height <= 0) {
       throw fontFailure(font, 'Tree Row: Label não renderizou.');
@@ -103,6 +121,15 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
       icon.layoutPositioning = 'ABSOLUTE';
       placeDisclosure(icon, observed.sample.svgOffset.x, observed.sample.svgOffset.y,
         observed.disclosure.rotationDeg);
+    } else if (wraps && spec.hasChildren) {
+      const icon = glyphs.createGlyph('right-triangle', 'Faint', outline!.body.disclosureSize);
+      icon.name = 'Disclosure';
+      row.appendChild(icon);
+      icon.layoutPositioning = 'ABSOLUTE';
+      icon.x = 4 + 17 * spec.depth;
+      icon.y = 7.45;
+      icon.opacity = theme.dark.mutedOpacity;
+      icon.constraints = { horizontal: 'MIN', vertical: 'MIN' };
     }
     if (spec.kind === 'File' && spec.depth === 2) {
       const tag = figma.createFrame();
@@ -135,7 +162,7 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
   });
   const set = figma.combineAsVariants(variants, figma.currentPage);
   set.name = 'Obsidian / Tree Navigation Row';
-  set.description = 'Folder/File compartilham altura, seleção, radius, tipografia, ellipsis e indentação. Dark/Light por Variables; extensão é metadata opcional.';
+  set.description = 'Folder, File e Outline compartilham seleção, radius, tipografia e indentação. Files usa ellipsis; Outline permite quebra e altura variável. Dark/Light por Variables; metadata é opcional.';
   const labelProperty = set.addComponentProperty('Label', 'TEXT', specs[0]!.label);
   labels.forEach((label) => { label.componentPropertyReferences = { characters: labelProperty }; });
   const metadataProperty = set.addComponentProperty('Metadata', 'TEXT', 'JSON');
@@ -143,9 +170,14 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
   if (!metadataText || !metadataFrame) throw new Error('Tree Row: metadata observada ausente.');
   metadataText.componentPropertyReferences = { characters: metadataProperty };
   metadataFrame.componentPropertyReferences = { visible: metadataVisibleProperty };
-  variants.forEach((variant, index) => { variant.x = 20; variant.y = 20 + index * 45; });
-  set.resizeWithoutConstraints(Math.max(...variants.map((node) => node.width)) + 40,
-    20 + variants.length * 45);
+  const previousCount = folders.length + 4;
+  let nextY = 20 + previousCount * 45;
+  variants.forEach((variant, index) => {
+    variant.x = 20;
+    variant.y = index < previousCount ? 20 + index * 45 : nextY;
+    if (index >= previousCount) nextY += variant.height + 20;
+  });
+  set.resizeWithoutConstraints(Math.max(...variants.map((node) => node.width)) + 40, nextY);
   set.x = figma.currentPage.children.filter((node) => node !== set)
     .map((node) => node.absoluteBoundingBox).filter((box): box is Rect => box !== null)
     .reduce((right, box) => Math.max(right, box.x + box.width), 0) + 64;
@@ -189,6 +221,19 @@ export async function createTreeRowLibrary(folderProbe: unknown, activeProbe: un
         instance.setProperties({ [metadataVisibleProperty]: false });
       }
       instance.name = `${kind} / ${item.label}`;
+      return instance;
+    },
+    createOutline(item) {
+      if (!outline) throw new Error('Tree Row: Outline não incluído nesta geração.');
+      const state = item.hasChildren ? 'Expanded' : item.state;
+      const variant = set.children.find((node): node is ComponentNode => node.type === 'COMPONENT' &&
+        node.variantProperties?.Kind === 'Outline' &&
+        node.variantProperties?.Depth === String(item.depth) &&
+        node.variantProperties?.State === state);
+      if (!variant) throw new Error(`Tree Row: Outline/${item.depth}/${state} ausente.`);
+      const instance = variant.createInstance();
+      instance.setProperties({ [labelProperty]: item.label });
+      instance.name = `Outline / ${item.label}`;
       return instance;
     } };
 }
