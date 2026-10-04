@@ -18,6 +18,11 @@ test('reads the observed query controls and file-grouped results', () => {
     ['Properties probe', false, 2], ['README', false, 2],
   ]);
   assert.ok(model.groups[1]!.matches[0]!.height > model.groups[0]!.matches[0]!.height);
+  assert.ok(model.groups[1]!.matches[0]!.expandedText!.length >
+    model.groups[1]!.matches[0]!.text.length);
+  assert.match(model.icons.sort, /m7 15 5 5 5-5/);
+  assert.match(model.icons.contextUp, /lucide-chevron-up/);
+  assert.match(model.icons.contextDown, /lucide-chevron-down/);
 });
 
 test('rejects a different theme, missing file group and unsafe SVG', () => {

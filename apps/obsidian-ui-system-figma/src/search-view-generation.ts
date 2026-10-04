@@ -1,17 +1,15 @@
 import { fontFailure, requiredFont } from './font-resolution';
 import { readSearchViewModel, type SearchViewGroup, type SearchViewModel } from './search-view-data';
-import type { IconButtonLibrary } from './icon-button-generation';
+import { rebindGlyphTone, type IconButtonLibrary } from './icon-button-generation';
 import { boundUiKitPaint, type UiKitThemeVariables } from './ui-kit-theme';
-
-// Sort chevrons belong only to this existing Search composition; no observed SVG
-// for this drawing is present in the fixed canonical glyph evidence.
-const SORT_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>';
+import type { PublicControlsLibrary } from './public-controls-generation';
 
 /** Creates a new reusable Search composition and duplicates the validated Side Panel preview. */
 export async function composeSearchInSidePanel(probe: unknown,
   searchSet: ComponentSetNode, host: {
     panel: ComponentNode; group: ComponentSetNode; preview: FrameNode;
-  }, iconButtons: IconButtonLibrary, theme: UiKitThemeVariables): Promise<{
+  }, iconButtons: IconButtonLibrary, theme: UiKitThemeVariables,
+  publicControls: PublicControlsLibrary): Promise<{
   component: ComponentNode; preview: FrameNode;
 }> {
   const model = readSearchViewModel(probe);
@@ -19,7 +17,8 @@ export async function composeSearchInSidePanel(probe: unknown,
   const existingRoots = new Set(figma.currentPage.children.map((node) => node.id));
   let preview: FrameNode | undefined;
   try {
-    const component = await generateSearchView(probe, searchSet, iconButtons, theme);
+    const component = await generateSearchView(probe, searchSet, iconButtons, theme,
+      publicControls);
 
     preview = target.preview.clone();
     preview.name = 'Side Panel / Dark resize preview / Search';
@@ -33,6 +32,23 @@ export async function composeSearchInSidePanel(probe: unknown,
       instance.setProperties({ [target.viewProperty]: component.id,
         [target.tabProperty]: target.searchTab.id });
       await verifyHostedSearch(instance, component, target.searchTab, model);
+    }
+    const openPreview = preview.clone();
+    openPreview.name = 'Side Panel / Dark resize preview / Search options';
+    openPreview.x = preview.x + preview.width + 64;
+    const optionsProperty = findProperty(component, 'Show options', 'BOOLEAN');
+    for (const panel of openPreview.children.filter((node): node is InstanceNode =>
+      node.type === 'INSTANCE')) {
+      const hosted = panel.findOne((node) => node.type === 'INSTANCE' &&
+        node.name === 'Hosted View');
+      if (hosted?.type !== 'INSTANCE') throw new Error('Search View: slot de opções ausente.');
+      hosted.setProperties({ [optionsProperty]: true });
+      const options = hosted.findOne((node) => node.name === 'Search options');
+      if (!options?.visible) throw new Error('Search View: opções abertas não apareceram.');
+      const settings = hosted.findOne((node) => node.type === 'INSTANCE' &&
+        node.name === 'Search settings');
+      if (settings?.type === 'INSTANCE') settings.setProperties({ State: 'Active' });
+      await verifyHostedSearch(panel, component, target.searchTab, model);
     }
     const resizeProbe = target.panel.createInstance();
     try {
@@ -83,7 +99,7 @@ async function inspectSidePanelHost(host: {
 }
 
 function findProperty(component: ComponentNode | ComponentSetNode, name: string,
-  type: 'TEXT' | 'INSTANCE_SWAP'): string {
+  type: 'TEXT' | 'INSTANCE_SWAP' | 'BOOLEAN'): string {
   const key = Object.keys(component.componentPropertyDefinitions).find((item) =>
     item.startsWith(`${name}#`) && component.componentPropertyDefinitions[item]?.type === type);
   if (!key) throw new Error(`Search View: propriedade ${name} ausente em ${component.name}.`);
@@ -137,7 +153,7 @@ async function verifyHostedSearch(panelInstance: InstanceNode, content: Componen
 /** First bounded Dark Search View content; suitable for the Side Panel Hosted View slot. */
 export async function generateSearchView(probe: unknown,
   searchSet: ComponentSetNode, iconButtons: IconButtonLibrary,
-  theme: UiKitThemeVariables): Promise<ComponentNode> {
+  theme: UiKitThemeVariables, publicControls: PublicControlsLibrary): Promise<ComponentNode> {
   const model = readSearchViewModel(probe);
   const search = findFilledSearch(searchSet);
   const available = (await figma.listAvailableFontsAsync()).map((item) => item.fontName);
@@ -156,9 +172,11 @@ export async function generateSearchView(probe: unknown,
   figma.ui.postMessage({ type: 'typography', text: `Typography: ${font.family} / ${font.style} ✓` });
 
   let component: ComponentNode | undefined;
-  const parts: ComponentNode[] = [];
+  const parts: SceneNode[] = [];
   try {
-    const field = createGlobalSearchField(model, search, iconButtons);
+    const matchCase = createMatchCaseControl(iconButtons, theme);
+    parts.push(matchCase);
+    const field = createGlobalSearchField(model, search, matchCase);
     parts.push(field);
     component = figma.createComponent();
     component.name = 'Obsidian / Search View / Dark';
@@ -172,9 +190,19 @@ export async function generateSearchView(probe: unknown,
     component.strokes = [];
     component.clipsContent = true;
 
-    addSearchRow(component, model, field, parts, iconButtons);
-    addResultsInfo(component, model, font, parts, iconButtons);
-    const results = addResults(component, model, font, parts, iconButtons, theme);
+    addSearchRow(component, model, field, parts, iconButtons, theme);
+    const options = createSearchOptions(model, font, publicControls, theme);
+    parts.push(options);
+    const optionsInstance = options.createInstance();
+    optionsInstance.name = 'Search options';
+    component.appendChild(optionsInstance);
+    optionsInstance.layoutSizingHorizontal = 'FILL';
+    optionsInstance.visible = false;
+    const optionsProperty = component.addComponentProperty('Show options', 'BOOLEAN', false);
+    optionsInstance.componentPropertyReferences = { visible: optionsProperty };
+    addResultsInfo(component, model, font, parts, iconButtons, theme);
+    const results = addResults(component, model, font, parts, iconButtons, theme,
+      publicControls);
     if (component.width !== model.width || results.width !== model.width) {
       throw new Error('Search View: propriedades ou largura da composição divergentes.');
     }
@@ -208,8 +236,126 @@ function findFilledSearch(set: ComponentSetNode): { variant: ComponentNode; valu
   return { variant, valueProperty: findProperty(set, 'Value', 'TEXT') };
 }
 
+function stateVariant(set: ComponentSetNode, state: string): ComponentNode {
+  const variant = set.children.find((node): node is ComponentNode =>
+    node.type === 'COMPONENT' && node.variantProperties?.State === state);
+  if (!variant) throw new Error(`Search View: variant ${state} ausente em ${set.name}.`);
+  return variant;
+}
+
+function addStateUnderlay(component: ComponentNode, theme: UiKitThemeVariables,
+  role: 'selectedOverlay' | 'accentFill', opacity: number): void {
+  const underlay = figma.createRectangle();
+  underlay.name = 'State background';
+  component.insertChild(0, underlay);
+  underlay.resize(component.width, component.height);
+  underlay.x = 0;
+  underlay.y = 0;
+  underlay.cornerRadius = 8;
+  underlay.fills = [boundUiKitPaint(theme, role)];
+  underlay.strokes = [];
+  underlay.opacity = opacity;
+}
+
+/** Search's inline 24×20 control is structurally distinct from Icon Button. */
+function createMatchCaseControl(glyphs: IconButtonLibrary,
+  theme: UiKitThemeVariables): ComponentSetNode {
+  const variants = (['Default', 'Hover', 'Active'] as const).map((state) => {
+    const component = figma.createComponent();
+    component.name = `State=${state}`;
+    component.resize(24, 20);
+    component.fills = [];
+    component.strokes = [];
+    component.cornerRadius = 8;
+    if (state === 'Hover') addStateUnderlay(component, theme, 'selectedOverlay', 0.067);
+    const icon = glyphs.createGlyph('Search / Match case');
+    icon.name = 'Aa';
+    component.appendChild(icon);
+    icon.x = 4;
+    icon.y = 2;
+    if (state === 'Active' && !rebindGlyphTone(icon,
+      theme.primitive.colors.icon, theme.colors.iconActive, theme.primitive.dark.colors.icon)) {
+      throw new Error('Search View: Aa ativo sem Variable de foreground.');
+    }
+    return component;
+  });
+  const set = figma.combineAsVariants(variants, figma.currentPage);
+  set.name = 'Obsidian / Search / Match case';
+  set.description = 'Controle inline observado, com glyph Aa canônico; State=Default/Hover/Active. O estado ativo muda a cor, sem duplicar a geometria.';
+  variants.forEach((item, index) => { item.x = 16; item.y = 16 + index * 48; });
+  return set;
+}
+
+function createSettingsControl(glyphs: IconButtonLibrary,
+  theme: UiKitThemeVariables): ComponentSetNode {
+  const variants = (['Default', 'Hover', 'Active'] as const).map((state) => {
+    const component = figma.createComponent();
+    component.name = `State=${state}`;
+    component.resize(28, 24);
+    component.fills = [];
+    component.strokes = [];
+    component.cornerRadius = 8;
+    if (state === 'Hover') addStateUnderlay(component, theme, 'selectedOverlay', 0.067);
+    if (state === 'Active') addStateUnderlay(component, theme, 'accentFill', 0.1);
+    const button = glyphs.create('Search / Settings', 'Toolbar', 'Default', 'Opaque');
+    button.name = 'Icon Button';
+    component.appendChild(button);
+    button.x = 0;
+    button.y = 0;
+    if (state === 'Active' && !rebindGlyphTone(button,
+      theme.primitive.colors.icon, theme.colors.iconActive, theme.primitive.dark.colors.icon)) {
+      throw new Error('Search View: Settings ativo sem Variable de foreground.');
+    }
+    return component;
+  });
+  const set = figma.combineAsVariants(variants, figma.currentPage);
+  set.name = 'Obsidian / Search / Settings';
+  set.description = 'Ação Search no contexto Toolbar do Icon Button; estado aberto usa o papel visual ativo observado.';
+  variants.forEach((item, index) => { item.x = 16; item.y = 16 + index * 52; });
+  return set;
+}
+
+function createSearchOptions(model: SearchViewModel, font: FontName,
+  controls: PublicControlsLibrary, theme: UiKitThemeVariables): ComponentNode {
+  const options = figma.createComponent();
+  options.name = 'Obsidian / Search / Options';
+  options.description = 'Opções abertas da Search; ToggleComponent público é reutilizado para cada opção.';
+  options.resize(model.width, 142);
+  options.layoutMode = 'VERTICAL';
+  options.primaryAxisSizingMode = 'AUTO';
+  options.counterAxisSizingMode = 'FIXED';
+  options.paddingLeft = 16;
+  options.paddingRight = 16;
+  options.paddingTop = 4;
+  options.paddingBottom = 12;
+  options.itemSpacing = 8;
+  options.fills = [];
+  options.strokes = [];
+  for (const label of ['Collapse results', 'Show more context', 'Explain search terms']) {
+    const row = frame(options, label, model.width - 32, 32);
+    row.layoutMode = 'HORIZONTAL';
+    row.primaryAxisSizingMode = 'FIXED';
+    row.counterAxisSizingMode = 'FIXED';
+    row.counterAxisAlignItems = 'CENTER';
+    row.itemSpacing = 8;
+    row.layoutSizingHorizontal = 'FILL';
+    const name = textNode(row, 'Label', label, font, 13, 16.9, model.colors.normal);
+    name.textAutoResize = 'HEIGHT';
+    name.resize(124, name.height);
+    name.layoutSizingHorizontal = 'FILL';
+    name.fills = [boundUiKitPaint(theme, 'textNormal')];
+    const toggle = controls.toggleState('Off');
+    toggle.name = 'Toggle';
+    row.appendChild(toggle);
+    toggle.isExposedInstance = true;
+    const key = options.addComponentProperty(label, 'TEXT', label);
+    name.componentPropertyReferences = { characters: key };
+  }
+  return options;
+}
+
 function createGlobalSearchField(model: SearchViewModel,
-  search: ReturnType<typeof findFilledSearch>, iconButtons: IconButtonLibrary): ComponentNode {
+  search: ReturnType<typeof findFilledSearch>, matchCaseSet: ComponentSetNode): ComponentNode {
   const g = model.geometry;
   const width = model.width - 2 * g.inset - g.searchSettingsWidth - g.searchRowGap;
   const field = figma.createComponent();
@@ -229,7 +375,7 @@ function createGlobalSearchField(model: SearchViewModel,
   const viewport = base.findOne((node) => node.name === 'Text viewport');
   if (viewport?.type !== 'FRAME') throw new Error('Search View: viewport da Search Filled ausente.');
   viewport.resize(width - g.inputTextLeft - g.inputTextRight, viewport.height);
-  const matchCase = iconButtons.create('Search / Match case', 'Input', 'Default', 'Opaque');
+  const matchCase = stateVariant(matchCaseSet, 'Default').createInstance();
   field.appendChild(matchCase);
   matchCase.isExposedInstance = true;
   matchCase.name = 'Match case';
@@ -240,7 +386,8 @@ function createGlobalSearchField(model: SearchViewModel,
 }
 
 function addSearchRow(parent: ComponentNode, model: SearchViewModel,
-  field: ComponentNode, parts: ComponentNode[], iconButtons: IconButtonLibrary): void {
+  field: ComponentNode, parts: SceneNode[], iconButtons: IconButtonLibrary,
+  theme: UiKitThemeVariables): void {
   const g = model.geometry;
   const row = figma.createComponent();
   row.name = 'Obsidian / Search / Controls / Dark';
@@ -263,7 +410,9 @@ function addSearchRow(parent: ComponentNode, model: SearchViewModel,
   input.layoutGrow = 1;
   input.minWidth = 1;
   input.isExposedInstance = true;
-  const settings = iconButtons.create('Search / Settings', 'Toolbar', 'Default', 'Opaque');
+  const settingsSet = createSettingsControl(iconButtons, theme);
+  parts.push(settingsSet);
+  const settings = stateVariant(settingsSet, 'Default').createInstance();
   settings.name = 'Search settings';
   row.appendChild(settings);
   settings.isExposedInstance = true;
@@ -275,7 +424,7 @@ function addSearchRow(parent: ComponentNode, model: SearchViewModel,
 }
 
 function addResultsInfo(parent: ComponentNode, model: SearchViewModel, font: FontName,
-  parts: ComponentNode[], glyphs: IconButtonLibrary): void {
+  parts: SceneNode[], glyphs: IconButtonLibrary, theme: UiKitThemeVariables): void {
   const g = model.geometry;
   const info = figma.createComponent();
   info.name = 'Obsidian / Search / Results Toolbar / Dark';
@@ -296,32 +445,19 @@ function addResultsInfo(parent: ComponentNode, model: SearchViewModel, font: Fon
   info.strokeLeftWeight = 0;
   info.strokeRightWeight = 0;
 
-  const countButton = frame(info, 'Result count', 78, 24);
-  countButton.cornerRadius = 8;
-  const count = textNode(countButton, 'Count', model.resultCount, font, 12, 15.6, model.colors.muted);
-  count.x = 6;
-  count.y = 4;
-  observedIcon(countButton, 'More options', 'Search / More', glyphs, 16, 56, 4);
-
-  const sort = frame(info, 'Sort order', model.width - 2 * g.inset - 78, 24);
+  const countComponent = createResultCount(model, font, glyphs, theme);
+  const sortComponent = createSortSelect(model, font, glyphs, theme);
+  parts.push(countComponent, sortComponent);
+  const countButton = countComponent.createInstance();
+  countButton.name = 'Result count';
+  info.appendChild(countButton);
+  countButton.isExposedInstance = true;
+  const sort = sortComponent.createInstance();
+  sort.name = 'Sort order';
+  info.appendChild(sort);
   sort.layoutGrow = 1;
-  sort.cornerRadius = 8;
-  const labelView = frame(sort, 'Sort label viewport', sort.width - 26, 18);
-  labelView.x = 9;
-  labelView.y = 3;
-  labelView.constraints = { horizontal: 'STRETCH', vertical: 'CENTER' };
-  labelView.clipsContent = true;
-  const label = textNode(labelView, 'Sort label', model.sortLabel, font, 12, 15.6, model.colors.muted);
-  label.textAutoResize = 'NONE';
-  label.resize(labelView.width, 18);
-  label.textTruncation = 'ENDING';
-  label.x = 0;
-  label.y = 1;
-  label.constraints = { horizontal: 'STRETCH', vertical: 'CENTER' };
-  const chevrons = icon(sort, 'Sort chevrons', SORT_ICON, model.colors.muted, 16, sort.width - 20, 4);
-  chevrons.constraints = { horizontal: 'MAX', vertical: 'CENTER' };
-  const property = info.addComponentProperty('Result count', 'TEXT', model.resultCount);
-  count.componentPropertyReferences = { characters: property };
+  sort.minWidth = 1;
+  sort.isExposedInstance = true;
   const instance = info.createInstance();
   instance.name = 'Results count and sort';
   parent.appendChild(instance);
@@ -329,8 +465,83 @@ function addResultsInfo(parent: ComponentNode, model: SearchViewModel, font: Fon
   instance.isExposedInstance = true;
 }
 
+function createResultCount(model: SearchViewModel, font: FontName,
+  glyphs: IconButtonLibrary, theme: UiKitThemeVariables): ComponentNode {
+  const count = figma.createComponent();
+  count.name = 'Obsidian / Search / Result Count';
+  count.description = 'Menu trigger da contagem. O pequeno círculo … pertence ao controle, não é um Toolbar Icon Button.';
+  count.resize(78, 24);
+  count.fills = [];
+  count.strokes = [];
+  count.cornerRadius = 8;
+  const label = textNode(count, 'Count', model.resultCount, font, 12, 15.6,
+    model.colors.muted);
+  label.fills = [boundUiKitPaint(theme, 'textMuted')];
+  label.x = 6;
+  label.y = 4;
+  const bubble = figma.createEllipse();
+  bubble.name = 'More options background';
+  count.appendChild(bubble);
+  bubble.resize(11, 11);
+  bubble.x = 56;
+  bubble.y = 6.5;
+  bubble.fills = [boundUiKitPaint(theme, 'textMuted')];
+  bubble.strokes = [];
+  const more = glyphs.createGlyph('Search / More', 'Muted', 10);
+  more.name = 'More options';
+  count.appendChild(more);
+  more.x = 56.5;
+  more.y = 7;
+  if (!rebindGlyphTone(more, theme.primitive.colors.icon,
+    theme.colors.surfaceSecondary, theme.primitive.dark.colors.icon)) {
+    throw new Error('Search View: indicador de menu sem cor invertida.');
+  }
+  const property = count.addComponentProperty('Result count', 'TEXT', model.resultCount);
+  label.componentPropertyReferences = { characters: property };
+  return count;
+}
+
+function createSortSelect(model: SearchViewModel, font: FontName,
+  glyphs: IconButtonLibrary, theme: UiKitThemeVariables): ComponentNode {
+  const sort = figma.createComponent();
+  sort.name = 'Obsidian / Search / Sort Select';
+  sort.description = 'Select da ordenação observado: label truncado e SVG de fundo renderizado a 12 px. O menu nativo não integra este estado estático.';
+  sort.resize(model.width - 2 * model.geometry.inset - 78, 24);
+  sort.fills = [];
+  sort.strokes = [];
+  sort.cornerRadius = 8;
+  const labelView = frame(sort, 'Sort label viewport', sort.width - 28, 18);
+  labelView.x = 9;
+  labelView.y = 3;
+  labelView.constraints = { horizontal: 'STRETCH', vertical: 'CENTER' };
+  labelView.clipsContent = true;
+  const label = textNode(labelView, 'Sort label', model.sortLabel, font, 12, 15.6,
+    model.colors.muted);
+  label.fills = [boundUiKitPaint(theme, 'textMuted')];
+  label.textAutoResize = 'NONE';
+  label.resize(labelView.width, 18);
+  label.textTruncation = 'ENDING';
+  label.x = 0;
+  label.y = 1;
+  label.constraints = { horizontal: 'STRETCH', vertical: 'CENTER' };
+  const chevrons = glyphs.createGlyph('Search / Sort', 'Muted', 12);
+  chevrons.name = 'Sort chevrons';
+  sort.appendChild(chevrons);
+  chevrons.x = sort.width - 20;
+  chevrons.y = 6;
+  chevrons.constraints = { horizontal: 'MAX', vertical: 'CENTER' };
+  if (!rebindGlyphTone(chevrons, theme.primitive.colors.icon,
+    theme.colors.sortIcon, theme.primitive.dark.colors.icon)) {
+    throw new Error('Search View: sort sem Variable própria.');
+  }
+  const property = sort.addComponentProperty('Sort label', 'TEXT', model.sortLabel);
+  label.componentPropertyReferences = { characters: property };
+  return sort;
+}
+
 function addResults(parent: ComponentNode, model: SearchViewModel, font: FontName,
-  parts: ComponentNode[], glyphs: IconButtonLibrary, theme: UiKitThemeVariables): FrameNode {
+  parts: SceneNode[], glyphs: IconButtonLibrary, theme: UiKitThemeVariables,
+  publicControls: PublicControlsLibrary): FrameNode {
   const g = model.geometry;
   const results = frame(parent, 'Grouped search results', model.width,
     model.height - g.searchRowTop - g.searchRowHeight - g.searchRowBottom - g.resultsInfoHeight);
@@ -345,25 +556,120 @@ function addResults(parent: ComponentNode, model: SearchViewModel, font: FontNam
   results.layoutSizingHorizontal = 'FILL';
   results.layoutGrow = 1;
   results.clipsContent = true;
+  const contextActions = createContextActionSet(glyphs);
+  parts.push(contextActions);
+  const all = (['Default', 'Hover'] as const).flatMap((state) =>
+    (['Short', 'Expanded'] as const).flatMap((context) =>
+      ([true, false] as const).map((divider) => ({ state, context, divider,
+        ...createMatchComponent(model, font, divider, context === 'Expanded',
+          state === 'Hover', contextActions, theme) }))));
+  const matchSet = figma.combineAsVariants(all.map((item) => item.component),
+    figma.currentPage);
+  matchSet.name = 'Obsidian / Search / Match';
+  matchSet.description = 'State=Default/Hover, Context=Short/Expanded, Divider=Yes/No. Snippet é texto contínuo editável com altura por wrapping; as setas acrescentam contexto nas duas direções.';
+  const snippetProperty = matchSet.addComponentProperty('Snippet', 'TEXT', model.query);
+  all.forEach((item, index) => {
+    item.label.componentPropertyReferences = { characters: snippetProperty };
+    item.component.x = 16 + (index % 2) * 210;
+    item.component.y = 16 + Math.floor(index / 2) * 120;
+  });
+  parts.push(matchSet);
+  const template = (state: 'Default' | 'Hover', context: 'Short' | 'Expanded',
+    divider: boolean) => {
+    const item = all.find((candidate) => candidate.state === state &&
+      candidate.context === context && candidate.divider === divider);
+    if (!item) throw new Error('Search View: variant de Match ausente.');
+    return { component: item.component, snippetProperty };
+  };
   const matches = {
-    divider: createMatchComponent(model, font, true, parts),
-    last: createMatchComponent(model, font, false, parts),
+    divider: template('Default', 'Short', true),
+    last: template('Default', 'Short', false),
+    expandedDivider: template('Default', 'Expanded', true),
+    expandedLast: template('Default', 'Expanded', false),
+    hoverDivider: template('Hover', 'Short', true),
+    hoverExpandedDivider: template('Hover', 'Expanded', true),
   };
   for (const group of model.groups) addGroup(results, model, group, font, parts, matches,
     glyphs, theme);
+  addContextPreview(model, matches, publicControls, theme, parts);
   return results;
 }
 
+function addContextPreview(model: SearchViewModel, matches: {
+  hoverDivider: { component: ComponentNode; snippetProperty: string };
+  hoverExpandedDivider: { component: ComponentNode; snippetProperty: string };
+}, controls: PublicControlsLibrary, theme: UiKitThemeVariables,
+parts: SceneNode[]): void {
+  const sample = model.groups.flatMap((group) => group.matches)
+    .find((match) => match.expandedText);
+  if (!sample?.expandedText) throw new Error('Search View: exemplo de contexto expandido ausente.');
+  const preview = figma.createFrame();
+  preview.name = 'Search context preview / Short and expanded';
+  preview.resize(410, 300);
+  preview.fills = [boundUiKitPaint(theme, 'surfaceSecondary')];
+  preview.strokes = [];
+  preview.clipsContent = false;
+  parts.push(preview);
+  for (const [index, template] of [matches.hoverDivider,
+    matches.hoverExpandedDivider].entries()) {
+    const instance = template.component.createInstance();
+    instance.name = index === 0 ? 'Short context' : 'Expanded context';
+    preview.appendChild(instance);
+    instance.x = index === 0 ? 16 : 218;
+    instance.y = 54;
+    instance.resize(176, instance.height);
+    instance.setProperties({ [template.snippetProperty]:
+      index === 0 ? sample.text : sample.expandedText });
+    const label = instance.findOne((node) => node.type === 'TEXT' &&
+      node.name === 'Snippet');
+    if (label?.type === 'TEXT') {
+      const at = label.characters.toLowerCase().indexOf(model.query.toLowerCase());
+      if (at >= 0) label.setRangeFills(at, at + model.query.length,
+        [boundUiKitPaint(theme, 'textNormal')]);
+    }
+  }
+  const tooltip = controls.tooltip.createInstance();
+  tooltip.name = 'Show more context tooltip';
+  preview.appendChild(tooltip);
+  tooltip.x = 218;
+  tooltip.y = 8;
+  tooltip.setProperties({ [controls.tooltipText]: 'Show more context' });
+}
+
+function createContextActionSet(glyphs: IconButtonLibrary): ComponentSetNode {
+  const variants = (['Up', 'Down'] as const).map((direction) => {
+    const component = figma.createComponent();
+    component.name = `Direction=${direction}`;
+    component.resize(22, 18);
+    component.fills = [];
+    component.strokes = [];
+    component.cornerRadius = 4;
+    const icon = glyphs.createGlyph(direction === 'Up' ? 'Search / Context up' :
+      'Search / Context down', 'Faint', 16);
+    icon.name = 'Chevron';
+    component.appendChild(icon);
+    icon.x = 3;
+    icon.y = 1;
+    return component;
+  });
+  const set = figma.combineAsVariants(variants, figma.currentPage);
+  set.name = 'Obsidian / Search / Context Action';
+  set.description = 'Seta de 22×18 px observada no resultado: Up acrescenta contexto anterior; Down acrescenta contexto posterior.';
+  variants.forEach((item, index) => { item.x = 16; item.y = 16 + index * 48; });
+  return set;
+}
+
 function createMatchComponent(model: SearchViewModel, font: FontName, divider: boolean,
-  parts: ComponentNode[]): { component: ComponentNode; snippetProperty: string } {
+  expanded: boolean, hover: boolean, actions: ComponentSetNode,
+  theme: UiKitThemeVariables): { component: ComponentNode; label: TextNode } {
   const g = model.geometry;
   const row = figma.createComponent();
-  row.name = `Obsidian / Search / Match / Dark / ${divider ? 'Divider' : 'Last'}`;
-  row.description = 'Linha de resultado reutilizável; Snippet é editável em cada instância.';
+  row.name = `State=${hover ? 'Hover' : 'Default'}, Context=${expanded ? 'Expanded' : 'Short'}, ` +
+    `Divider=${divider ? 'Yes' : 'No'}`;
+  row.description = 'Resultado com Snippet editável, wrapping e controles de contexto observados.';
   row.resize(model.width - 2 * g.inset, 32);
   row.fills = [];
   row.strokes = [];
-  parts.push(row);
   row.layoutMode = 'VERTICAL';
   row.primaryAxisSizingMode = 'AUTO';
   row.counterAxisSizingMode = 'FIXED';
@@ -371,10 +677,33 @@ function createMatchComponent(model: SearchViewModel, font: FontName, divider: b
   row.paddingRight = 20;
   row.paddingTop = g.matchVerticalPadding;
   row.paddingBottom = g.matchVerticalPadding + (divider ? 1 : 0);
+  if (hover) {
+    const underlay = figma.createRectangle();
+    underlay.name = 'Hover background';
+    row.appendChild(underlay);
+    underlay.layoutPositioning = 'ABSOLUTE';
+    underlay.resize(row.width, row.height);
+    underlay.x = 0;
+    underlay.y = 0;
+    underlay.constraints = { horizontal: 'STRETCH', vertical: 'STRETCH' };
+    underlay.fills = [boundUiKitPaint(theme, 'accentFill')];
+    underlay.strokes = [];
+    underlay.opacity = 0.33;
+  }
   const label = textNode(row, 'Snippet', model.query, font, 12, 15.6, model.colors.muted);
   label.textAutoResize = 'HEIGHT';
   label.resize(Math.max(1, row.width - g.matchHorizontalPadding - 20), 16);
   label.layoutSizingHorizontal = 'FILL';
+  label.fills = [boundUiKitPaint(theme, hover ? 'textNormal' : 'textMuted')];
+  if (hover) for (const direction of ['Up', 'Down'] as const) {
+    const action = stateContextAction(actions, direction);
+    action.name = `Show more context / ${direction}`;
+    row.appendChild(action);
+    action.layoutPositioning = 'ABSOLUTE';
+    action.x = row.width - 24;
+    action.y = direction === 'Up' ? 2 : row.height - 20;
+    action.constraints = { horizontal: 'MAX', vertical: direction === 'Up' ? 'MIN' : 'MAX' };
+  }
   if (divider) {
     row.strokes = [paint(model.colors.inputBorder)];
     row.strokeBottomWeight = 1;
@@ -382,15 +711,24 @@ function createMatchComponent(model: SearchViewModel, font: FontName, divider: b
     row.strokeLeftWeight = 0;
     row.strokeRightWeight = 0;
   }
-  const snippetProperty = row.addComponentProperty('Snippet', 'TEXT', model.query);
-  label.componentPropertyReferences = { characters: snippetProperty };
-  return { component: row, snippetProperty };
+  return { component: row, label };
+}
+
+function stateContextAction(set: ComponentSetNode, direction: 'Up' | 'Down'): InstanceNode {
+  const component = set.children.find((node): node is ComponentNode =>
+    node.type === 'COMPONENT' && node.variantProperties?.Direction === direction);
+  if (!component) throw new Error(`Search View: Context Action ${direction} ausente.`);
+  return component.createInstance();
 }
 
 function addGroup(parent: FrameNode, model: SearchViewModel, group: SearchViewGroup,
-  font: FontName, parts: ComponentNode[], matches: {
-    divider: ReturnType<typeof createMatchComponent>;
-    last: ReturnType<typeof createMatchComponent>;
+  font: FontName, parts: SceneNode[], matches: {
+    divider: { component: ComponentNode; snippetProperty: string };
+    last: { component: ComponentNode; snippetProperty: string };
+    expandedDivider: { component: ComponentNode; snippetProperty: string };
+    expandedLast: { component: ComponentNode; snippetProperty: string };
+    hoverDivider: { component: ComponentNode; snippetProperty: string };
+    hoverExpandedDivider: { component: ComponentNode; snippetProperty: string };
   }, glyphs: IconButtonLibrary, theme: UiKitThemeVariables): void {
   const g = model.geometry;
   const node = figma.createComponent();
@@ -527,20 +865,6 @@ function textNode(parent: ComponentNode | FrameNode, name: string, value: string
   if (node.hasMissingFont || node.width <= 0 || node.height <= 0) {
     throw fontFailure(font, `Search View: texto ${name} não renderizou.`);
   }
-  return node;
-}
-
-function icon(parent: ComponentNode | FrameNode, name: string, svg: string,
-  color: string, size: number, x: number, y: number): FrameNode {
-  const recolored = svg.replace(/currentColor/g, color).replace(/width="24"/, `width="${size}"`)
-    .replace(/height="24"/, `height="${size}"`).replace(/width="12"/, `width="${size}"`)
-    .replace(/height="12"/, `height="${size}"`);
-  const node = figma.createNodeFromSvg(recolored);
-  node.name = name;
-  parent.appendChild(node);
-  node.resize(size, size);
-  node.x = x;
-  node.y = y;
   return node;
 }
 

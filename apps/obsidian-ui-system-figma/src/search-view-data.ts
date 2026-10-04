@@ -3,7 +3,7 @@ import { record } from './reader-primitives';
 export interface SearchViewGroup {
   title: string;
   collapsed: boolean;
-  matches: { text: string; height: number }[];
+  matches: { text: string; expandedText?: string; height: number }[];
 }
 
 export interface SearchViewModel {
@@ -22,7 +22,8 @@ export interface SearchViewModel {
   };
   colors: Record<'background' | 'input' | 'inputBorder' | 'normal' | 'muted' |
     'subtle' | 'matchBackground', string>;
-  icons: Record<'matchCase' | 'settings' | 'disclosure' | 'more', string>;
+  icons: Record<'matchCase' | 'settings' | 'disclosure' | 'more' |
+    'sort' | 'contextUp' | 'contextDown', string>;
   groups: SearchViewGroup[];
 }
 
@@ -56,7 +57,8 @@ export function readSearchViewModel(input: unknown): SearchViewModel {
     }
     return [key, value];
   })) as SearchViewModel['colors'];
-  const requiredIcons = ['matchCase', 'settings', 'disclosure', 'more'] as const;
+  const requiredIcons = ['matchCase', 'settings', 'disclosure', 'more',
+    'sort', 'contextUp', 'contextDown'] as const;
   const parsedIcons = Object.fromEntries(requiredIcons.map((key) => {
     const value = String(icons[key]);
     if (!value.startsWith('<svg ') || !value.includes('</svg>') ||
@@ -79,10 +81,14 @@ export function readSearchViewModel(input: unknown): SearchViewModel {
       const match = record(rawMatch, `Search View: match ${index}/${matchIndex} inválido.`);
       const height = Number(match.height);
       if (typeof match.text !== 'string' || !match.text.trim() ||
+          (match.expandedText !== undefined &&
+            (typeof match.expandedText !== 'string' || !match.expandedText.trim())) ||
           !Number.isFinite(height) || height < 24) {
         throw new Error(`Search View: match ${index}/${matchIndex} incompleto.`);
       }
-      return { text: match.text, height };
+      return { text: match.text,
+        ...(match.expandedText === undefined ? {} : { expandedText: match.expandedText as string }),
+        height };
     });
     if (group.collapsed || matches.length !== 2) {
       throw new Error(`Search View: anatomia observada do grupo ${index} mudou.`);

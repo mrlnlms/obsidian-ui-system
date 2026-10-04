@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { assertPrimitiveRoleAliases, boundUiKitPaint, classifyUiKitPaint,
+import { assertPrimitiveRoleAliases, bindUiKitTheme, boundUiKitPaint, classifyUiKitPaint,
   readUiKitThemeEvidence, type UiKitThemeVariables } from '../src/ui-kit-theme';
+import { uiKitColorRoles } from '../src/appearance-contract';
+import { assertSelectedOverlayConsumers } from '../src/ui-kit-theme-validation';
 import evidenceJson from './fixtures/ui-kit-theme-probe.json';
 import primitiveJson from './fixtures/primitive-theme-probe.json';
 import { readPrimitiveThemeEvidence } from '../src/primitive-theme';
@@ -37,6 +39,54 @@ test('explicit paint binding keeps equal RGB roles distinct', () => {
     assert.deepEqual(surface.color, input.color);
     assert.notDeepEqual(surface.boundVariables, input.boundVariables);
   } finally { globalThis.figma = original; }
+});
+
+test('theme validation sees explicit glyph overrides nested in instances', () => {
+  const original = globalThis.figma;
+  globalThis.figma = { mixed: Symbol('mixed') } as unknown as typeof figma;
+  try {
+    const colors = Object.fromEntries(uiKitColorRoles.map((role) =>
+      [role, { id: role }])) as unknown as UiKitThemeVariables['colors'];
+    const theme = { colors, evidence } as UiKitThemeVariables;
+    const paint = (role: string): SolidPaint => ({ type: 'SOLID', color: { r: 0, g: 0, b: 0 },
+      boundVariables: { color: { type: 'VARIABLE_ALIAS', id: role } } });
+    const plain = uiKitColorRoles.filter((role) => role !== 'iconActive' && role !== 'sortIcon')
+      .map((role) => ({ type: 'RECTANGLE', name: role, fills: [paint(role)], strokes: [] }));
+    const active = { type: 'VECTOR', name: 'Aa shape', fills: [paint('iconActive')], strokes: [] };
+    const sort = { type: 'VECTOR', name: 'Sort shape', fills: [{ type: 'SOLID',
+      color: { r: 0, g: 0, b: 0 } }], strokes: [], boundVariables: {
+      fills: [{ type: 'VARIABLE_ALIAS', id: 'sortIcon' }] } };
+    const root = { type: 'FRAME', name: 'Generated Search', children: [...plain,
+      { type: 'INSTANCE', name: 'Match case', children: [active] },
+      { type: 'INSTANCE', name: 'Sort', children: [sort] }] } as unknown as SceneNode;
+    const before = JSON.stringify(root);
+    const bindings = bindUiKitTheme([root], theme, () => 'dark');
+    assert.deepEqual(new Set(bindings.map((binding) => binding.role)),
+      new Set(uiKitColorRoles));
+    assert.equal(bindings.find((binding) => binding.role === 'iconActive')?.consumer.name,
+      'Aa shape');
+    assert.equal(bindings.find((binding) => binding.role === 'sortIcon')?.consumer.name,
+      'Sort shape');
+    assert.equal(JSON.stringify(root), before);
+  } finally { globalThis.figma = original; }
+});
+
+test('selection and compact Search hover share an overlay without losing geometry', () => {
+  const overlay = (name: string, width: number, parentWidth: number,
+    opacity = 0.067) => ({ role: 'selectedOverlay', root: {} as SceneNode,
+      consumer: { type: 'RECTANGLE', name, width, opacity,
+        parent: { type: 'COMPONENT', name: 'State=Hover', width: parentWidth } } }) as
+      Parameters<typeof assertSelectedOverlayConsumers>[0][number];
+  const bindings = [overlay('Selection background', 200, 200),
+    overlay('Selection background', 242, 242),
+    overlay('State background', 24, 24), overlay('State background', 28, 28)];
+  assert.doesNotThrow(() => assertSelectedOverlayConsumers(bindings, 0.067));
+  assert.throws(() => assertSelectedOverlayConsumers([
+    ...bindings.slice(0, 3), overlay('State background', 27, 28)], 0.067),
+  /seleção\/hover divergente/);
+  assert.throws(() => assertSelectedOverlayConsumers([
+    ...bindings.slice(0, 3), overlay('State background', 28, 28, 1)], 0.067),
+  /seleção\/hover divergente/);
 });
 
 test('paired Desktop and Package evidence covers the current kit palette', () => {

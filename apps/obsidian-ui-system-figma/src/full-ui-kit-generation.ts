@@ -31,6 +31,7 @@ import { beginAppearanceRun, type AppearanceRun } from './appearance-lifecycle';
 import { reconcileAppearanceCollections,
   type AppearanceMigrationReport } from './appearance-migration';
 import { beginUiKitNodeRun, verifyGeneratedRootsRetained } from './ui-kit-node-lifecycle';
+import { createPublicControls, readPublicControlsEvidence } from './public-controls-generation';
 import activeRowProbe from '../tests/fixtures/file-explorer-active-row-probe.json';
 import taggedRowsProbe from '../tests/fixtures/file-explorer-tagged-rows-probe.json';
 import folderRowsProbe from '../tests/fixtures/folder-rows-probe.json';
@@ -42,6 +43,7 @@ import filesViewProbe from '../tests/fixtures/file-explorer-view-probe.json';
 import bookmarksViewProbe from '../tests/fixtures/bookmarks-view-probe.json';
 import primitiveThemeProbe from '../tests/fixtures/primitive-theme-probe.json';
 import uiKitThemeProbe from '../tests/fixtures/ui-kit-theme-probe.json';
+import publicControlsProbe from '../tests/fixtures/public-toggle-tooltip-probe.json';
 
 /** Checks every included observed fixture before a Figma node is created. */
 export function validateIncludedEvidence(): void {
@@ -57,6 +59,7 @@ export function validateIncludedEvidence(): void {
   readTreeRowEvidence(folderRowsProbe, activeRowProbe, taggedRowsProbe, filesViewProbe);
   readPrimitiveThemeEvidence(primitiveThemeProbe);
   readUiKitThemeEvidence(uiKitThemeProbe);
+  readPublicControlsEvidence(publicControlsProbe);
 }
 
 /** One Package v1, one action, one file-wide managed composition. */
@@ -92,6 +95,8 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     const uiKitTheme = extendUiKitThemeVariables(primitiveTheme,
       readUiKitThemeEvidence(uiKitThemeProbe), appearanceRun);
     const iconButtons = createIconButtonLibrary(iconSources, primitiveTheme);
+    const publicControls = await createPublicControls(readPublicControlsEvidence(publicControlsProbe),
+      uiKitTheme, searchModel.fontFamily);
     const button = await generateButton(input.components, input.layout);
     const search = await generateSearch(input.components, input.layout);
     organizePublicSets(button, search);
@@ -101,7 +106,7 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     const workspaceTab = await generateWorkspaceTab(workspaceTabProbe, iconButtons);
     const sidePanel = await generateSidePanel(sidePanelProbe, workspaceTab.set, iconButtons);
     const searchResult = await composeSearchInSidePanel(searchViewProbe, search, sidePanel,
-      iconButtons, uiKitTheme);
+      iconButtons, uiKitTheme, publicControls);
     const filesResult = await composeFilesInSidePanel(filesViewProbe, sidePanel, rows, iconButtons);
     const bookmarksResult = await composeBookmarksInSidePanel(bookmarksViewProbe, sidePanel,
       filesResult.actions, iconButtons, uiKitTheme);

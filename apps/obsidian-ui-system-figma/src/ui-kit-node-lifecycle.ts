@@ -80,6 +80,17 @@ function recoverStaleRoots(page: PageNode, manifest: Manifest,
 }
 
 function componentIdentity(node: ComponentNode, root: SceneNode): string {
+  // The first Search Match Component Set promotes the two earlier standalone
+  // masters into Default/Short variants. Keep their source identities so user
+  // instances and direct Snippet overrides migrate during this one transition.
+  if (node.parent?.type === 'COMPONENT_SET' &&
+      node.parent.name === 'Obsidian / Search / Match' &&
+      node.variantProperties?.State === 'Default' &&
+      node.variantProperties?.Context === 'Short' &&
+      ['Yes', 'No'].includes(node.variantProperties?.Divider ?? '')) {
+    return `Obsidian / Search / Match / ` +
+      (node.variantProperties.Divider === 'Yes' ? 'Divider' : 'Last');
+  }
   const path: string[] = [];
   let current: BaseNode | null = node;
   while (current && current !== root.parent) {
@@ -228,8 +239,9 @@ export async function beginUiKitNodeRun(): Promise<UiKitNodeRun> {
       const targets = new Map<string, ComponentNode>();
       for (const group of oldGroups) {
         const oldSources = sourceComponents(group);
-        if ((!recovering && oldSources.size !== newSources.size) ||
-            [...oldSources.keys()].some((key) => !newSources.has(key))) {
+        // A later kit may add new Component families. Every old source must still
+        // have an equivalent target so external instances can migrate safely.
+        if ([...oldSources.keys()].some((key) => !newSources.has(key))) {
           throw new Error('UI Kit: Components incompatíveis com a geração anterior; instâncias preservadas.');
         }
         for (const [key, old] of oldSources) targets.set(old.id, newSources.get(key)!);

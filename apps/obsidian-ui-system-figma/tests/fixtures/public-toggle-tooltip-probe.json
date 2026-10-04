@@ -1,0 +1,21 @@
+{
+  "format": "obsidian-public-controls-probe",
+  "version": 1,
+  "source": "public-api components.json 2026-10-01T21-15-15-702Z (obsidian.toggle off/on, obsidian.display-tooltip visible); Search runtime CSS 2026-10-04",
+  "toggle": {
+    "width": 36,
+    "height": 16,
+    "thumbWidth": 20,
+    "thumbHeight": 12,
+    "thumbInset": 2,
+    "radius": 24
+  },
+  "tooltip": {
+    "paddingHorizontal": 12,
+    "paddingVertical": 8,
+    "radius": 12,
+    "fontSize": 13,
+    "lineHeight": 16.9,
+    "sampleText": "Show more context"
+  }
+}

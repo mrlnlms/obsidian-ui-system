@@ -16,9 +16,11 @@ export const primitiveRadiusNames = {
   mediumRadius: 'radius/medium', metadataRadius: 'radius/metadata',
 } as const;
 
-export const uiKitColorRoles = ['surfacePrimary', 'surfaceSecondary', 'formField',
+export const legacyUiKitColorRoles = ['surfacePrimary', 'surfaceSecondary', 'formField',
   'controlFill', 'controlBorder', 'textNormal', 'textMuted', 'textFaint',
   'accentFill', 'matchHighlight', 'selectedOverlay'] as const;
+export const uiKitColorRoles = [...legacyUiKitColorRoles, 'iconActive',
+  'toggleTrackOff', 'toggleThumb', 'tooltipSurface', 'tooltipText', 'sortIcon'] as const;
 
 export type UiKitColorRole = typeof uiKitColorRoles[number];
 export const uiKitVariableName = (role: UiKitColorRole): string => `ui-kit/${role}`;
@@ -29,6 +31,10 @@ export const uiKitWebSyntax: Record<UiKitColorRole, string> = {
   controlBorder: '--background-modifier-border', textNormal: '--text-normal',
   textMuted: '--text-muted', textFaint: '--text-faint', accentFill: '--interactive-accent',
   matchHighlight: '--obsidian-ui-search-mark', selectedOverlay: '--background-modifier-hover',
+  iconActive: '--icon-color-active', toggleTrackOff: '--background-modifier-border-hover',
+  toggleThumb: '--toggle-thumb-color',
+  tooltipSurface: '--tooltip-background', tooltipText: '--tooltip-color',
+  sortIcon: '--obsidian-ui-search-sort-icon',
 };
 
 /** The guide was added after the first full-kit checkpoint. */

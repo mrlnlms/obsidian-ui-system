@@ -1,6 +1,6 @@
 import { appearanceCollectionName,
   appearanceVariableTypes, legacyNavigationCollectionName,
-  requiredPrimitiveNames, uiKitColorRoles, uiKitVariableName,
+  requiredPrimitiveNames, legacyUiKitColorRoles, uiKitColorRoles, uiKitVariableName,
   uiKitWebSyntax } from './appearance-contract';
 
 export interface AppearanceRun {
@@ -36,10 +36,11 @@ export function isPluginAppearanceCollection(collection: VariableCollection,
     return false;
   }
   const names = new Set(own.map((variable) => variable.name));
-  const globals = uiKitColorRoles.map(uiKitVariableName);
-  const hasAllGlobals = globals.every((name) => names.has(name));
-  if (collection.name === appearanceCollectionName && !hasAllGlobals) return false;
-  if (globals.some((name) => names.has(name)) && !hasAllGlobals) return false;
+  const priorGlobals = legacyUiKitColorRoles.map(uiKitVariableName);
+  const hasPriorGlobals = priorGlobals.every((name) => names.has(name));
+  if (collection.name === appearanceCollectionName && !hasPriorGlobals) return false;
+  if (uiKitColorRoles.some((role) => names.has(uiKitVariableName(role))) &&
+      !hasPriorGlobals) return false;
   const [dark, light] = ['Dark', 'Light'].map((name) =>
     collection.modes.find((mode) => mode.name === name)!.modeId);
   return own.every((variable) => variable.remote === false &&

@@ -15,17 +15,36 @@ function structure(root: SceneNode): string {
       .map((node) => [node.id, node.characters, node.width, node.height]) });
 }
 
+/** The shared overlay role has two observed consumers: selection and Search hover. */
+export function assertSelectedOverlayConsumers(bindings: readonly UiKitThemeBinding[],
+  opacity: number): void {
+  const overlays = bindings.filter((binding) => binding.role === 'selectedOverlay');
+  const selections = overlays.filter(({ consumer }) => consumer.name === 'Selection background');
+  const searchHovers = overlays.filter(({ consumer }) => consumer.name === 'State background' &&
+    consumer.parent?.type === 'COMPONENT');
+  const invalid = overlays.find(({ consumer }) =>
+    consumer.type !== 'RECTANGLE' ||
+    (consumer.name !== 'Selection background' &&
+      !(consumer.name === 'State background' && consumer.parent?.type === 'COMPONENT')) ||
+    Math.abs(consumer.opacity - opacity) > 0.001 ||
+    !consumer.parent || !('width' in consumer.parent) ||
+    Math.abs(consumer.width - consumer.parent.width) > 0.5);
+  if (selections.length < 2 || searchHovers.length !== 2 || invalid) {
+    const consumer = invalid?.consumer;
+    throw new Error('UI Kit theme: transparência ou largura da seleção/hover divergente: ' +
+      JSON.stringify({ selections: selections.length, searchHovers: searchHovers.length,
+        consumer: consumer?.name, parent: consumer?.parent?.name,
+        opacity: consumer && 'opacity' in consumer ? consumer.opacity : undefined,
+        width: consumer?.width,
+        parentWidth: consumer?.parent && 'width' in consumer.parent
+          ? consumer.parent.width : undefined }));
+  }
+}
+
 /** In-plugin readback of the generated Component roots and hosted previews. */
 export function verifyUiKitThemeModes(theme: UiKitThemeVariables,
   bindings: readonly UiKitThemeBinding[], hostedPreviews: readonly FrameNode[]): void {
-  const overlays = bindings.filter((binding) => binding.role === 'selectedOverlay');
-  if (overlays.length < 2 || overlays.some(({ consumer }) =>
-    consumer.type !== 'RECTANGLE' || consumer.name !== 'Selection background' ||
-    Math.abs(consumer.opacity - theme.evidence.roles.selectedOverlay.opacity!) > 0.001 ||
-    !consumer.parent || !('width' in consumer.parent) ||
-    Math.abs(consumer.width - consumer.parent.width) > 0.5)) {
-    throw new Error('UI Kit theme: transparência ou largura da seleção divergente.');
-  }
+  assertSelectedOverlayConsumers(bindings, theme.evidence.roles.selectedOverlay.opacity!);
   const highlights = bindings.filter((binding) => binding.role === 'matchHighlight');
   if (!highlights.length || highlights.some(({ consumer }) =>
     consumer.type !== 'RECTANGLE' || consumer.name !== 'Match highlight underlay' ||

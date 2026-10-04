@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { appearanceCollectionName, legacyNavigationCollectionName,
-  primitiveColorNames, primitiveRadiusNames } from '../src/appearance-contract';
+  primitiveColorNames, primitiveRadiusNames, legacyUiKitColorRoles,
+  uiKitColorRoles, uiKitVariableName } from '../src/appearance-contract';
 import { beginAppearanceRun, isPluginAppearanceCollection } from '../src/appearance-lifecycle';
 import { reconcileAppearanceCollections } from '../src/appearance-migration';
 import { createPrimitiveVariables, readPrimitiveThemeEvidence } from '../src/primitive-theme';
@@ -90,6 +91,28 @@ async function buildAppearance() {
   extendUiKitThemeVariables(primitive, readUiKitThemeEvidence(kitFixture), run);
   return run;
 }
+
+test('the prior Appearance palette extends in place with observed Search and public control roles', async () => {
+  const fake = fakeFigma();
+  const first = await buildAppearance();
+  const collectionId = first.collection.id;
+  const mutedId = fake.variables.find((item) => item.name === uiKitVariableName('textMuted')).id;
+  const added = uiKitColorRoles.filter((role) =>
+    !(legacyUiKitColorRoles as readonly string[]).includes(role));
+  for (const variable of [...fake.variables]) {
+    if (added.some((role) => variable.name === uiKitVariableName(role))) variable.remove();
+  }
+  assert.equal(isPluginAppearanceCollection(first.collection, fake.variables), true);
+  const second = await buildAppearance();
+  assert.equal(second.collection.id, collectionId);
+  assert.equal(fake.collections.length, 1);
+  assert.equal(fake.variables.find((item) => item.name === uiKitVariableName('textMuted')).id,
+    mutedId);
+  for (const role of added) {
+    assert.ok(fake.variables.some((item) => item.name === uiKitVariableName(role) &&
+      item.variableCollectionId === collectionId));
+  }
+});
 
 function addOldPrimitiveCollection(fake: ReturnType<typeof fakeFigma>) {
   const old = fake.createCollection(legacyNavigationCollectionName);

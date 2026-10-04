@@ -141,6 +141,7 @@ npm run test:ui-kit --workspace @obsidian-ui-system/figma-plugin
 npm run test:full-ui-kit --workspace @obsidian-ui-system/figma-plugin
 npm run test:appearance-lifecycle --workspace @obsidian-ui-system/figma-plugin
 npm run test:ui-kit-node-lifecycle --workspace @obsidian-ui-system/figma-plugin
+npm run test:public-controls --workspace @obsidian-ui-system/figma-plugin
 npm run test:bookmarks-view --workspace @obsidian-ui-system/figma-plugin
 npm run test:package --workspace @obsidian-ui-system/figma-plugin
 npm run test:variables --workspace @obsidian-ui-system/figma-plugin

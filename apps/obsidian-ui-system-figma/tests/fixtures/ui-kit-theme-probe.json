@@ -66,6 +66,36 @@
       "lightCss": "rgb(0, 0, 0)",
       "opacity": 0.067,
       "source": "computed selected tree row and sidedock tab backgrounds"
+    },
+    "iconActive": {
+      "darkCss": "rgb(166, 138, 249)",
+      "lightCss": "rgb(152, 115, 247)",
+      "source": "--icon-color-active on Search Match case in Dark/Light"
+    },
+    "toggleTrackOff": {
+      "darkCss": "rgb(63, 63, 63)",
+      "lightCss": "rgb(218, 218, 218)",
+      "source": "--background-modifier-border-hover on public ToggleComponent and Search checkbox-container"
+    },
+    "toggleThumb": {
+      "darkCss": "rgb(255, 255, 255)",
+      "lightCss": "rgb(255, 255, 255)",
+      "source": "--toggle-thumb-color on public ToggleComponent and Search checkbox-container"
+    },
+    "tooltipSurface": {
+      "darkCss": "rgb(0, 0, 0)",
+      "lightCss": "rgb(0, 0, 0)",
+      "source": "--tooltip-background; black with 90% node opacity in both modes"
+    },
+    "tooltipText": {
+      "darkCss": "rgb(250, 250, 250)",
+      "lightCss": "rgb(250, 250, 250)",
+      "source": "--tooltip-color on public displayTooltip specimen and Search hover tooltip"
+    },
+    "sortIcon": {
+      "darkCss": "rgb(153, 153, 153)",
+      "lightCss": "rgb(26, 26, 26)",
+      "source": "Search select.dropdown CSS SVG background: white at 60% Dark, black at 90% Light over neutral toolbar"
     }
   }
 }

@@ -78,6 +78,12 @@ const scopes: Record<UiKitColorRole, VariableScope[]> = {
   accentFill: ['FRAME_FILL', 'SHAPE_FILL'],
   matchHighlight: ['FRAME_FILL', 'SHAPE_FILL'],
   selectedOverlay: ['FRAME_FILL', 'SHAPE_FILL'],
+  iconActive: ['SHAPE_FILL', 'STROKE_COLOR'],
+  toggleTrackOff: ['FRAME_FILL', 'SHAPE_FILL'],
+  toggleThumb: ['SHAPE_FILL'],
+  tooltipSurface: ['FRAME_FILL', 'SHAPE_FILL'],
+  tooltipText: ['TEXT_FILL'],
+  sortIcon: ['SHAPE_FILL', 'STROKE_COLOR'],
 };
 
 /** Paired values and bounded Obsidian roles justify these aliases; future divergence may split them. */
@@ -165,7 +171,10 @@ export function classifyUiKitPaint(paint: Paint, field: PaintField,
     if (node?.type === 'TEXT') return undefined;
   }
   for (const role of roleNames) {
-    if (role === 'selectedOverlay' || role === 'controlFill' || role === 'controlBorder') continue;
+    if (role === 'selectedOverlay' || role === 'controlFill' || role === 'controlBorder' ||
+        role === 'iconActive' || role === 'toggleTrackOff' || role === 'toggleThumb' ||
+        role === 'tooltipSurface' ||
+        role === 'tooltipText' || role === 'sortIcon') continue;
     if (sameColor(paint.color, evidence.roles[role][mode])) return role;
   }
   if (sameColor(paint.color, evidence.roles.controlFill[mode])) {
@@ -178,6 +187,33 @@ export interface UiKitThemeBinding {
   role: UiKitColorRole;
   root: SceneNode;
   consumer: SceneNode;
+}
+
+/** Instance overrides are already bound by their consumer; read them without recoloring. */
+export function explicitInstanceThemeBindings(roots: readonly SceneNode[],
+  theme: UiKitThemeVariables, roles: readonly UiKitColorRole[]): UiKitThemeBinding[] {
+  const wanted = new Map(roles.map((role) => [theme.colors[role].id, role]));
+  const bindings: UiKitThemeBinding[] = [];
+  const visit = (node: SceneNode, root: SceneNode, inInstance: boolean): void => {
+    const nested = inInstance || node.type === 'INSTANCE';
+    if (nested) for (const field of ['fills', 'strokes'] as const) {
+      if (!(field in node)) continue;
+      const paints = (node as SceneNode & { fills?: readonly Paint[];
+        strokes?: readonly Paint[] })[field];
+      if (!Array.isArray(paints)) continue;
+      const nodeBindings = node.boundVariables?.[field];
+      paints.forEach((paint, index) => {
+        if (paint.type !== 'SOLID' || paint.visible === false) return;
+        const binding = nodeBindings?.[index];
+        const inheritedId = Array.isArray(binding) ? binding[0]?.id : binding?.id;
+        const role = wanted.get(paint.boundVariables?.color?.id ?? inheritedId ?? '');
+        if (role) bindings.push({ role, root, consumer: node });
+      });
+    }
+    if ('children' in node) for (const child of node.children) visit(child, root, nested);
+  };
+  for (const root of roots) visit(root, root, false);
+  return bindings;
 }
 
 /** Applies bindings only to new generator roots, never to pre-existing page content. */
@@ -216,6 +252,9 @@ export function bindUiKitTheme(roots: readonly SceneNode[], theme: UiKitThemeVar
   };
   for (const root of roots) visit(root, root);
   const boundRoles = new Set(bindings.map((binding) => binding.role));
+  const instanceOnlyRoles = roleNames.filter((role) => !boundRoles.has(role));
+  bindings.push(...explicitInstanceThemeBindings(roots, theme, instanceOnlyRoles));
+  for (const binding of bindings) boundRoles.add(binding.role);
   const missing = roleNames.filter((role) => !boundRoles.has(role));
   if (missing.length) throw new Error(`UI Kit theme: sem consumidor para ${missing.join(', ')}.`);
   return bindings;

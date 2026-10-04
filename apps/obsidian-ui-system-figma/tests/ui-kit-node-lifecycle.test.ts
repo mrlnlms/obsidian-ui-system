@@ -206,6 +206,42 @@ test('two generations keep one managed Button/Glyph source and migrate user inst
   assert.equal(old.roots.every((root: any) => root.removed), true);
 });
 
+test('a later kit can add a new canonical family while migrating every old source', async () => {
+  const file = fakeFile();
+  const first = await beginUiKitNodeRun();
+  const old = file.kit(file.pageA);
+  await first.commit(old.roots);
+  const user = file.instance(file.pageB, old.button);
+  const second = await beginUiKitNodeRun();
+  const next = file.kit(file.pageA);
+  const toggle = file.add(file.pageA, file.makeNode('COMPONENT', 'Obsidian / Toggle'));
+  next.roots.push(toggle);
+  assert.deepEqual(await second.commit(next.roots), { replaced: 3, rebound: 1, adopted: 0 });
+  assert.equal(user.main, next.button);
+  verifyGeneratedRootsRetained(file.pageA, next.roots);
+});
+
+test('standalone Search Match sources migrate to Default Short variants', async () => {
+  const file = fakeFile();
+  const first = await beginUiKitNodeRun();
+  const old = file.kit(file.pageA);
+  const oldMatch = file.add(file.pageA,
+    file.makeNode('COMPONENT', 'Obsidian / Search / Match / Divider'));
+  await first.commit([...old.roots, oldMatch]);
+  const user = file.instance(file.pageB, oldMatch);
+  const second = await beginUiKitNodeRun();
+  const next = file.kit(file.pageA);
+  const short = file.makeNode('COMPONENT', 'State=Default, Context=Short, Divider=Yes');
+  short.variantProperties = { State: 'Default', Context: 'Short', Divider: 'Yes' };
+  const hovered = file.makeNode('COMPONENT', 'State=Hover, Context=Short, Divider=Yes');
+  hovered.variantProperties = { State: 'Hover', Context: 'Short', Divider: 'Yes' };
+  const set = file.add(file.pageA,
+    file.makeNode('COMPONENT_SET', 'Obsidian / Search / Match', [short, hovered]));
+  await second.commit([...next.roots, set]);
+  assert.equal(user.main, short);
+  assert.equal(oldMatch.removed, true);
+});
+
 test('a missing new root cannot be reported as successful regeneration', async () => {
   const file = fakeFile();
   const run = await beginUiKitNodeRun();

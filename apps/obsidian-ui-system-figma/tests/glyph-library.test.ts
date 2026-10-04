@@ -78,10 +78,12 @@ test('fixed glyph consumers do not recreate the catalogued SVG locally', () => {
     assert.match(source(name), /createGlyph\(/, name);
   }
   const searchView = source('search-view-generation.ts');
-  assert.equal([...searchView.matchAll(/createNodeFromSvg\(/g)].length, 1,
-    'only the uncatalogued Search sort chevrons keep their local SVG');
+  assert.equal([...searchView.matchAll(/createNodeFromSvg\(/g)].length, 0,
+    'Search sort and context chevrons now consume observed canonical glyphs');
   assert.match(searchView, /'Search \/ More'/);
   assert.match(searchView, /'Search \/ Disclosure'/);
+  assert.match(searchView, /'Search \/ Sort'/);
+  assert.match(searchView, /'Search \/ Context up'/);
 });
 
 test('Folder row disclosure uses the observed shared path and consumer rotation', () => {

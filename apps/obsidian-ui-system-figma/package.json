@@ -14,6 +14,7 @@
     "test:primitive-theme": "esbuild tests/primitive-theme.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/primitive-theme.test.cjs && node --test ../../.build/primitive-theme.test.cjs",
     "test:appearance-lifecycle": "esbuild tests/appearance-lifecycle.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/appearance-lifecycle.test.cjs && node --test ../../.build/appearance-lifecycle.test.cjs",
     "test:ui-kit-node-lifecycle": "esbuild tests/ui-kit-node-lifecycle.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/ui-kit-node-lifecycle.test.cjs && node --test ../../.build/ui-kit-node-lifecycle.test.cjs",
+    "test:public-controls": "esbuild tests/public-controls-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/public-controls-data.test.cjs && node --test ../../.build/public-controls-data.test.cjs",
     "test:glyph-library": "esbuild tests/glyph-library.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/glyph-library.test.cjs && node --test ../../.build/glyph-library.test.cjs",
     "test:ui-kit-theme": "esbuild tests/ui-kit-theme.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/ui-kit-theme.test.cjs && node --test ../../.build/ui-kit-theme.test.cjs",
     "test:view-header": "esbuild tests/view-header-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/view-header-data.test.cjs && node --test ../../.build/view-header-data.test.cjs",
