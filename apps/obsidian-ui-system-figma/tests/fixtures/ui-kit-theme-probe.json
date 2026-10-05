@@ -96,6 +96,46 @@
       "darkCss": "rgb(153, 153, 153)",
       "lightCss": "rgb(26, 26, 26)",
       "source": "Search select.dropdown CSS SVG background: white at 60% Dark, black at 90% Light over neutral toolbar"
+    },
+    "surfacePrimaryAlt": {
+      "darkCss": "rgb(35, 35, 35)",
+      "lightCss": "rgb(250, 250, 250)",
+      "source": "--background-primary-alt; Setting and DisplayValue surface in paired Package v1"
+    },
+    "modalBorder": {
+      "darkCss": "rgb(63, 63, 63)",
+      "lightCss": "rgb(218, 218, 218)",
+      "source": "--modal-border-color in paired Package v1"
+    },
+    "menuBorder": {
+      "darkCss": "rgb(63, 63, 63)",
+      "lightCss": "rgb(218, 218, 218)",
+      "source": "--menu-border-color in paired Package v1"
+    },
+    "sliderTrack": {
+      "darkCss": "rgb(63, 63, 63)",
+      "lightCss": "rgb(218, 218, 218)",
+      "source": "--slider-track-background in paired Package v1"
+    },
+    "sliderThumb": {
+      "darkCss": "rgb(255, 255, 255)",
+      "lightCss": "rgb(255, 255, 255)",
+      "source": "--slider-thumb-background in paired Package v1"
+    },
+    "noticeSurface": {
+      "darkCss": "rgb(0, 0, 0)",
+      "lightCss": "rgb(0, 0, 0)",
+      "source": "--notice-background; black at 90% opacity in paired Package v1"
+    },
+    "noticeText": {
+      "darkCss": "rgb(250, 250, 250)",
+      "lightCss": "rgb(250, 250, 250)",
+      "source": "--notice-color in paired Package v1"
+    },
+    "textWarning": {
+      "darkCss": "rgb(233, 151, 63)",
+      "lightCss": "rgb(236, 117, 0)",
+      "source": "--text-warning in paired Package v1"
     }
   }
 }

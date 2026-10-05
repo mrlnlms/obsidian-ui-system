@@ -20,7 +20,9 @@ export const legacyUiKitColorRoles = ['surfacePrimary', 'surfaceSecondary', 'for
   'controlFill', 'controlBorder', 'textNormal', 'textMuted', 'textFaint',
   'accentFill', 'matchHighlight', 'selectedOverlay'] as const;
 export const uiKitColorRoles = [...legacyUiKitColorRoles, 'iconActive',
-  'toggleTrackOff', 'toggleThumb', 'tooltipSurface', 'tooltipText', 'sortIcon'] as const;
+  'toggleTrackOff', 'toggleThumb', 'tooltipSurface', 'tooltipText', 'sortIcon',
+  'surfacePrimaryAlt', 'modalBorder', 'menuBorder', 'sliderTrack',
+  'sliderThumb', 'noticeSurface', 'noticeText', 'textWarning'] as const;
 
 export type UiKitColorRole = typeof uiKitColorRoles[number];
 export const uiKitVariableName = (role: UiKitColorRole): string => `ui-kit/${role}`;
@@ -35,6 +37,10 @@ export const uiKitWebSyntax: Record<UiKitColorRole, string> = {
   toggleThumb: '--toggle-thumb-color',
   tooltipSurface: '--tooltip-background', tooltipText: '--tooltip-color',
   sortIcon: '--obsidian-ui-search-sort-icon',
+  surfacePrimaryAlt: '--background-primary-alt', modalBorder: '--modal-border-color',
+  menuBorder: '--menu-border-color', sliderTrack: '--slider-track-background',
+  sliderThumb: '--slider-thumb-background', noticeSurface: '--notice-background',
+  noticeText: '--notice-color', textWarning: '--text-warning',
 };
 
 /** The guide was added after the first full-kit checkpoint. */

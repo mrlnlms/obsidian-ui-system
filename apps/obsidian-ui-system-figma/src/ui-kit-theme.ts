@@ -84,6 +84,11 @@ const scopes: Record<UiKitColorRole, VariableScope[]> = {
   tooltipSurface: ['FRAME_FILL', 'SHAPE_FILL'],
   tooltipText: ['TEXT_FILL'],
   sortIcon: ['SHAPE_FILL', 'STROKE_COLOR'],
+  surfacePrimaryAlt: ['FRAME_FILL', 'SHAPE_FILL'],
+  modalBorder: ['STROKE_COLOR'], menuBorder: ['STROKE_COLOR', 'SHAPE_FILL'],
+  sliderTrack: ['FRAME_FILL', 'SHAPE_FILL'], sliderThumb: ['SHAPE_FILL'],
+  noticeSurface: ['FRAME_FILL', 'SHAPE_FILL'], noticeText: ['TEXT_FILL'],
+  textWarning: ['TEXT_FILL', 'SHAPE_FILL'],
 };
 
 /** Paired values and bounded Obsidian roles justify these aliases; future divergence may split them. */
@@ -174,7 +179,11 @@ export function classifyUiKitPaint(paint: Paint, field: PaintField,
     if (role === 'selectedOverlay' || role === 'controlFill' || role === 'controlBorder' ||
         role === 'iconActive' || role === 'toggleTrackOff' || role === 'toggleThumb' ||
         role === 'tooltipSurface' ||
-        role === 'tooltipText' || role === 'sortIcon') continue;
+        role === 'tooltipText' || role === 'sortIcon' ||
+        role === 'surfacePrimaryAlt' || role === 'modalBorder' ||
+        role === 'menuBorder' || role === 'sliderTrack' || role === 'sliderThumb' ||
+        role === 'noticeSurface' || role === 'noticeText' ||
+        role === 'textWarning') continue;
     if (sameColor(paint.color, evidence.roles[role][mode])) return role;
   }
   if (sameColor(paint.color, evidence.roles.controlFill[mode])) {

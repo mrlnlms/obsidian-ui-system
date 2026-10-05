@@ -4,6 +4,8 @@ import { generateSearch } from './search-generation';
 import { createTreeRowLibrary } from './tree-navigation-row-generation';
 import { createIconButtonLibrary } from './icon-button-generation';
 import { observedUiKitGlyphSources } from './glyph-library';
+import { readPublicApiEvidence } from './public-api-batch-data';
+import { generatePublicApiBatch } from './public-api-batch-generation';
 import { generateViewHeader } from './view-header-generation';
 import { generateWorkspaceTab } from './workspace-tab-generation';
 import { generateSidePanel } from './side-panel-generation';
@@ -75,6 +77,7 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
   migration: AppearanceMigrationReport & { error?: string };
 }> {
   validateIncludedEvidence();
+  const publicEvidence = readPublicApiEvidence(input.components);
   const nodeRun = await beginUiKitNodeRun();
   const originalRoots = nodeRun.originalRootIds;
   let appearanceRun: AppearanceRun | undefined;
@@ -119,6 +122,8 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
       filesResult.actions, iconButtons, uiKitTheme);
     const outlineResult = await composeOutlineInSidePanel(outlineViewProbe, sidePanel,
       workspaceTab.set, bookmarksResult.actions, rows, iconButtons, uiKitTheme);
+    await generatePublicApiBatch(publicEvidence, uiKitTheme, searchModel.fontFamily,
+      iconButtons, publicControls, button, search);
     verifyPrimitiveThemeModes(primitiveTheme, iconButtons, rows,
       filesResult.preview, searchResult.preview);
     const newRoots = figma.currentPage.children.filter((node) => !originalRoots.has(node.id));

@@ -78,6 +78,8 @@ figma.ui.onmessage = async (message: unknown) => {
         `View Header, Workspace Tab, Side Panel, ${result.searchView.name} e ` +
         `${result.filesView.name}, ${result.bookmarksView.name} e ${result.outlineView.name}. ` +
         `Search, Files, Bookmarks e Outline estão em previews separados do Side Panel. ` +
+        `As 26 famílias public-api estão nas seções Controls, Settings e Overlays, ` +
+        `com cobertura parcial nos casos documentados. ` +
         `${result.nodes.adopted} geração(ões) legada(s) adotada(s); ` +
         `${result.nodes.replaced} raiz(es) anteriores substituídas; ` +
         `${result.nodes.rebound} instância(s) externa(s) migrada(s).` + appearanceNote });
