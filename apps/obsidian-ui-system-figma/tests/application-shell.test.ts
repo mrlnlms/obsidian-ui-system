@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { applicationShellGlyphSources, assertShellAdjacency, assertShellResize,
-  assertSidedockProbeLayout,
+  assertSidedockProbeLayout, assertLeftSidedockSelection, leftSidedockViewChoices,
   readApplicationShellEvidence } from
   '../src/application-shell-generation';
 import { canonicalGlyphs, observedUiKitGlyphSources } from '../src/glyph-library';
@@ -125,6 +125,33 @@ test('Sidedock probe rejects gaps, stale content widths and detached Status Bar'
     main: { ...layout.main, content: 656 } }), /reflow horizontal/);
   assert.throws(() => assertSidedockProbeLayout({ ...layout,
     status: { ...layout.status, x: 598 } }), /reflow horizontal/);
+});
+
+test('Left Sidedock View pairs each canonical content with its active tab', () => {
+  const choices = leftSidedockViewChoices({ filesView: 'File Explorer', filesTab: 'Files',
+    searchView: 'Search View', searchTab: 'Search',
+    bookmarksView: 'Bookmarks View', bookmarksTab: 'Bookmarks' });
+  assert.deepEqual(choices, [
+    { name: 'Files', view: 'File Explorer', tab: 'Files' },
+    { name: 'Search', view: 'Search View', tab: 'Search' },
+    { name: 'Bookmarks', view: 'Bookmarks View', tab: 'Bookmarks' },
+  ]);
+  assert.deepEqual(readSidePanelModel(sideProbe).tabs.map((tab) => tab.title),
+    choices.map((choice) => choice.name));
+});
+
+test('Left Sidedock accepts a null nested tab link when its swap and tab state agree', () => {
+  const expected = { name: 'Files', viewId: 'view-files', tabId: 'tab-files' };
+  const actual = { selection: 'Files', view: 'view-files', tab: 'tab-files',
+    hostedType: 'INSTANCE', tabsType: 'INSTANCE', linkedView: 'view-files',
+    linkedTab: null, activeTab: 'Files' };
+  assert.doesNotThrow(() => assertLeftSidedockSelection(expected, actual));
+  assert.throws(() => assertLeftSidedockSelection(expected,
+    { ...actual, tab: 'tab-search' }), /não atualizou conteúdo e tab/);
+  assert.throws(() => assertLeftSidedockSelection(expected,
+    { ...actual, tabsType: null }), /não atualizou conteúdo e tab/);
+  assert.throws(() => assertLeftSidedockSelection(expected,
+    { ...actual, activeTab: 'Search' }), /não atualizou conteúdo e tab/);
 });
 
 test('incomplete chrome probe cannot enter full generation', () => {

@@ -130,9 +130,17 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
       workspaceTab.set, bookmarksResult.actions, rows, iconButtons, uiKitTheme);
     const filesTab = sidePanel.group.children.find((node): node is ComponentNode =>
       node.type === 'COMPONENT' && node.variantProperties?.Active === 'Files');
-    if (!filesTab) throw new Error('UI Kit: tab Files ausente para o Application Shell.');
+    const searchTab = sidePanel.group.children.find((node): node is ComponentNode =>
+      node.type === 'COMPONENT' && node.variantProperties?.Active === 'Search');
+    const bookmarksTab = sidePanel.group.children.find((node): node is ComponentNode =>
+      node.type === 'COMPONENT' && node.variantProperties?.Active === 'Bookmarks');
+    if (!filesTab || !searchTab || !bookmarksTab) {
+      throw new Error('UI Kit: tabs esquerdas ausentes para o Application Shell.');
+    }
     await generateApplicationShell(shellEvidence, {
       sidePanel: sidePanel.panel, filesView: filesResult.component, filesTab,
+      searchView: searchResult.component, searchTab,
+      bookmarksView: bookmarksResult.component, bookmarksTab,
       workspaceTab: workspaceTab.set, viewHeader: viewHeader.component,
       outlineView: outlineResult.component, outlineTab: outlineResult.tab,
       iconButtons, sideModel, headerModel, workspaceModel,

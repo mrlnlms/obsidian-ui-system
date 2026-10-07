@@ -149,6 +149,10 @@ interface Sources {
   sidePanel: ComponentNode;
   filesView: ComponentNode;
   filesTab: ComponentNode;
+  searchView: ComponentNode;
+  searchTab: ComponentNode;
+  bookmarksView: ComponentNode;
+  bookmarksTab: ComponentNode;
   workspaceTab: ComponentSetNode;
   viewHeader: ComponentNode;
   outlineView: ComponentNode;
@@ -170,8 +174,12 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
   if (!mainTab || !inactiveMainTab ||
       sources.sidePanel.name !== 'Obsidian / Side Panel / Left / Dark' ||
       sources.filesView.name !== 'Obsidian / File Explorer View / Dark' ||
+      sources.searchView.name !== 'Obsidian / Search View / Dark' ||
+      sources.bookmarksView.name !== 'Obsidian / Bookmarks View / Dark' ||
       sources.viewHeader.name !== 'Obsidian / View Header / Markdown' ||
       sources.filesTab.variantProperties?.Active !== 'Files' ||
+      sources.searchTab.variantProperties?.Active !== 'Search' ||
+      sources.bookmarksTab.variantProperties?.Active !== 'Bookmarks' ||
       sources.outlineView.name !== 'Obsidian / Outline View' ||
       sources.outlineTab.name !== 'Obsidian / WorkspaceTabs / Outline') {
     throw new Error('Application Shell: fontes canônicas incompatíveis.');
@@ -369,7 +377,8 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
     instance.resize(shell.width, shell.height);
     await verifyShell(instance, sources, contentSlot, rightSlot, statusSource,
       profileSource, leftSource, evidence, 'restored');
-    const slotProbe = createSidedockSlotProbe(shell);
+    const leftViews = createLeftSidedockViews(leftSource, sources);
+    const slotProbe = createSidedockSlotProbe(shell, leftViews.files);
     const probeLeft = slotProbe.findOne((node) => node.name === 'Left Sidedock / Files');
     const probeRight = slotProbe.findOne((node) => node.name === 'Right Sidedock');
     const probeMain = slotProbe.findOne((node) => node.name === 'Main Workspace');
@@ -377,16 +386,17 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
       .filter((property) => property.type === 'SLOT');
     if (probeLeft?.type !== 'INSTANCE' || probeRight?.type !== 'INSTANCE' ||
         probeMain?.type !== 'SLOT' ||
-        (await probeLeft.getMainComponentAsync())?.id !== leftSource.id ||
+        (await probeLeft.getMainComponentAsync())?.id !== leftViews.files.id ||
         (await probeRight.getMainComponentAsync())?.id !== rightSlot.id ||
         probeSlots.length !== 3) {
       throw new Error('Application Shell Slot probe: fontes canônicas ou Slots divergiram.');
     }
-    const slotPreview = createSidedockSlotPreview(slotProbe, evidence);
+    const slotPreview = await createSidedockSlotPreview(slotProbe, evidence, sources);
     const rightEdge = figma.currentPage.children.filter((node) =>
       node !== shell && node !== contentSlot && node !== rightSlot &&
       node !== ribbonSource && node !== statusSource && node !== profileSource &&
-      node !== leftSource && node !== slotProbe && node !== slotPreview &&
+      node !== leftSource && node !== leftViews.set &&
+      node !== slotProbe && node !== slotPreview &&
       node !== preview)
       .map((node) => node.absoluteBoundingBox).filter((box): box is Rect => box !== null)
       .reduce((edge, box) => Math.max(edge, box.x + box.width), 0);
@@ -396,6 +406,8 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
     statusSource.x = rightSlot.x + rightSlot.width + 64;
     profileSource.x = statusSource.x + statusSource.width + 64;
     leftSource.x = profileSource.x + profileSource.width + 64;
+    leftViews.set.x = leftSource.x;
+    leftViews.set.y = leftSource.y + leftSource.height + 64;
     shell.x = leftSource.x + leftSource.width + 64;
     preview.x = shell.x + shell.width + 64;
     slotProbe.x = preview.x + preview.width + 64;
@@ -416,8 +428,78 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
   }
 }
 
+/** One View choice on the Left Sidedock keeps its hosted content and active tab paired. */
+export function leftSidedockViewChoices<T>(sources: {
+  filesView: T; filesTab: T; searchView: T; searchTab: T;
+  bookmarksView: T; bookmarksTab: T;
+}): ReadonlyArray<{ name: 'Files' | 'Search' | 'Bookmarks'; view: T; tab: T }> {
+  return [
+    { name: 'Files', view: sources.filesView, tab: sources.filesTab },
+    { name: 'Search', view: sources.searchView, tab: sources.searchTab },
+    { name: 'Bookmarks', view: sources.bookmarksView, tab: sources.bookmarksTab },
+  ];
+}
+
+export function assertLeftSidedockSelection(expected: { name: string; viewId: string;
+  tabId: string }, actual: { selection: string | boolean | null;
+  view: string | boolean | null; tab: string | boolean | null;
+  hostedType: string | null; tabsType: string | null;
+  linkedView: string | null; linkedTab: string | null;
+  activeTab: string | boolean | null }): void {
+  // Figma may return null for a nested tab's main component; the panel swap remains readable.
+  if (actual.selection !== expected.name || actual.view !== expected.viewId ||
+      actual.tab !== expected.tabId || actual.hostedType !== 'INSTANCE' ||
+      actual.tabsType !== 'INSTANCE' ||
+      (actual.linkedView && actual.linkedView !== expected.viewId) ||
+      (actual.linkedTab && actual.linkedTab !== expected.tabId) ||
+      (actual.activeTab && actual.activeTab !== expected.name)) {
+    throw new Error(`Application Shell Slot probe: View ${expected.name} não atualizou conteúdo e tab ` +
+      JSON.stringify({ expected, actual }));
+  }
+}
+
+function createLeftSidedockViews(filesSource: ComponentNode,
+  sources: Sources): { set: ComponentSetNode; files: ComponentNode } {
+  const choices = leftSidedockViewChoices(sources);
+  const variants: ComponentNode[] = [];
+  for (const choice of choices) {
+    const variant = filesSource.clone();
+    variant.name = `View=${choice.name}`;
+    const panel = variant.findOne((node) => node.name === 'Side Panel / Files');
+    if (panel?.type !== 'INSTANCE') {
+      throw new Error(`Application Shell Slot probe: host ${choice.name} ausente.`);
+    }
+    const viewProperty = swapProperty(sources.sidePanel, 'Hosted View');
+    const tabProperty = swapProperty(sources.sidePanel, 'Tab group');
+    panel.setProperties({ [viewProperty]: choice.view.id,
+      [tabProperty]: choice.tab.id });
+    panel.isExposedInstance = false;
+    const actualView = panel.componentProperties[viewProperty]?.value;
+    const actualTab = panel.componentProperties[tabProperty]?.value;
+    if (actualView !== choice.view.id || actualTab !== choice.tab.id) {
+      throw new Error(`Application Shell Slot probe: propriedades ${choice.name} divergiram ` +
+        JSON.stringify({ expectedView: choice.view.id, actualView,
+          expectedTab: choice.tab.id, actualTab }));
+    }
+    variants.push(variant);
+  }
+  const set = figma.combineAsVariants(variants, figma.currentPage);
+  set.name = 'Obsidian / Left Sidedock / View (probe)';
+  set.description = 'View seleciona Files, Search ou Bookmarks junto com sua tab ativa. Mantém o Side Panel e o Vault Profile canônicos.';
+  if (set.children.length !== 3 || set.componentPropertyDefinitions.View?.type !== 'VARIANT') {
+    throw new Error('Application Shell Slot probe: propriedade View do Left Sidedock ausente.');
+  }
+  variants.forEach((variant, index) => {
+    variant.x = 20;
+    variant.y = 20 + index * (filesSource.height + 20);
+  });
+  set.resizeWithoutConstraints(filesSource.width + 40, 3 * (filesSource.height + 20) + 20);
+  return { set, files: variants[0]! };
+}
+
 /** Linked-instance probe: sidedock slots resize, and the Main Workspace accepts content. */
-function createSidedockSlotProbe(shell: ComponentNode): ComponentNode {
+function createSidedockSlotProbe(shell: ComponentNode,
+  filesLeft: ComponentNode): ComponentNode {
   const probe = shell.clone();
   probe.name = 'Obsidian / Application Shell / Sidedock Slots (probe)';
   probe.description = 'Shell com Sidedocks redimensionáveis, Main Workspace editável e controles de visibilidade estrutural na instância.';
@@ -431,6 +513,8 @@ function createSidedockSlotProbe(shell: ComponentNode): ComponentNode {
   if (left?.type !== 'INSTANCE' || right?.type !== 'INSTANCE') {
     throw new Error('Application Shell Slot probe: fontes laterais ausentes.');
   }
+  left.swapComponent(filesLeft);
+  left.isExposedInstance = true;
   const rightSwap = Object.keys(probe.componentPropertyDefinitions).find((key) =>
     key.startsWith('Right Sidedock#') &&
     probe.componentPropertyDefinitions[key]?.type === 'INSTANCE_SWAP');
@@ -515,8 +599,8 @@ function wrapSidedockInSlot(component: ComponentNode, body: FrameNode,
   slot.minWidth = child.minWidth;
 }
 
-function createSidedockSlotPreview(probe: ComponentNode,
-  evidence: ApplicationShellEvidence): FrameNode {
+async function createSidedockSlotPreview(probe: ComponentNode,
+  evidence: ApplicationShellEvidence, sources: Sources): Promise<FrameNode> {
   const preview = figma.createFrame();
   preview.name = 'Application Shell / Sidedock Slots resize probe';
   preview.resize(probe.width + 40, probe.height + 40);
@@ -623,6 +707,39 @@ function createSidedockSlotPreview(probe: ComponentNode,
     }
   }
   instance.setProperties({ [showRibbon]: true, [showLeft]: true, [showRight]: true });
+  verify();
+  for (const choice of leftSidedockViewChoices(sources)) {
+    left.setProperties({ View: choice.name });
+    const panel = left.findOne((node) => node.name === 'Side Panel / Files');
+    const hosted = panel?.type === 'INSTANCE'
+      ? panel.findOne((node) => node.name === 'Hosted View') : null;
+    const tabArea = panel?.type === 'INSTANCE'
+      ? panel.findOne((node) => node.name === 'Tab group area') : null;
+    const tabs = tabArea?.type === 'FRAME'
+      ? tabArea.children.find((node) => node.type === 'INSTANCE') : null;
+    const actualView = panel?.type === 'INSTANCE'
+      ? panel.componentProperties[swapProperty(sources.sidePanel, 'Hosted View')]?.value : null;
+    const actualTab = panel?.type === 'INSTANCE'
+      ? panel.componentProperties[swapProperty(sources.sidePanel, 'Tab group')]?.value : null;
+    const linkedView = hosted?.type === 'INSTANCE'
+      ? (await hosted.getMainComponentAsync())?.id : null;
+    const linkedTab = tabs?.type === 'INSTANCE'
+      ? (await tabs.getMainComponentAsync())?.id : null;
+    const activeTab = tabs?.type === 'INSTANCE'
+      ? tabs.componentProperties.Active?.value : null;
+    assertLeftSidedockSelection({ name: choice.name,
+      viewId: choice.view.id, tabId: choice.tab.id }, {
+      selection: left.componentProperties.View?.value ?? null,
+      view: actualView ?? null, tab: actualTab ?? null,
+      hostedType: hosted?.type ?? null, tabsType: tabs?.type ?? null,
+      linkedView: linkedView ?? null, linkedTab: linkedTab ?? null,
+      activeTab: activeTab ?? null });
+    verify();
+    left.resize(left.width + 40, left.height);
+    verify();
+    left.resize(left.width - 40, left.height);
+  }
+  left.setProperties({ View: 'Files' });
   verify();
   return preview;
 }
