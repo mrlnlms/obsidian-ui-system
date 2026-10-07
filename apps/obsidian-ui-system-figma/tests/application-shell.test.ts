@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { applicationShellGlyphSources, assertShellAdjacency, assertShellResize,
-  assertSidedockProbeLayout, assertLeftSidedockSelection, leftSidedockViewChoices,
+  assertSidedockProbeLayout, assertLeftSidedockSelection, assertPluginHostedSlotLayout,
+  leftSidedockViewChoices,
   readApplicationShellEvidence } from
   '../src/application-shell-generation';
 import { canonicalGlyphs, observedUiKitGlyphSources } from '../src/glyph-library';
@@ -154,6 +155,22 @@ test('Left Sidedock accepts a null nested tab link when its swap and tab state a
     { ...actual, activeTab: 'Search' }), /não atualizou conteúdo e tab/);
 });
 
+test('Plugin Hosted View fills the sidedock and leaves Vault Profile at the bottom', () => {
+  for (const width of [200, 242, 320]) {
+    for (const height of [420, 600, 740]) {
+      const panelHeight = height - 40;
+      const layout = { panel: { width, height: panelHeight },
+        header: { height: 40 },
+        slot: { width, height: panelHeight - 40, y: 40 },
+        profile: { y: panelHeight, height: 40 }, sidedock: { height } };
+      assert.doesNotThrow(() => assertPluginHostedSlotLayout(layout));
+      assert.throws(() => assertPluginHostedSlotLayout({ ...layout,
+        slot: { ...layout.slot, height: layout.slot.height - 2 } }),
+      /Plugin Slot não acompanha/);
+    }
+  }
+});
+
 test('incomplete chrome probe cannot enter full generation', () => {
   assert.throws(() => readApplicationShellEvidence({ ...probe, statusBar: { height: 27 } }),
     /evidência da Status Bar/);
@@ -189,6 +206,11 @@ test('Ribbon and right tabs resolve through the shared canonical glyph catalog',
   assert.equal(catalog.byUse.get('Vault / Help'), 'help');
   assert.equal(catalog.byUse.get('Vault / Settings'), 'lucide-settings');
   assert.equal(catalog.byUse.get('Main tabs / New tab'), 'lucide-plus');
+  assert.equal(catalog.byUse.get('Ribbon / Create new canvas'), 'lucide-layout-dashboard');
+  for (const title of ['Files', 'Search', 'Bookmarks']) {
+    assert.notEqual(catalog.byUse.get('Ribbon / Create new canvas'),
+      catalog.byUse.get(`Sidedock tab / ${title}`));
+  }
   assert.equal(catalog.glyphs.find((glyph) => glyph.name === 'lucide-plus')?.color,
     'rgb(179, 179, 179)');
   assert.ok(catalog.glyphs.every((glyph) => glyph.color === 'rgb(179, 179, 179)'),

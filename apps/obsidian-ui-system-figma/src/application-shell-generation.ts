@@ -391,11 +391,15 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
         probeSlots.length !== 3) {
       throw new Error('Application Shell Slot probe: fontes canônicas ou Slots divergiram.');
     }
-    const slotPreview = await createSidedockSlotPreview(slotProbe, evidence, sources);
+    const slotPreview = await createSidedockSlotPreview(slotProbe, evidence, sources,
+      leftViews.pluginTabs, leftViews.panels);
     const rightEdge = figma.currentPage.children.filter((node) =>
       node !== shell && node !== contentSlot && node !== rightSlot &&
       node !== ribbonSource && node !== statusSource && node !== profileSource &&
       node !== leftSource && node !== leftViews.set &&
+      !Object.values(leftViews.panels).includes(node as ComponentNode) &&
+      node !== leftViews.pluginTabs &&
+      !leftViews.pluginIcons.includes(node as ComponentNode) &&
       node !== slotProbe && node !== slotPreview &&
       node !== preview)
       .map((node) => node.absoluteBoundingBox).filter((box): box is Rect => box !== null)
@@ -408,6 +412,16 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
     leftSource.x = profileSource.x + profileSource.width + 64;
     leftViews.set.x = leftSource.x;
     leftViews.set.y = leftSource.y + leftSource.height + 64;
+    Object.values(leftViews.panels).forEach((panel, index) => {
+      panel.x = leftViews.set.x + index * (panel.width + 32);
+      panel.y = leftViews.set.y + leftViews.set.height + 64;
+    });
+    leftViews.pluginTabs.x = leftViews.panels.Plugin.x + leftViews.panels.Plugin.width + 64;
+    leftViews.pluginTabs.y = leftViews.panels.Plugin.y;
+    leftViews.pluginIcons.forEach((icon, index) => {
+      icon.x = leftViews.pluginTabs.x + leftViews.pluginTabs.width + 64 + index * 32;
+      icon.y = leftViews.pluginTabs.y;
+    });
     shell.x = leftSource.x + leftSource.width + 64;
     preview.x = shell.x + shell.width + 64;
     slotProbe.x = preview.x + preview.width + 64;
@@ -458,43 +472,224 @@ export function assertLeftSidedockSelection(expected: { name: string; viewId: st
   }
 }
 
+export function assertPluginHostedSlotLayout(layout: { panel: { width: number; height: number };
+  header: { height: number }; slot: { width: number; height: number; y: number };
+  profile: { y: number; height: number }; sidedock: { height: number } }): void {
+  if (Math.abs(layout.slot.width - layout.panel.width) > 1 ||
+      Math.abs(layout.slot.height - (layout.panel.height - layout.header.height)) > 1 ||
+      Math.abs(layout.slot.y - layout.header.height) > 1 ||
+      Math.abs(layout.profile.y - layout.panel.height) > 1 ||
+      Math.abs(layout.profile.y + layout.profile.height - layout.sidedock.height) > 1) {
+    throw new Error('Application Shell Slot probe: Plugin Slot não acompanha o Sidedock.');
+  }
+}
+
 function createLeftSidedockViews(filesSource: ComponentNode,
-  sources: Sources): { set: ComponentSetNode; files: ComponentNode } {
+  sources: Sources): { set: ComponentSetNode; files: ComponentNode;
+    panels: Record<'Files' | 'Search' | 'Bookmarks' | 'Plugin', ComponentNode>;
+    pluginTabs: ComponentSetNode;
+    pluginIcons: ComponentNode[] } {
   const choices = leftSidedockViewChoices(sources);
+  const { set: pluginTabs, groups, icons: pluginIcons } = createPluginTabGroups(sources);
+  const panels = {} as Record<'Files' | 'Search' | 'Bookmarks' | 'Plugin', ComponentNode>;
   const variants: ComponentNode[] = [];
   for (const choice of choices) {
+    const sourcePanel = createProbeSidePanel(sources.sidePanel,
+      groups[choice.name], choice.name, choice.view);
+    panels[choice.name] = sourcePanel;
     const variant = filesSource.clone();
     variant.name = `View=${choice.name}`;
     const panel = variant.findOne((node) => node.name === 'Side Panel / Files');
     if (panel?.type !== 'INSTANCE') {
       throw new Error(`Application Shell Slot probe: host ${choice.name} ausente.`);
     }
-    const viewProperty = swapProperty(sources.sidePanel, 'Hosted View');
-    const tabProperty = swapProperty(sources.sidePanel, 'Tab group');
+    panel.swapComponent(sourcePanel);
+    const viewProperty = swapProperty(sourcePanel, 'Hosted View');
+    const tabProperty = swapProperty(sourcePanel, 'Tab group');
     panel.setProperties({ [viewProperty]: choice.view.id,
-      [tabProperty]: choice.tab.id });
+      [tabProperty]: groups[choice.name].id });
+    const tabArea = panel.findOne((node) => node.name === 'Tab group area');
+    const tabGroup = tabArea?.type === 'FRAME' ? tabArea.children[0] : null;
+    if (tabArea?.type !== 'FRAME' || tabGroup?.type !== 'INSTANCE') {
+      throw new Error(`Application Shell Slot probe: grupo ${choice.name} ausente na variante.`);
+    }
+    tabArea.resize(groups[choice.name].width, tabArea.height);
+    tabGroup.swapComponent(groups[choice.name]);
+    tabGroup.resize(groups[choice.name].width, groups[choice.name].height);
     panel.isExposedInstance = false;
     const actualView = panel.componentProperties[viewProperty]?.value;
     const actualTab = panel.componentProperties[tabProperty]?.value;
-    if (actualView !== choice.view.id || actualTab !== choice.tab.id) {
+    if (actualView !== choice.view.id || actualTab !== groups[choice.name].id) {
       throw new Error(`Application Shell Slot probe: propriedades ${choice.name} divergiram ` +
         JSON.stringify({ expectedView: choice.view.id, actualView,
-          expectedTab: choice.tab.id, actualTab }));
+          expectedTab: groups[choice.name].id, actualTab }));
     }
     variants.push(variant);
   }
+  const pluginPanel = createPluginSidePanel(sources, groups.Plugin);
+  panels.Plugin = pluginPanel;
+  const plugin = filesSource.clone();
+  plugin.name = 'View=Plugin';
+  const panel = plugin.findOne((node) => node.name === 'Side Panel / Files');
+  if (panel?.type !== 'INSTANCE') {
+    throw new Error('Application Shell Slot probe: host Plugin ausente.');
+  }
+  panel.swapComponent(pluginPanel);
+  panel.isExposedInstance = true;
+  variants.push(plugin);
   const set = figma.combineAsVariants(variants, figma.currentPage);
   set.name = 'Obsidian / Left Sidedock / View (probe)';
-  set.description = 'View seleciona Files, Search ou Bookmarks junto com sua tab ativa. Mantém o Side Panel e o Vault Profile canônicos.';
-  if (set.children.length !== 3 || set.componentPropertyDefinitions.View?.type !== 'VARIANT') {
+  set.description = 'View seleciona Files, Search, Bookmarks ou uma área Plugin vazia. O Vault Profile permanece no Sidedock.';
+  if (set.children.length !== 4 || set.componentPropertyDefinitions.View?.type !== 'VARIANT') {
     throw new Error('Application Shell Slot probe: propriedade View do Left Sidedock ausente.');
   }
   variants.forEach((variant, index) => {
     variant.x = 20;
     variant.y = 20 + index * (filesSource.height + 20);
   });
-  set.resizeWithoutConstraints(filesSource.width + 40, 3 * (filesSource.height + 20) + 20);
-  return { set, files: variants[0]! };
+  set.resizeWithoutConstraints(filesSource.width + 40,
+    variants.length * (filesSource.height + 20) + 20);
+  return { set, files: variants[0]!, panels, pluginTabs, pluginIcons };
+}
+
+function createPluginTabGroups(sources: Sources): { set: ComponentSetNode;
+  groups: Record<'Files' | 'Search' | 'Bookmarks' | 'Plugin', ComponentNode>;
+  icons: ComponentNode[] } {
+  const active = sources.workspaceTab.children.find((node): node is ComponentNode =>
+    node.type === 'COMPONENT' && node.variantProperties?.Context === 'Sidedock' &&
+    node.variantProperties?.State === 'Active');
+  const inactive = sources.workspaceTab.children.find((node): node is ComponentNode =>
+    node.type === 'COMPONENT' && node.variantProperties?.Context === 'Sidedock' &&
+    node.variantProperties?.State === 'Inactive');
+  const filesInactive = sources.searchTab.children[0];
+  const searchInactive = sources.filesTab.children[1];
+  const bookmarksInactive = sources.filesTab.children[2];
+  if (!active || !inactive || filesInactive?.type !== 'INSTANCE' ||
+      searchInactive?.type !== 'INSTANCE' || bookmarksInactive?.type !== 'INSTANCE') {
+    throw new Error('Application Shell Slot probe: tabs inativas do Plugin ausentes.');
+  }
+  const icons = (['Active', 'Inactive'] as const).map((state) => {
+    const icon = figma.createComponent();
+    icon.name = `Obsidian / Workspace Tab Icon / Plugin / ${state} (probe)`;
+    icon.resize(16, 16);
+    icon.fills = [];
+    icon.strokes = [];
+    const glyph = sources.iconButtons.createGlyph('Ribbon / Create new canvas',
+      state === 'Active' ? 'Selected' : 'Muted');
+    glyph.name = 'Glyph / layout-dashboard';
+    glyph.opacity = state === 'Active' ? 1 : 0.85;
+    icon.appendChild(glyph);
+    return icon;
+  });
+  const groups = {} as Record<'Files' | 'Search' | 'Bookmarks' | 'Plugin', ComponentNode>;
+  for (const name of ['Files', 'Search', 'Bookmarks', 'Plugin'] as const) {
+    const group = figma.createComponent();
+    group.name = `Active=${name}`;
+    group.layoutMode = 'HORIZONTAL';
+    group.primaryAxisSizingMode = 'AUTO';
+    group.counterAxisSizingMode = 'FIXED';
+    group.itemSpacing = sources.sideModel.tabGap;
+    group.fills = [];
+    group.strokes = [];
+    group.resize(4 * 28 + 3 * sources.sideModel.tabGap, 25);
+    const source = name === 'Files' ? sources.filesTab :
+      name === 'Search' ? sources.searchTab :
+      name === 'Bookmarks' ? sources.bookmarksTab : null;
+    for (const tab of source?.children ??
+      [filesInactive, searchInactive, bookmarksInactive]) {
+      if (tab.type !== 'INSTANCE') throw new Error(`Application Shell Slot probe: tab ${name} inválida.`);
+      group.appendChild(tab.clone());
+    }
+    const state = name === 'Plugin' ? 'Active' : 'Inactive';
+    const pluginTab = (state === 'Active' ? active : inactive).createInstance();
+    pluginTab.name = 'Plugin tab';
+    pluginTab.setProperties({ [swapProperty(sources.workspaceTab, `Icon / ${state}`)]:
+      icons[state === 'Active' ? 0 : 1]!.id });
+    group.appendChild(pluginTab);
+    if (group.children.length !== 4 || Math.abs(group.width - (4 * 28 +
+        3 * sources.sideModel.tabGap)) > 1) {
+      throw new Error(`Application Shell Slot probe: tab Plugin no estado ${name} divergiu.`);
+    }
+    groups[name] = group;
+  }
+  const set = figma.combineAsVariants(Object.values(groups), figma.currentPage);
+  set.name = 'Obsidian / WorkspaceTabs / Left with Plugin (probe)';
+  if (set.componentPropertyDefinitions.Active?.type !== 'VARIANT') {
+    throw new Error('Application Shell Slot probe: estados de tabs do Plugin ausentes.');
+  }
+  Object.values(groups).forEach((group, index) => {
+    group.x = 20;
+    group.y = 20 + index * 45;
+  });
+  set.resizeWithoutConstraints(4 * 28 + 3 * sources.sideModel.tabGap + 40, 200);
+  return { set, groups, icons };
+}
+
+function createProbeSidePanel(source: ComponentNode, tabs: ComponentNode,
+  name: 'Files' | 'Search' | 'Bookmarks' | 'Plugin',
+  view?: ComponentNode): ComponentNode {
+  const panel = source.clone();
+  panel.name = `Obsidian / Side Panel / Left / ${name} (probe)`;
+  const tabArea = panel.findOne((node) => node.name === 'Tab group area');
+  const tabGroup = tabArea?.type === 'FRAME' ? tabArea.children[0] : null;
+  if (tabArea?.type !== 'FRAME' || tabGroup?.type !== 'INSTANCE') {
+    throw new Error(`Application Shell Slot probe: Tab group de ${name} ausente.`);
+  }
+  tabArea.resize(tabs.width, tabArea.height);
+  tabGroup.swapComponent(tabs);
+  tabGroup.resize(tabs.width, tabs.height);
+  if (tabGroup.children.length !== 4) {
+    throw new Error(`Application Shell Slot probe: fonte ${name} sem quatro tabs.`);
+  }
+  panel.editComponentProperty(swapProperty(panel, 'Tab group'),
+    { defaultValue: tabs.id });
+  if (view) {
+    const hosted = panel.findOne((node) => node.name === 'Hosted View');
+    if (hosted?.type !== 'INSTANCE') {
+      throw new Error(`Application Shell Slot probe: Hosted View de ${name} ausente.`);
+    }
+    hosted.swapComponent(view);
+    hosted.name = 'Hosted View';
+    panel.editComponentProperty(swapProperty(panel, 'Hosted View'),
+      { defaultValue: view.id });
+  }
+  return panel;
+}
+
+function createPluginSidePanel(sources: Sources, pluginTabs: ComponentNode): ComponentNode {
+  const panel = createProbeSidePanel(sources.sidePanel, pluginTabs, 'Plugin');
+  panel.name = 'Obsidian / Side Panel / Left / Plugin Slot (probe)';
+  panel.description = 'Estrutura do Side Panel esquerdo com área hospedada composicional vazia.';
+  const hosted = panel.findOne((node) => node.name === 'Hosted View');
+  if (hosted?.type !== 'INSTANCE') {
+    throw new Error('Application Shell Slot probe: Hosted View do Plugin ausente.');
+  }
+  const index = panel.children.indexOf(hosted);
+  const known = new Set(Object.keys(panel.componentPropertyDefinitions));
+  const slot = panel.createSlot();
+  const property = Object.keys(panel.componentPropertyDefinitions).find((key) =>
+    !known.has(key) && panel.componentPropertyDefinitions[key]?.type === 'SLOT');
+  if (!property) throw new Error('Application Shell Slot probe: Slot Plugin ausente.');
+  panel.editComponentProperty(property, { name: 'Plugin View content',
+    description: 'Insira Components nesta área da View do plugin.' });
+  slot.name = 'Hosted View / Plugin Slot';
+  panel.insertChild(index, slot);
+  slot.resize(hosted.width, hosted.height);
+  slot.layoutMode = 'VERTICAL';
+  slot.itemSpacing = 0;
+  slot.paddingLeft = 0;
+  slot.paddingRight = 0;
+  slot.paddingTop = 0;
+  slot.paddingBottom = 0;
+  slot.fills = panel.fills;
+  slot.strokes = [];
+  slot.layoutSizingHorizontal = 'FILL';
+  slot.layoutGrow = 1;
+  slot.minWidth = 1;
+  hosted.remove();
+  const oldProperty = swapProperty(panel, 'Hosted View');
+  panel.deleteComponentProperty(oldProperty);
+  return panel;
 }
 
 /** Linked-instance probe: sidedock slots resize, and the Main Workspace accepts content. */
@@ -600,7 +795,10 @@ function wrapSidedockInSlot(component: ComponentNode, body: FrameNode,
 }
 
 async function createSidedockSlotPreview(probe: ComponentNode,
-  evidence: ApplicationShellEvidence, sources: Sources): Promise<FrameNode> {
+  evidence: ApplicationShellEvidence, sources: Sources,
+  probeTabSet: ComponentSetNode,
+  probePanels: Record<'Files' | 'Search' | 'Bookmarks' | 'Plugin', ComponentNode>
+): Promise<FrameNode> {
   const preview = figma.createFrame();
   preview.name = 'Application Shell / Sidedock Slots resize probe';
   preview.resize(probe.width + 40, probe.height + 40);
@@ -709,6 +907,9 @@ async function createSidedockSlotPreview(probe: ComponentNode,
   instance.setProperties({ [showRibbon]: true, [showLeft]: true, [showRight]: true });
   verify();
   for (const choice of leftSidedockViewChoices(sources)) {
+    const expectedTab = probeTabSet.children.find((node): node is ComponentNode =>
+      node.type === 'COMPONENT' && node.variantProperties?.Active === choice.name);
+    if (!expectedTab) throw new Error(`Application Shell Slot probe: tabs ${choice.name} ausentes.`);
     left.setProperties({ View: choice.name });
     const panel = left.findOne((node) => node.name === 'Side Panel / Files');
     const hosted = panel?.type === 'INSTANCE'
@@ -718,17 +919,27 @@ async function createSidedockSlotPreview(probe: ComponentNode,
     const tabs = tabArea?.type === 'FRAME'
       ? tabArea.children.find((node) => node.type === 'INSTANCE') : null;
     const actualView = panel?.type === 'INSTANCE'
-      ? panel.componentProperties[swapProperty(sources.sidePanel, 'Hosted View')]?.value : null;
+      ? panel.componentProperties[swapProperty(probePanels[choice.name], 'Hosted View')]?.value : null;
     const actualTab = panel?.type === 'INSTANCE'
-      ? panel.componentProperties[swapProperty(sources.sidePanel, 'Tab group')]?.value : null;
+      ? panel.componentProperties[swapProperty(probePanels[choice.name], 'Tab group')]?.value : null;
     const linkedView = hosted?.type === 'INSTANCE'
       ? (await hosted.getMainComponentAsync())?.id : null;
     const linkedTab = tabs?.type === 'INSTANCE'
       ? (await tabs.getMainComponentAsync())?.id : null;
     const activeTab = tabs?.type === 'INSTANCE'
       ? tabs.componentProperties.Active?.value : null;
+    if (tabs?.type !== 'INSTANCE' || tabs.children.length !== 4 ||
+        Math.abs(tabs.width - expectedTab.width) > 1 ||
+        tabArea?.type !== 'FRAME' ||
+        Math.abs(tabArea.width - 4 * 28 - 3 * sources.sideModel.tabGap) > 1) {
+      throw new Error(`Application Shell Slot probe: quarta tab ausente em ${choice.name} ` +
+        JSON.stringify({ tabAreaWidth: tabArea?.width, tabType: tabs?.type,
+          tabWidth: tabs?.width, tabChildren: tabs?.type === 'INSTANCE'
+            ? tabs.children.length : null, expectedWidth: expectedTab.width,
+          tabProperty: actualTab, expectedTab: expectedTab.id }));
+    }
     assertLeftSidedockSelection({ name: choice.name,
-      viewId: choice.view.id, tabId: choice.tab.id }, {
+      viewId: choice.view.id, tabId: expectedTab.id }, {
       selection: left.componentProperties.View?.value ?? null,
       view: actualView ?? null, tab: actualTab ?? null,
       hostedType: hosted?.type ?? null, tabsType: tabs?.type ?? null,
@@ -739,6 +950,63 @@ async function createSidedockSlotPreview(probe: ComponentNode,
     verify();
     left.resize(left.width - 40, left.height);
   }
+  left.setProperties({ View: 'Plugin' });
+  const pluginPanel = left.findOne((node) => node.name === 'Side Panel / Files');
+  const pluginSlot = pluginPanel?.type === 'INSTANCE'
+    ? pluginPanel.findOne((node) => node.name === 'Hosted View / Plugin Slot') : null;
+  const pluginHeader = pluginPanel?.type === 'INSTANCE'
+    ? pluginPanel.findOne((node) => node.name === 'Tab header / 40 px') : null;
+  const pluginTabArea = pluginPanel?.type === 'INSTANCE'
+    ? pluginPanel.findOne((node) => node.name === 'Tab group area') : null;
+  const pluginTabs = pluginTabArea?.type === 'FRAME'
+    ? pluginTabArea.children.find((node) => node.type === 'INSTANCE') : null;
+  const pluginTabProperty = pluginPanel?.type === 'INSTANCE'
+    ? Object.keys(pluginPanel.componentProperties).find((key) => key.startsWith('Tab group#'))
+    : null;
+  const pluginTabSource = probeTabSet.children.find((node): node is ComponentNode =>
+    node.type === 'COMPONENT' && node.variantProperties?.Active === 'Plugin');
+  const profile = left.findOne((node) => node.name === 'Vault Profile');
+  if (left.componentProperties.View?.value !== 'Plugin' ||
+      pluginPanel?.type !== 'INSTANCE' || pluginSlot?.type !== 'SLOT' ||
+      pluginHeader?.type !== 'FRAME' || profile?.type !== 'INSTANCE' ||
+      pluginTabArea?.type !== 'FRAME' || pluginTabs?.type !== 'INSTANCE' ||
+      pluginTabs.children.length !== 4 ||
+      pluginTabs.children[3]?.type !== 'INSTANCE' ||
+      (pluginTabSource && Math.abs(pluginTabs.width - pluginTabSource.width) > 1) ||
+      Math.abs(pluginTabArea.width - 4 * 28 - 3 * sources.sideModel.tabGap) > 1 ||
+      !pluginTabProperty || !pluginTabSource ||
+      pluginPanel.componentProperties[pluginTabProperty]?.value !== pluginTabSource.id ||
+      pluginSlot.children.length !== 0 || pluginSlot.layoutMode !== 'VERTICAL' ||
+      pluginSlot.layoutSizingHorizontal !== 'FILL' || pluginSlot.layoutGrow !== 1 ||
+      JSON.stringify(pluginSlot.fills) !== JSON.stringify(pluginPanel.fills)) {
+    throw new Error('Application Shell Slot probe: View Plugin não expôs um Slot vazio.');
+  }
+  const verifyPlugin = (): void => {
+    assertPluginHostedSlotLayout({ panel: { width: pluginPanel.width, height: pluginPanel.height },
+      header: { height: pluginHeader.height },
+      slot: { width: pluginSlot.width, height: pluginSlot.height, y: pluginSlot.y },
+      profile: { y: profile.y, height: profile.height },
+      sidedock: { height: left.height } });
+    verify();
+  };
+  verifyPlugin();
+  const insertionProbe = figma.createComponent();
+  insertionProbe.name = 'Application Shell / temporary Plugin Slot insertion check';
+  insertionProbe.resize(16, 16);
+  const inserted = insertionProbe.createInstance();
+  pluginSlot.appendChild(inserted);
+  if (inserted.parent !== pluginSlot || !pluginSlot.children.includes(inserted)) {
+    throw new Error('Application Shell Slot probe: Plugin Slot não aceitou Component.');
+  }
+  left.resize(left.width + 40, left.height);
+  verifyPlugin();
+  left.resize(left.width - 40, left.height);
+  instance.resize(instance.width, instance.height + 80);
+  verifyPlugin();
+  instance.resize(instance.width, instance.height - 80);
+  verifyPlugin();
+  inserted.remove();
+  insertionProbe.remove();
   left.setProperties({ View: 'Files' });
   verify();
   return preview;
@@ -1099,7 +1367,7 @@ function edgeStroke(node: ComponentNode | InstanceNode, edge: 'LEFT' | 'RIGHT'):
   node.strokeRightWeight = edge === 'RIGHT' ? 1 : 0;
 }
 
-function swapProperty(component: ComponentNode, name: string): string {
+function swapProperty(component: ComponentNode | ComponentSetNode, name: string): string {
   const property = Object.keys(component.componentPropertyDefinitions).find((key) =>
     key.startsWith(`${name}#`) && component.componentPropertyDefinitions[key]?.type === 'INSTANCE_SWAP');
   if (!property) throw new Error(`Application Shell: slot ${name} ausente.`);
