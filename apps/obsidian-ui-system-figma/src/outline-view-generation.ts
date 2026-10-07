@@ -12,7 +12,7 @@ interface Host { panel: ComponentNode; group: ComponentSetNode; preview: FrameNo
 export async function composeOutlineInSidePanel(probe: unknown, host: Host,
   workspaceTabs: ComponentSetNode, bookmarkActions: ComponentSetNode,
   rows: TreeRowLibrary, icons: IconButtonLibrary, theme: UiKitThemeVariables): Promise<{
-    component: ComponentNode; preview: FrameNode }> {
+    component: ComponentNode; preview: FrameNode; tab: ComponentNode }> {
   const model = readOutlineViewModel(probe);
   if (host.panel.name !== 'Obsidian / Side Panel / Left / Dark' ||
       host.group.name !== 'Obsidian / WorkspaceTabs / Sidedock' ||
@@ -47,7 +47,7 @@ export async function composeOutlineInSidePanel(probe: unknown, host: Host,
       resized.resize(300, 480);
       await verifyHost(resized, component, tab.group, model);
     } finally { resized.remove(); }
-    return { component, preview };
+    return { component, preview, tab: tab.group };
   } catch (error) {
     for (const node of figma.currentPage.children) {
       if (!roots.has(node.id) && !node.removed) node.remove();

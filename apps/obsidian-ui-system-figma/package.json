@@ -24,6 +24,7 @@
     "test:search-view": "esbuild tests/search-view-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/search-view-data.test.cjs && node --test ../../.build/search-view-data.test.cjs",
     "test:ui-kit": "esbuild tests/ui-kit-layout.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/ui-kit-layout.test.cjs && node --test ../../.build/ui-kit-layout.test.cjs",
     "test:full-ui-kit": "esbuild tests/full-ui-kit-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/full-ui-kit-data.test.cjs && node --test ../../.build/full-ui-kit-data.test.cjs",
+    "test:application-shell": "esbuild tests/application-shell.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/application-shell.test.cjs && node --test ../../.build/application-shell.test.cjs",
     "test:file-explorer-view": "esbuild tests/file-explorer-view-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/file-explorer-view-data.test.cjs && node --test ../../.build/file-explorer-view-data.test.cjs",
     "test:bookmarks-view": "esbuild tests/bookmarks-view-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/bookmarks-view-data.test.cjs && node --test ../../.build/bookmarks-view-data.test.cjs",
     "test:outline-view": "esbuild tests/outline-view-data.test.ts --bundle --platform=node --format=cjs --outfile=../../.build/outline-view-data.test.cjs && node --test ../../.build/outline-view-data.test.cjs",

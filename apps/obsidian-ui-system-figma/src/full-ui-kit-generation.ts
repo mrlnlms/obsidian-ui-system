@@ -9,6 +9,8 @@ import { generatePublicApiBatch } from './public-api-batch-generation';
 import { generateViewHeader } from './view-header-generation';
 import { generateWorkspaceTab } from './workspace-tab-generation';
 import { generateSidePanel } from './side-panel-generation';
+import { applicationShellGlyphSources, generateApplicationShell,
+  readApplicationShellEvidence } from './application-shell-generation';
 import { composeSearchInSidePanel } from './search-view-generation';
 import { composeFilesInSidePanel } from './file-explorer-view-generation';
 import { composeBookmarksInSidePanel } from './bookmarks-view-generation';
@@ -49,6 +51,7 @@ import outlineViewProbe from '../tests/fixtures/outline-view-probe.json';
 import primitiveThemeProbe from '../tests/fixtures/primitive-theme-probe.json';
 import uiKitThemeProbe from '../tests/fixtures/ui-kit-theme-probe.json';
 import publicControlsProbe from '../tests/fixtures/public-toggle-tooltip-probe.json';
+import applicationShellProbe from '../tests/fixtures/application-shell-probe.json';
 
 /** Checks every included observed fixture before a Figma node is created. */
 export function validateIncludedEvidence(): void {
@@ -66,6 +69,7 @@ export function validateIncludedEvidence(): void {
   readPrimitiveThemeEvidence(primitiveThemeProbe);
   readUiKitThemeEvidence(uiKitThemeProbe);
   readPublicControlsEvidence(publicControlsProbe);
+  readApplicationShellEvidence(applicationShellProbe);
 }
 
 /** One Package v1, one action, one file-wide managed composition. */
@@ -95,9 +99,11 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     const sideModel = readSidePanelModel(sidePanelProbe);
     const searchModel = readSearchViewModel(searchViewProbe);
     const workspaceModel = readWorkspaceTabModel(workspaceTabProbe);
-    const iconSources = observedUiKitGlyphSources({ files: filesModel,
+    const shellEvidence = readApplicationShellEvidence(applicationShellProbe);
+    const iconSources = [...observedUiKitGlyphSources({ files: filesModel,
       bookmarks: bookmarksModel, header: headerModel, search: searchModel,
-      side: sideModel, workspace: workspaceModel, outline: outlineModel });
+      side: sideModel, workspace: workspaceModel, outline: outlineModel }),
+    ...applicationShellGlyphSources(shellEvidence)];
     appearanceRun = await beginAppearanceRun();
     previousPageMode = figma.currentPage.explicitVariableModes[appearanceRun.collection.id];
     const primitiveTheme = createPrimitiveVariables(readPrimitiveThemeEvidence(primitiveThemeProbe),
@@ -112,7 +118,7 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
     organizePublicSets(button, search);
     const rows = await createTreeRowLibrary(folderRowsProbe, activeRowProbe, taggedRowsProbe,
       filesViewProbe, primitiveTheme, iconButtons, outlineViewProbe);
-    await generateViewHeader(viewHeaderProbe, iconButtons);
+    const viewHeader = await generateViewHeader(viewHeaderProbe, iconButtons);
     const workspaceTab = await generateWorkspaceTab(workspaceTabProbe, iconButtons);
     const sidePanel = await generateSidePanel(sidePanelProbe, workspaceTab.set, iconButtons);
     const searchResult = await composeSearchInSidePanel(searchViewProbe, search, sidePanel,
@@ -122,6 +128,15 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
       filesResult.actions, iconButtons, uiKitTheme);
     const outlineResult = await composeOutlineInSidePanel(outlineViewProbe, sidePanel,
       workspaceTab.set, bookmarksResult.actions, rows, iconButtons, uiKitTheme);
+    const filesTab = sidePanel.group.children.find((node): node is ComponentNode =>
+      node.type === 'COMPONENT' && node.variantProperties?.Active === 'Files');
+    if (!filesTab) throw new Error('UI Kit: tab Files ausente para o Application Shell.');
+    await generateApplicationShell(shellEvidence, {
+      sidePanel: sidePanel.panel, filesView: filesResult.component, filesTab,
+      workspaceTab: workspaceTab.set, viewHeader: viewHeader.component,
+      outlineView: outlineResult.component, outlineTab: outlineResult.tab,
+      iconButtons, sideModel, headerModel, workspaceModel,
+    });
     await generatePublicApiBatch(publicEvidence, uiKitTheme, searchModel.fontFamily,
       iconButtons, publicControls, button, search);
     verifyPrimitiveThemeModes(primitiveTheme, iconButtons, rows,
