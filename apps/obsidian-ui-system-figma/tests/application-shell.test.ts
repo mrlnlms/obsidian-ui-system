@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { applicationShellGlyphSources, assertShellAdjacency, assertShellResize,
+  assertSidedockProbeLayout,
   readApplicationShellEvidence } from
   '../src/application-shell-generation';
 import { canonicalGlyphs, observedUiKitGlyphSources } from '../src/glyph-library';
@@ -73,6 +74,57 @@ test('Ribbon, sidedocks and Main Workspace stay adjacent when a panel grows', ()
     { x: 0, width: 44 }, { x: 95, width: 300 },
     { x: 395, width: 405 }, { x: 800, width: 200 },
   ]), /gap entre regiões \(51 px\)/);
+});
+
+test('Sidedock probe reflows every visibility combination at two shell widths', () => {
+  const ribbon = 44;
+  const left = 242;
+  const right = 227;
+  const status = 300;
+  for (const shell of [1100, 1300]) {
+    for (let mask = 0; mask < 8; mask += 1) {
+      const showRibbon = Boolean(mask & 1);
+      const showLeft = Boolean(mask & 2);
+      const showRight = Boolean(mask & 4);
+      const ribbonWidth = showRibbon ? ribbon : 0;
+      const leftWidth = showLeft ? left : 0;
+      const rightWidth = showRight ? right : 0;
+      const main = shell - ribbonWidth - leftWidth - rightWidth;
+      assert.doesNotThrow(() => assertSidedockProbeLayout({ shell,
+        ribbon: { visible: showRibbon, x: 0, width: ribbon },
+        left: { visible: showLeft, x: ribbonWidth, width: left },
+        main: { x: ribbonWidth + leftWidth, width: main,
+          header: main, content: main },
+        right: { visible: showRight, x: shell - rightWidth, width: right },
+        status: { x: shell - status, width: status },
+      }), `mask=${mask}, shell=${shell}`);
+    }
+  }
+  assert.doesNotThrow(() => assertSidedockProbeLayout({ shell: status,
+    ribbon: { visible: false, x: 0, width: ribbon },
+    left: { visible: false, x: ribbon, width: left },
+    main: { x: 0, width: status, header: status, content: status },
+    right: { visible: false, x: status, width: right },
+    status: { x: 0, width: status },
+  }));
+});
+
+test('Sidedock probe rejects gaps, stale content widths and detached Status Bar', () => {
+  const layout = {
+    shell: 900,
+    ribbon: { visible: false, x: 0, width: 44 },
+    left: { visible: true, x: 0, width: 242 },
+    main: { x: 242, width: 658, header: 658, content: 658 },
+    right: { visible: false, x: 900, width: 227 },
+    status: { x: 600, width: 300 },
+  };
+  assert.doesNotThrow(() => assertSidedockProbeLayout(layout));
+  assert.throws(() => assertSidedockProbeLayout({ ...layout,
+    main: { ...layout.main, x: 244 } }), /gap entre regiões/);
+  assert.throws(() => assertSidedockProbeLayout({ ...layout,
+    main: { ...layout.main, content: 656 } }), /reflow horizontal/);
+  assert.throws(() => assertSidedockProbeLayout({ ...layout,
+    status: { ...layout.status, x: 598 } }), /reflow horizontal/);
 });
 
 test('incomplete chrome probe cannot enter full generation', () => {

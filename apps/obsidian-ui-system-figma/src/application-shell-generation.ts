@@ -124,6 +124,27 @@ export function assertShellAdjacency(width: number, regions: ReadonlyArray<{
   }
 }
 
+export function assertSidedockProbeLayout(layout: {
+  shell: number; main: { x: number; width: number; header: number; content: number };
+  ribbon: { visible: boolean; x: number; width: number };
+  left: { visible: boolean; x: number; width: number };
+  right: { visible: boolean; x: number; width: number };
+  status: { x: number; width: number };
+}): void {
+  const regions = [layout.ribbon, layout.left, layout.main, layout.right]
+    .filter((region) => !('visible' in region) || region.visible);
+  assertShellAdjacency(layout.shell, regions);
+  const sideWidth = [layout.ribbon, layout.left, layout.right]
+    .reduce((width, region) => width + (region.visible ? region.width : 0), 0);
+  if (layout.main.width < 1 ||
+      Math.abs(layout.main.width - (layout.shell - sideWidth)) > 1 ||
+      Math.abs(layout.main.header - layout.main.width) > 1 ||
+      Math.abs(layout.main.content - layout.main.width) > 1 ||
+      Math.abs(layout.status.x + layout.status.width - layout.shell) > 1) {
+    throw new Error('Application Shell Slot probe: reflow horizontal divergente.');
+  }
+}
+
 interface Sources {
   sidePanel: ComponentNode;
   filesView: ComponentNode;
@@ -399,7 +420,10 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
 function createSidedockSlotProbe(shell: ComponentNode): ComponentNode {
   const probe = shell.clone();
   probe.name = 'Obsidian / Application Shell / Sidedock Slots (probe)';
-  probe.description = 'Shell com Sidedocks redimensionáveis e Main Workspace editável na instância. Arraste conteúdo para o Slot central ou ajuste a largura dos painéis laterais.';
+  probe.description = 'Shell com Sidedocks redimensionáveis, Main Workspace editável e controles de visibilidade estrutural na instância.';
+  const status = probe.findOne((node) => node.name === 'Status Bar');
+  if (status?.type !== 'INSTANCE') throw new Error('Application Shell Slot probe: Status Bar ausente.');
+  probe.minWidth = status.width;
   const body = probe.findOne((node) => node.name === 'Workspace regions');
   if (body?.type !== 'FRAME') throw new Error('Application Shell Slot probe: regiões ausentes.');
   const left = body.children.find((node) => node.name === 'Left Sidedock / Files');
@@ -414,6 +438,20 @@ function createSidedockSlotProbe(shell: ComponentNode): ComponentNode {
   wrapSidedockInSlot(probe, body, left, 'Left Sidedock slot');
   wrapSidedockInSlot(probe, body, right, 'Right Sidedock slot');
   wrapMainWorkspaceInSlot(probe, body);
+  const ribbon = body.children.find((node) => node.name === 'Ribbon');
+  const leftSlot = body.children.find((node) => node.name === 'Left Sidedock slot');
+  const rightSlot = body.children.find((node) => node.name === 'Right Sidedock slot');
+  if (ribbon?.type !== 'INSTANCE' || leftSlot?.type !== 'SLOT' ||
+      rightSlot?.type !== 'SLOT') {
+    throw new Error('Application Shell Slot probe: regiões configuráveis ausentes.');
+  }
+  for (const [name, node] of [
+    ['Show Ribbon', ribbon], ['Show Left Sidedock', leftSlot],
+    ['Show Right Sidedock', rightSlot],
+  ] as const) {
+    const property = probe.addComponentProperty(name, 'BOOLEAN', true);
+    node.componentPropertyReferences = { ...node.componentPropertyReferences, visible: property };
+  }
   return probe;
 }
 
@@ -497,12 +535,32 @@ function createSidedockSlotPreview(probe: ComponentNode,
   const main = instance.findOne((node) => node.name === 'Main Workspace');
   const header = instance.findOne((node) => node.name === 'View Header / chrome');
   const content = instance.findOne((node) => node.name === 'Main Content');
+  const status = instance.findOne((node) => node.name === 'Status Bar');
   if (body?.type !== 'FRAME' || leftSlot?.type !== 'SLOT' ||
       rightSlot?.type !== 'SLOT' || left?.type !== 'INSTANCE' ||
       right?.type !== 'INSTANCE' || ribbon?.type !== 'INSTANCE' ||
       main?.type !== 'SLOT' || header?.type !== 'INSTANCE' ||
-      content?.type !== 'INSTANCE') {
-    throw new Error('Application Shell Slot probe: composição inválida.');
+      content?.type !== 'INSTANCE' || status?.type !== 'INSTANCE') {
+    throw new Error('Application Shell Slot probe: composição inválida ' +
+      JSON.stringify({ body: body?.type, leftSlot: leftSlot?.type,
+        rightSlot: rightSlot?.type, left: left?.type, right: right?.type,
+        ribbon: ribbon?.type, main: main?.type, header: header?.type,
+        content: content?.type, status: status?.type }));
+  }
+  const property = (name: string): string => {
+    const key = Object.keys(probe.componentPropertyDefinitions).find((candidate) =>
+      candidate.startsWith(`${name}#`) &&
+      probe.componentPropertyDefinitions[candidate]?.type === 'BOOLEAN');
+    if (!key) throw new Error(`Application Shell Slot probe: propriedade ${name} ausente.`);
+    return key;
+  };
+  const showRibbon = property('Show Ribbon');
+  const showLeft = property('Show Left Sidedock');
+  const showRight = property('Show Right Sidedock');
+  if (ribbon.componentPropertyReferences?.visible !== showRibbon ||
+      leftSlot.componentPropertyReferences?.visible !== showLeft ||
+      rightSlot.componentPropertyReferences?.visible !== showRight) {
+    throw new Error('Application Shell Slot probe: controles de visibilidade desconectados.');
   }
   const verify = (): void => {
     if (main.layoutMode !== 'VERTICAL' ||
@@ -513,14 +571,27 @@ function createSidedockSlotPreview(probe: ComponentNode,
     }
     if (leftSlot.layoutSizingHorizontal !== 'HUG' ||
         rightSlot.layoutSizingHorizontal !== 'HUG' ||
-        Math.abs(leftSlot.width - left.width) > 1 ||
-        Math.abs(rightSlot.width - right.width) > 1) {
+        (leftSlot.visible && Math.abs(leftSlot.width - left.width) > 1) ||
+        (rightSlot.visible && Math.abs(rightSlot.width - right.width) > 1)) {
       throw new Error('Application Shell Slot probe: Slots não seguem os painéis.');
     }
-    assertShellAdjacency(body.width, [ribbon, leftSlot, main, rightSlot]);
-    assertShellResize({ shell: instance.width, ribbon: ribbon.width,
-      left: leftSlot.width, main: main.width, right: rightSlot.width,
-      content: content.width, header: header.width }, evidence);
+    if ((ribbon.visible && Math.abs(ribbon.width - evidence.ribbonWidth) > 1) ||
+        (leftSlot.visible && leftSlot.width < 199) ||
+        (rightSlot.visible && rightSlot.width < rightMinimumWidth(evidence) - 1)) {
+      throw new Error('Application Shell Slot probe: largura de região visível divergente.');
+    }
+    assertSidedockProbeLayout({ shell: body.width,
+      ribbon: { visible: ribbon.visible, x: ribbon.x, width: ribbon.width },
+      left: { visible: leftSlot.visible, x: leftSlot.x, width: leftSlot.width },
+      main: { x: main.x, width: main.width, header: header.width,
+        content: content.width },
+      right: { visible: rightSlot.visible, x: rightSlot.x, width: rightSlot.width },
+      status: { x: status.x, width: status.width } });
+    if (ribbon.visible && leftSlot.visible && rightSlot.visible) {
+      assertShellResize({ shell: instance.width, ribbon: ribbon.width,
+        left: leftSlot.width, main: main.width, right: rightSlot.width,
+        content: content.width, header: header.width }, evidence);
+    }
   };
   verify();
   left.resize(left.width + 40, left.height);
@@ -529,6 +600,29 @@ function createSidedockSlotPreview(probe: ComponentNode,
   verify();
   left.resize(left.width - 40, left.height);
   right.resize(right.width - 40, right.height);
+  verify();
+  for (let mask = 0; mask < 8; mask += 1) {
+    const show = [Boolean(mask & 1), Boolean(mask & 2), Boolean(mask & 4)];
+    instance.setProperties({ [showRibbon]: show[0]!,
+      [showLeft]: show[1]!, [showRight]: show[2]! });
+    if (ribbon.visible !== show[0] || leftSlot.visible !== show[1] ||
+        rightSlot.visible !== show[2]) {
+      throw new Error('Application Shell Slot probe: controles não alteraram a visibilidade.');
+    }
+    verify();
+    instance.resize(probe.width + 160, probe.height);
+    verify();
+    instance.resize(probe.width, probe.height);
+    if (mask === 0) {
+      instance.resize(status.width + 1, probe.height);
+      if (Math.abs(instance.width - (status.width + 1)) > 1) {
+        throw new Error('Application Shell Slot probe: largura mínima das regiões ocultas persistiu.');
+      }
+      verify();
+      instance.resize(probe.width, probe.height);
+    }
+  }
+  instance.setProperties({ [showRibbon]: true, [showLeft]: true, [showRight]: true });
   verify();
   return preview;
 }
