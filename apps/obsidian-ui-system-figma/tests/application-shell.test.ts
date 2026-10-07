@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { applicationShellGlyphSources, assertShellAdjacency, assertShellResize,
   assertSidedockProbeLayout, assertLeftSidedockSelection, assertPluginHostedSlotLayout,
-  leftSidedockViewChoices,
+  leftSidedockViewChoices, RIGHT_SIDEDOCK_VIEWS, rightSidedockProbeMinimumWidth,
   readApplicationShellEvidence } from
   '../src/application-shell-generation';
 import { canonicalGlyphs, observedUiKitGlyphSources } from '../src/glyph-library';
@@ -169,6 +169,17 @@ test('Plugin Hosted View fills the sidedock and leaves Vault Profile at the bott
       /Plugin Slot não acompanha/);
     }
   }
+});
+
+test('Right probe offers the five observed tabs plus Plugin within its sample width', () => {
+  const evidence = readApplicationShellEvidence(probe);
+  assert.deepEqual(RIGHT_SIDEDOCK_VIEWS, [
+    'Backlinks', 'Outgoing links', 'Tags', 'All properties', 'Outline', 'Plugin',
+  ]);
+  assert.deepEqual(evidence.right.tabs.map((tab) => tab.name),
+    RIGHT_SIDEDOCK_VIEWS.slice(0, 5));
+  assert.equal(rightSidedockProbeMinimumWidth(evidence.right), 220);
+  assert.ok(evidence.rightSampleWidth > rightSidedockProbeMinimumWidth(evidence.right));
 });
 
 test('incomplete chrome probe cannot enter full generation', () => {
