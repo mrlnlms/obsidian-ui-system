@@ -109,6 +109,20 @@ export function assertShellResize(widths: { shell: number; ribbon: number; left:
   }
 }
 
+export function assertShellAdjacency(width: number, regions: ReadonlyArray<{
+  x: number; width: number }>): void {
+  let edge = 0;
+  for (const region of regions) {
+    if (Math.abs(region.x - edge) > 1) {
+      throw new Error(`Application Shell: gap entre regiões (${region.x - edge} px).`);
+    }
+    edge = region.x + region.width;
+  }
+  if (Math.abs(edge - width) > 1) {
+    throw new Error(`Application Shell: borda final deslocada (${width - edge} px).`);
+  }
+}
+
 interface Sources {
   sidePanel: ComponentNode;
   filesView: ComponentNode;
@@ -158,6 +172,7 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
     const profileSource = await createVaultProfile(evidence.vaultProfile,
       sources.iconButtons, sources.sideModel.width,
       sources.headerModel.typography.fontFamily);
+    const leftSource = createLeftSidedock(evidence, sources, profileSource);
 
     const shell = figma.createComponent();
     shell.name = 'Obsidian / Application Shell';
@@ -179,46 +194,27 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
       shell.height);
     body.layoutGrow = 1;
     body.layoutSizingHorizontal = 'FILL';
+    body.primaryAxisAlignItems = 'MIN';
+    body.counterAxisAlignItems = 'MIN';
+    body.itemSpacing = 0;
     const ribbon = ribbonSource.createInstance();
     ribbon.name = 'Ribbon';
     body.appendChild(ribbon);
     ribbon.layoutSizingVertical = 'FILL';
 
-    const leftColumn = frame(body, 'Left Sidedock / Files', 'VERTICAL',
-      sources.sideModel.width, shell.height);
+    const leftColumn = leftSource.createInstance();
+    leftColumn.name = 'Left Sidedock / Files';
+    body.appendChild(leftColumn);
     leftColumn.layoutSizingVertical = 'FILL';
     leftColumn.layoutSizingHorizontal = 'FIXED';
     leftColumn.minWidth = sources.sideModel.minExpandedWidth;
-    leftColumn.strokes = [paint(evidence.borderColor)];
-    leftColumn.strokeRightWeight = 1;
-    leftColumn.strokeLeftWeight = 0;
-    leftColumn.strokeTopWeight = 0;
-    leftColumn.strokeBottomWeight = 0;
-    const left = sources.sidePanel.createInstance();
-    left.name = 'Side Panel / Files';
-    leftColumn.appendChild(left);
-    left.layoutSizingHorizontal = 'FILL';
-    left.layoutGrow = 1;
-    left.setProperties({
-      [swapProperty(sources.sidePanel, 'Hosted View')]: sources.filesView.id,
-      [swapProperty(sources.sidePanel, 'Tab group')]: sources.filesTab.id,
-    });
-    const leftHeader = left.findOne((node) => node.name === 'Tab header / 40 px');
-    if (leftHeader?.type !== 'FRAME') throw new Error('Application Shell: header esquerdo ausente.');
-    leftHeader.strokes = [paint(evidence.borderColor)];
-    leftHeader.strokeBottomWeight = 1;
-    leftHeader.strokeTopWeight = 0;
-    leftHeader.strokeLeftWeight = 0;
-    leftHeader.strokeRightWeight = 0;
-    if (hasExposableChildren(left.findAll(() => true))) left.isExposedInstance = true;
-    const profile = profileSource.createInstance();
-    profile.name = 'Vault Profile';
-    leftColumn.appendChild(profile);
-    profile.layoutSizingHorizontal = 'FILL';
+    if (hasExposableChildren(leftColumn.findAll(() => true))) {
+      leftColumn.isExposedInstance = true;
+    }
 
     const main = frame(body, 'Main Workspace', 'VERTICAL',
       sources.headerModel.sample.width, sources.sideModel.height);
-    main.layoutGrow = 1;
+    main.layoutSizingHorizontal = 'FILL';
     main.minWidth = 1;
     main.layoutSizingVertical = 'FILL';
     main.fills = [paint('rgb(28, 28, 28)')];
@@ -299,6 +295,8 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
     right.strokes = [paint(evidence.borderColor)];
     edgeStroke(right, 'LEFT');
     if (hasExposableChildren(right.findAll(() => true))) right.isExposedInstance = true;
+    body.primaryAxisAlignItems = 'MIN';
+    body.itemSpacing = 0;
     const contentProperty = shell.addComponentProperty('Main Content', 'INSTANCE_SWAP',
       contentSlot.id);
     const rightProperty = shell.addComponentProperty('Right Sidedock', 'INSTANCE_SWAP',
@@ -330,26 +328,41 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
     instance.x = 20;
     instance.y = 20;
     await verifyShell(instance, sources, contentSlot, rightSlot, statusSource,
-      profileSource, evidence);
+      profileSource, leftSource, evidence, 'initial');
     instance.resize(shell.width + 200, shell.height + 100);
     const adjustableLeft = instance.findOne((node) => node.name === 'Left Sidedock / Files');
     const adjustableRight = instance.findOne((node) => node.name === 'Right Sidedock');
-    if (adjustableLeft?.type !== 'FRAME' || adjustableRight?.type !== 'INSTANCE') {
+    if (adjustableLeft?.type !== 'INSTANCE' || adjustableRight?.type !== 'INSTANCE') {
       throw new Error('Application Shell: painéis redimensionáveis ausentes.');
     }
     adjustableLeft.resize(sources.sideModel.minExpandedWidth, adjustableLeft.height);
     adjustableRight.resize(evidence.rightSampleWidth + 40, adjustableRight.height);
     await verifyShell(instance, sources, contentSlot, rightSlot, statusSource,
-      profileSource, evidence);
+      profileSource, leftSource, evidence, 'panels resized');
     adjustableLeft.resize(sources.sideModel.width, adjustableLeft.height);
     adjustableRight.resize(evidence.rightSampleWidth, adjustableRight.height);
     instance.resize(shell.width - 300, shell.height);
     await verifyShell(instance, sources, contentSlot, rightSlot, statusSource,
-      profileSource, evidence);
+      profileSource, leftSource, evidence, 'shell narrowed');
     instance.resize(shell.width, shell.height);
+    await verifyShell(instance, sources, contentSlot, rightSlot, statusSource,
+      profileSource, leftSource, evidence, 'restored');
+    const slotProbe = createSidedockSlotProbe(shell);
+    const probeLeft = slotProbe.findOne((node) => node.name === 'Left Sidedock / Files');
+    const probeRight = slotProbe.findOne((node) => node.name === 'Right Sidedock');
+    const probeSlots = Object.values(slotProbe.componentPropertyDefinitions)
+      .filter((property) => property.type === 'SLOT');
+    if (probeLeft?.type !== 'INSTANCE' || probeRight?.type !== 'INSTANCE' ||
+        (await probeLeft.getMainComponentAsync())?.id !== leftSource.id ||
+        (await probeRight.getMainComponentAsync())?.id !== rightSlot.id ||
+        probeSlots.length !== 2) {
+      throw new Error('Application Shell Slot probe: fontes canônicas ou Slots divergiram.');
+    }
+    const slotPreview = createSidedockSlotPreview(slotProbe, evidence);
     const rightEdge = figma.currentPage.children.filter((node) =>
       node !== shell && node !== contentSlot && node !== rightSlot &&
       node !== ribbonSource && node !== statusSource && node !== profileSource &&
+      node !== leftSource && node !== slotProbe && node !== slotPreview &&
       node !== preview)
       .map((node) => node.absoluteBoundingBox).filter((box): box is Rect => box !== null)
       .reduce((edge, box) => Math.max(edge, box.x + box.width), 0);
@@ -358,8 +371,11 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
     rightSlot.x = ribbonSource.x + ribbonSource.width + 64;
     statusSource.x = rightSlot.x + rightSlot.width + 64;
     profileSource.x = statusSource.x + statusSource.width + 64;
-    shell.x = profileSource.x + profileSource.width + 64;
+    leftSource.x = profileSource.x + profileSource.width + 64;
+    shell.x = leftSource.x + leftSource.width + 64;
     preview.x = shell.x + shell.width + 64;
+    slotProbe.x = preview.x + preview.width + 64;
+    slotPreview.x = slotProbe.x + slotProbe.width + 64;
     figma.currentPage.children.filter((node) => !originalRoots.has(node.id) &&
       node.type === 'COMPONENT' &&
       evidence.right.tabs.some((tab) => node.name ===
@@ -374,6 +390,107 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
     }
     throw error;
   }
+}
+
+/** Isolated linked-instance probe: editable slot content controls each side's Hug width. */
+function createSidedockSlotProbe(shell: ComponentNode): ComponentNode {
+  const probe = shell.clone();
+  probe.name = 'Obsidian / Application Shell / Sidedock Slots (probe)';
+  probe.description = 'Shell com Sidedocks redimensionáveis na instância: selecione o painel dentro do Slot e arraste sua borda. O Application Shell original permanece disponível.';
+  const body = probe.findOne((node) => node.name === 'Workspace regions');
+  if (body?.type !== 'FRAME') throw new Error('Application Shell Slot probe: regiões ausentes.');
+  const left = body.children.find((node) => node.name === 'Left Sidedock / Files');
+  const right = body.children.find((node) => node.name === 'Right Sidedock');
+  if (left?.type !== 'INSTANCE' || right?.type !== 'INSTANCE') {
+    throw new Error('Application Shell Slot probe: fontes laterais ausentes.');
+  }
+  const rightSwap = Object.keys(probe.componentPropertyDefinitions).find((key) =>
+    key.startsWith('Right Sidedock#') &&
+    probe.componentPropertyDefinitions[key]?.type === 'INSTANCE_SWAP');
+  if (rightSwap) probe.deleteComponentProperty(rightSwap);
+  wrapSidedockInSlot(probe, body, left, 'Left Sidedock slot');
+  wrapSidedockInSlot(probe, body, right, 'Right Sidedock slot');
+  return probe;
+}
+
+function wrapSidedockInSlot(component: ComponentNode, body: FrameNode,
+  child: InstanceNode, name: string): void {
+  const index = body.children.indexOf(child);
+  if (index < 0) throw new Error(`Application Shell Slot probe: ${name} fora do body.`);
+  const known = new Set(Object.keys(component.componentPropertyDefinitions));
+  const slot = component.createSlot();
+  const property = Object.keys(component.componentPropertyDefinitions).find((key) =>
+    !known.has(key) && component.componentPropertyDefinitions[key]?.type === 'SLOT');
+  if (!property) throw new Error(`Application Shell Slot probe: propriedade ${name} ausente.`);
+  component.editComponentProperty(property, { name,
+    description: 'Contém uma instância canônica; teste o resize horizontal nesta cópia.' });
+  slot.name = name;
+  body.insertChild(index, slot);
+  slot.layoutMode = 'HORIZONTAL';
+  slot.itemSpacing = 0;
+  slot.paddingLeft = 0;
+  slot.paddingRight = 0;
+  slot.paddingTop = 0;
+  slot.paddingBottom = 0;
+  slot.fills = [];
+  slot.strokes = [];
+  slot.resize(child.width, body.height);
+  slot.appendChild(child);
+  child.layoutSizingHorizontal = 'FIXED';
+  child.layoutSizingVertical = 'FILL';
+  slot.layoutSizingHorizontal = 'HUG';
+  slot.layoutSizingVertical = 'FILL';
+  slot.minWidth = child.minWidth;
+}
+
+function createSidedockSlotPreview(probe: ComponentNode,
+  evidence: ApplicationShellEvidence): FrameNode {
+  const preview = figma.createFrame();
+  preview.name = 'Application Shell / Sidedock Slots resize probe';
+  preview.resize(probe.width + 40, probe.height + 40);
+  preview.fills = [];
+  const instance = probe.createInstance();
+  instance.name = 'Application Shell / Slot resize sample';
+  preview.appendChild(instance);
+  instance.x = 20;
+  instance.y = 20;
+  const body = instance.findOne((node) => node.name === 'Workspace regions');
+  const leftSlot = instance.findOne((node) => node.name === 'Left Sidedock slot');
+  const rightSlot = instance.findOne((node) => node.name === 'Right Sidedock slot');
+  const left = leftSlot?.type === 'SLOT' ? leftSlot.children[0] : null;
+  const right = rightSlot?.type === 'SLOT' ? rightSlot.children[0] : null;
+  const ribbon = instance.findOne((node) => node.name === 'Ribbon');
+  const main = instance.findOne((node) => node.name === 'Main Workspace');
+  const header = instance.findOne((node) => node.name === 'View Header / chrome');
+  const content = instance.findOne((node) => node.name === 'Main Content');
+  if (body?.type !== 'FRAME' || leftSlot?.type !== 'SLOT' ||
+      rightSlot?.type !== 'SLOT' || left?.type !== 'INSTANCE' ||
+      right?.type !== 'INSTANCE' || ribbon?.type !== 'INSTANCE' ||
+      main?.type !== 'FRAME' || header?.type !== 'INSTANCE' ||
+      content?.type !== 'INSTANCE') {
+    throw new Error('Application Shell Slot probe: composição inválida.');
+  }
+  const verify = (): void => {
+    if (leftSlot.layoutSizingHorizontal !== 'HUG' ||
+        rightSlot.layoutSizingHorizontal !== 'HUG' ||
+        Math.abs(leftSlot.width - left.width) > 1 ||
+        Math.abs(rightSlot.width - right.width) > 1) {
+      throw new Error('Application Shell Slot probe: Slots não seguem os painéis.');
+    }
+    assertShellAdjacency(body.width, [ribbon, leftSlot, main, rightSlot]);
+    assertShellResize({ shell: instance.width, ribbon: ribbon.width,
+      left: leftSlot.width, main: main.width, right: rightSlot.width,
+      content: content.width, header: header.width }, evidence);
+  };
+  verify();
+  left.resize(left.width + 40, left.height);
+  verify();
+  right.resize(right.width + 40, right.height);
+  verify();
+  left.resize(left.width - 40, left.height);
+  right.resize(right.width - 40, right.height);
+  verify();
+  return preview;
 }
 
 function createRibbon(evidence: ApplicationShellEvidence, icons: IconButtonLibrary,
@@ -414,6 +531,47 @@ function createRibbon(evidence: ApplicationShellEvidence, icons: IconButtonLibra
     throw new Error('Application Shell: Ribbon perdeu ações ou alinhamento observados.');
   }
   return ribbon;
+}
+
+function createLeftSidedock(evidence: ApplicationShellEvidence, sources: Sources,
+  profileSource: ComponentNode): ComponentNode {
+  const host = figma.createComponent();
+  host.name = 'Obsidian / Side Panel / Left / Files + Vault Profile';
+  host.description = 'Instância redimensionável do Side Panel canônico com Files e rodapé do vault.';
+  host.layoutMode = 'VERTICAL';
+  host.primaryAxisSizingMode = 'FIXED';
+  host.counterAxisSizingMode = 'FIXED';
+  host.itemSpacing = 0;
+  host.resize(sources.sideModel.width,
+    sources.sideModel.height + evidence.vaultProfile.height);
+  host.minWidth = sources.sideModel.minExpandedWidth;
+  host.fills = [paint(sources.sideModel.background)];
+  host.strokes = [paint(evidence.borderColor)];
+  edgeStroke(host, 'RIGHT');
+
+  const panel = sources.sidePanel.createInstance();
+  panel.name = 'Side Panel / Files';
+  host.appendChild(panel);
+  panel.layoutSizingHorizontal = 'FILL';
+  panel.layoutGrow = 1;
+  panel.setProperties({
+    [swapProperty(sources.sidePanel, 'Hosted View')]: sources.filesView.id,
+    [swapProperty(sources.sidePanel, 'Tab group')]: sources.filesTab.id,
+  });
+  const header = panel.findOne((node) => node.name === 'Tab header / 40 px');
+  if (header?.type !== 'FRAME') throw new Error('Application Shell: header esquerdo ausente.');
+  header.strokes = [paint(evidence.borderColor)];
+  header.strokeBottomWeight = 1;
+  header.strokeTopWeight = 0;
+  header.strokeLeftWeight = 0;
+  header.strokeRightWeight = 0;
+  if (hasExposableChildren(panel.findAll(() => true))) panel.isExposedInstance = true;
+
+  const profile = profileSource.createInstance();
+  profile.name = 'Vault Profile';
+  host.appendChild(profile);
+  profile.layoutSizingHorizontal = 'FILL';
+  return host;
 }
 
 function createRightSidedock(evidence: ApplicationShellEvidence, sources: Sources): ComponentNode {
@@ -500,8 +658,8 @@ function createRightSidedock(evidence: ApplicationShellEvidence, sources: Source
 
 async function verifyShell(instance: InstanceNode, sources: Sources,
   contentSlot: ComponentNode, rightSlot: ComponentNode, statusSource: ComponentNode,
-  profileSource: ComponentNode,
-  evidence: ApplicationShellEvidence): Promise<void> {
+  profileSource: ComponentNode, leftSource: ComponentNode,
+  evidence: ApplicationShellEvidence, stage: string): Promise<void> {
   const body = instance.findOne((node) => node.name === 'Workspace regions');
   const main = instance.findOne((node) => node.name === 'Main Workspace');
   const tabBar = instance.findOne((node) => node.name === 'Workspace Tabs');
@@ -514,6 +672,10 @@ async function verifyShell(instance: InstanceNode, sources: Sources,
   const left = instance.findOne((node) => node.name === 'Left Sidedock / Files');
   const leftPanel = instance.findOne((node) => node.name === 'Side Panel / Files');
   const profile = instance.findOne((node) => node.name === 'Vault Profile');
+  const vaultSwitcher = profile?.type === 'INSTANCE'
+    ? profile.findOne((node) => node.name === 'Vault switcher') : null;
+  const vaultName = profile?.type === 'INSTANCE'
+    ? profile.findOne((node) => node.name === 'Vault name') : null;
   const ribbon = instance.findOne((node) => node.name === 'Ribbon');
   const tab = instance.findOne((node) => node.name === 'Workspace Tab / plugin context');
   const inactiveTab = instance.findOne((node) => node.name === 'Workspace Tab / previous note');
@@ -532,12 +694,14 @@ async function verifyShell(instance: InstanceNode, sources: Sources,
       bottomRule?.type !== 'FRAME' ||
       leftShoulder?.type !== 'FRAME' || rightShoulder?.type !== 'FRAME' ||
       newTab?.type !== 'FRAME' || newTabGlyph?.type !== 'INSTANCE' ||
-      left?.type !== 'FRAME' || leftPanel?.type !== 'INSTANCE' ||
-      profile?.type !== 'INSTANCE' || tab?.type !== 'INSTANCE' ||
+      left?.type !== 'INSTANCE' || leftPanel?.type !== 'INSTANCE' ||
+      profile?.type !== 'INSTANCE' || vaultSwitcher?.type !== 'FRAME' ||
+      vaultName?.type !== 'TEXT' || tab?.type !== 'INSTANCE' ||
       inactiveTab?.type !== 'INSTANCE' || status?.type !== 'INSTANCE' ||
       header?.type !== 'INSTANCE' || content?.type !== 'INSTANCE' ||
       right?.type !== 'INSTANCE' ||
       !leftPanel.isExposedInstance || !right.isExposedInstance ||
+      (await left.getMainComponentAsync())?.id !== leftSource.id ||
       (await leftPanel.getMainComponentAsync())?.id !== sources.sidePanel.id ||
       hostedFiles?.type !== 'INSTANCE' ||
       (await hostedFiles.getMainComponentAsync())?.id !== sources.filesView.id ||
@@ -567,10 +731,10 @@ async function verifyShell(instance: InstanceNode, sources: Sources,
       Math.abs(bottomRule.width - tabBar.width) > 1 ||
       Math.abs(bottomRule.y - (tabBar.height - 1)) > 1 ||
       Math.abs(leftShoulder.x - (tabsRow.width / 2 -
-        evidence.mainTabs.activeChrome.shoulderSize)) > 1 ||
+        evidence.mainTabs.activeChrome.shoulderSize / 2)) > 1 ||
       Math.abs(rightShoulder.x - tabsRow.width) > 1 ||
       Math.abs(leftShoulder.y - (tabsRow.height -
-        evidence.mainTabs.activeChrome.shoulderSize)) > 1 ||
+        evidence.mainTabs.activeChrome.shoulderSize / 2)) > 1 ||
       tab.strokeBottomWeight !== 0 ||
       Math.abs(tab.width - Math.min(evidence.mainTabs.tabWidth,
         (main.width - tabBar.paddingLeft - evidence.mainTabs.newTabGap -
@@ -581,6 +745,13 @@ async function verifyShell(instance: InstanceNode, sources: Sources,
       Math.abs(leftPanel.height - (left.height - evidence.vaultProfile.height)) > 1 ||
       Math.abs(profile.width - left.width) > 1 ||
       Math.abs(profile.y - leftPanel.height) > 1 ||
+      Math.abs(vaultSwitcher.width - (profile.width -
+        evidence.vaultProfile.paddingLeft - evidence.vaultProfile.paddingRight -
+        evidence.vaultProfile.itemGap - 2 * evidence.vaultProfile.actions[0]!.width)) > 1 ||
+      Math.abs(vaultName.width - (vaultSwitcher.width - 40)) > 1 ||
+      (vaultName.textAutoResize !== 'NONE' &&
+        vaultName.textAutoResize !== 'TRUNCATE') ||
+      vaultName.textTruncation !== 'ENDING' ||
       Math.abs(right.height - body.height) > 1 ||
       Math.abs(rightOutline.width - right.width) > 1 ||
       Math.abs(rightOutline.height - (right.height - evidence.right.headerHeight)) > 1 ||
@@ -589,8 +760,53 @@ async function verifyShell(instance: InstanceNode, sources: Sources,
       Math.abs((status.absoluteBoundingBox?.y ?? 0) -
         (instance.absoluteBoundingBox?.y ?? 0) - (instance.height - status.height)) > 1 ||
       Math.abs(content.height - (body.height - tabBar.height - header.height)) > 1) {
-    throw new Error('Application Shell: fontes, slots ou resize divergiram.');
+    const diagnostics: Array<[string, boolean]> = [
+      ['left instance', left?.type === 'INSTANCE'],
+      ['left source', left?.type === 'INSTANCE' &&
+        (await left.getMainComponentAsync())?.id === leftSource.id],
+      ['nested Side Panel', leftPanel?.type === 'INSTANCE'],
+      ['nested Side Panel exposure', leftPanel?.type === 'INSTANCE' &&
+        leftPanel.isExposedInstance],
+      ['Vault Profile', profile?.type === 'INSTANCE'],
+      ['vault switcher', vaultSwitcher?.type === 'FRAME'],
+      ['vault name', vaultName?.type === 'TEXT'],
+      ['left height', left?.type === 'INSTANCE' &&
+        Math.abs(left.height - (body?.height ?? NaN)) <= 1],
+      ['left content height', left?.type === 'INSTANCE' &&
+        leftPanel?.type === 'INSTANCE' &&
+        Math.abs(leftPanel.height - (left.height - evidence.vaultProfile.height)) <= 1],
+      ['profile width', profile?.type === 'INSTANCE' && left?.type === 'INSTANCE' &&
+        Math.abs(profile.width - left.width) <= 1],
+      ['profile position', profile?.type === 'INSTANCE' &&
+        leftPanel?.type === 'INSTANCE' && Math.abs(profile.y - leftPanel.height) <= 1],
+      ['switcher width', vaultSwitcher?.type === 'FRAME' &&
+        profile?.type === 'INSTANCE' && Math.abs(vaultSwitcher.width -
+          (profile.width - 76)) <= 1],
+      ['name width', vaultName?.type === 'TEXT' && vaultSwitcher?.type === 'FRAME' &&
+        Math.abs(vaultName.width - (vaultSwitcher.width - 40)) <= 1],
+      ['name truncation', vaultName?.type === 'TEXT' &&
+        (vaultName.textAutoResize === 'NONE' ||
+          vaultName.textAutoResize === 'TRUNCATE') &&
+        vaultName.textTruncation === 'ENDING'],
+      ['left shoulder', leftShoulder?.type === 'FRAME' && tabsRow?.type === 'FRAME' &&
+        Math.abs(leftShoulder.x - (tabsRow.width / 2 -
+          evidence.mainTabs.activeChrome.shoulderSize / 2)) <= 1],
+    ];
+    const first = diagnostics.find(([, valid]) => !valid)?.[0] ?? 'another invariant';
+    throw new Error(`Application Shell: ${first} divergiu (${stage}); ` +
+      `left=${left?.width ?? 'missing'}, panel=${leftPanel?.width ?? 'missing'}, ` +
+      `profile=${profile?.width ?? 'missing'}, switcher=${vaultSwitcher?.width ?? 'missing'}, ` +
+      `name=${vaultName?.width ?? 'missing'}, ` +
+      `autoResize=${vaultName?.type === 'TEXT' ? vaultName.textAutoResize : 'missing'}, ` +
+      `truncation=${vaultName?.type === 'TEXT' ? vaultName.textTruncation : 'missing'}.`);
   }
+  if (body.primaryAxisAlignItems !== 'MIN' || Math.abs(body.itemSpacing) > 0.5 ||
+      main.layoutSizingHorizontal !== 'FILL') {
+    throw new Error(`Application Shell: Auto Layout distribuiu espaço (${stage}): ` +
+      `align=${body.primaryAxisAlignItems}, gap=${body.itemSpacing}, ` +
+      `main=${main.layoutSizingHorizontal}.`);
+  }
+  assertShellAdjacency(body.width, [ribbon, left, main, right]);
   assertShellResize({ shell: instance.width, ribbon: ribbon.width, left: left.width,
     main: main.width, right: right.width, content: content.width, header: header.width },
   evidence);
@@ -602,15 +818,15 @@ function rightMinimumWidth(evidence: ApplicationShellEvidence): number {
     evidence.right.toggleWidth + evidence.right.toggleRight;
 }
 
-/** The active tab's observed 20 px pseudo-elements join its sides to the header rule. */
+/** The clipped 20 px pseudo-elements leave a 10 px visible lower corner. */
 function createTabShoulder(row: FrameNode, evidence: ApplicationShellEvidence,
   side: 'LEFT' | 'RIGHT'): void {
-  const size = evidence.mainTabs.activeChrome.shoulderSize;
+  const size = evidence.mainTabs.activeChrome.shoulderSize / 2;
   const transform = side === 'RIGHT' ? ` transform="translate(${size} 0) scale(-1 1)"` : '';
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" ` +
     `viewBox="0 0 ${size} ${size}"><g${transform}>` +
-    `<path d="M20 0V20H0C11.046 20 20 11.046 20 0Z" fill="#1c1c1c"/>` +
-    `<path d="M0 20C11.046 20 20 11.046 20 0" fill="none" ` +
+    `<path d="M10 0V10H0C5.523 10 10 5.523 10 0Z" fill="#1c1c1c"/>` +
+    `<path d="M0 10C5.523 10 10 5.523 10 0" fill="none" ` +
     `stroke="#333333" stroke-width="1"/></g></svg>`;
   const shoulder = figma.createNodeFromSvg(svg);
   shoulder.name = `Active tab ${side.toLowerCase()} shoulder`;

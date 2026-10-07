@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { applicationShellGlyphSources, assertShellResize, readApplicationShellEvidence } from
+import { applicationShellGlyphSources, assertShellAdjacency, assertShellResize,
+  readApplicationShellEvidence } from
   '../src/application-shell-generation';
 import { canonicalGlyphs, observedUiKitGlyphSources } from '../src/glyph-library';
 import { readFileExplorerViewModel } from '../src/file-explorer-view-data';
@@ -30,6 +31,8 @@ test('shell sample uses measured application chrome and canonical host sizes', (
   assert.equal(evidence.vaultProfile.height, sideProbe.profile.rect.height);
   assert.equal(evidence.vaultProfile.borderTop, probe.borders.tabHeadersBottom);
   assert.equal(evidence.vaultProfile.actions.length, 2);
+  assert.equal(evidence.vaultProfile.switcher.flex, '1 1 auto');
+  assert.equal(evidence.vaultProfile.name.textOverflow, 'ellipsis');
   assert.equal(evidence.mainTabs.tabWidth, 200);
   assert.equal(evidence.mainTabs.newTab.width, 24);
   assert.equal(evidence.mainTabs.activeChrome.shoulderSize, 20);
@@ -59,6 +62,17 @@ test('shell sample uses measured application chrome and canonical host sizes', (
     ribbon: evidence.ribbonWidth, left: side.width, main: header.sample.width + 200,
     right: evidence.rightSampleWidth, content: header.sample.width,
     header: header.sample.width + 200 }, evidence), /distribuição horizontal/);
+});
+
+test('Ribbon, sidedocks and Main Workspace stay adjacent when a panel grows', () => {
+  assert.doesNotThrow(() => assertShellAdjacency(1000, [
+    { x: 0, width: 44 }, { x: 44, width: 300 },
+    { x: 344, width: 456 }, { x: 800, width: 200 },
+  ]));
+  assert.throws(() => assertShellAdjacency(1000, [
+    { x: 0, width: 44 }, { x: 95, width: 300 },
+    { x: 395, width: 405 }, { x: 800, width: 200 },
+  ]), /gap entre regiões \(51 px\)/);
 });
 
 test('incomplete chrome probe cannot enter full generation', () => {

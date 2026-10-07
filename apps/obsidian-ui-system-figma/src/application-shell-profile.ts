@@ -8,8 +8,10 @@ export interface VaultProfileEvidence {
   borderTop: string;
   paddingLeft: number;
   paddingRight: number;
-  switcher: { width: number; height: number; icon: string };
-  name: { text: string; width: number; fontSize: number; fontWeight: string; color: string };
+  itemGap: number;
+  switcher: { width: number; height: number; flex: string; icon: string };
+  name: { text: string; width: number; fontSize: number; fontWeight: string;
+    color: string; textOverflow: string };
   actions: Array<{ width: number; height: number; svg: string }>;
 }
 
@@ -18,8 +20,11 @@ export function readVaultProfileEvidence(input: unknown): VaultProfileEvidence {
   if (value?.height !== 41.890625 || value.background !== 'rgb(40, 40, 40)' ||
       value.borderTop !== '1px solid rgb(51, 51, 51)' ||
       value.paddingLeft !== 8 || value.paddingRight !== 8 ||
+      value.itemGap !== 4 ||
       value.switcher?.width !== 124 || value.switcher.height !== 24.890625 ||
+      value.switcher.flex !== '1 1 auto' ||
       value.name?.fontSize !== 13 || value.name.fontWeight !== '500' ||
+      value.name.textOverflow !== 'ellipsis' ||
       value.name.text !== 'dev-vault' || value.actions?.length !== 2 ||
       value.actions.some((action) => action.width !== 28 || action.height !== 24)) {
     throw new Error('Application Shell: evidência do Vault Profile incompleta.');
@@ -54,6 +59,7 @@ export async function createVaultProfile(evidence: VaultProfileEvidence,
   profile.counterAxisSizingMode = 'FIXED';
   profile.primaryAxisAlignItems = 'MIN';
   profile.counterAxisAlignItems = 'CENTER';
+  profile.itemSpacing = evidence.itemGap;
   profile.resize(width, evidence.height);
   profile.paddingLeft = evidence.paddingLeft;
   profile.paddingRight = evidence.paddingRight;
@@ -68,36 +74,50 @@ export async function createVaultProfile(evidence: VaultProfileEvidence,
   switcher.name = 'Vault switcher';
   profile.appendChild(switcher);
   switcher.resize(evidence.switcher.width, evidence.switcher.height);
+  switcher.layoutMode = 'HORIZONTAL';
+  switcher.primaryAxisSizingMode = 'FIXED';
+  switcher.counterAxisSizingMode = 'FIXED';
+  switcher.counterAxisAlignItems = 'CENTER';
+  switcher.itemSpacing = 8;
+  switcher.paddingLeft = 8;
+  switcher.paddingRight = 8;
+  switcher.layoutGrow = 1;
+  switcher.minWidth = 1;
   switcher.fills = [];
   switcher.strokes = [];
+  switcher.clipsContent = true;
   const switchGlyph = icons.createGlyph('Vault / Switch', 'Faint');
   switcher.appendChild(switchGlyph);
-  switchGlyph.x = 8;
-  switchGlyph.y = (switcher.height - switchGlyph.height) / 2;
   const name = figma.createText();
   name.name = 'Vault name';
   switcher.appendChild(name);
   name.fontName = font;
   name.fontSize = evidence.name.fontSize;
+  name.lineHeight = { unit: 'PIXELS', value: 16.9 };
   name.characters = evidence.name.text;
   name.fills = [paint(evidence.name.color)];
-  name.resize(evidence.name.width, 17);
-  name.x = 32;
-  name.y = (switcher.height - name.height) / 2;
+  name.textAutoResize = 'NONE';
+  name.textTruncation = 'ENDING';
+  name.resize(Math.max(1, evidence.switcher.width - 16 - 8 - 16), 16.9);
+  name.layoutGrow = 1;
+  name.minWidth = 1;
   const nameProperty = profile.addComponentProperty('Vault name', 'TEXT', evidence.name.text);
   name.componentPropertyReferences = { characters: nameProperty };
 
-  const spacer = figma.createFrame();
-  spacer.name = 'Flexible vault space';
-  profile.appendChild(spacer);
-  spacer.resize(1, 1);
-  spacer.fills = [];
-  spacer.strokes = [];
-  spacer.layoutGrow = 1;
+  const actions = figma.createFrame();
+  actions.name = 'Vault actions';
+  profile.appendChild(actions);
+  actions.layoutMode = 'HORIZONTAL';
+  actions.primaryAxisSizingMode = 'FIXED';
+  actions.counterAxisSizingMode = 'FIXED';
+  actions.itemSpacing = 0;
+  actions.resize(2 * evidence.actions[0]!.width, evidence.actions[0]!.height);
+  actions.fills = [];
+  actions.strokes = [];
   for (const action of ['Help', 'Settings']) {
     const button = icons.create(`Vault / ${action}`);
     button.name = action;
-    profile.appendChild(button);
+    actions.appendChild(button);
   }
   return profile;
 }
