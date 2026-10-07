@@ -1,6 +1,7 @@
 import { requiredFont } from './font-resolution';
 import { glyphGeometry, type IconSource } from './glyph-library';
-import type { IconButtonLibrary } from './icon-button-generation';
+import { rebindGlyphTone, type IconButtonLibrary } from './icon-button-generation';
+import { boundUiKitPaint, type UiKitThemeVariables } from './ui-kit-theme';
 
 interface StatusItem {
   name: 'Backlinks' | 'Editor status' | 'Word count' | 'Sync';
@@ -72,7 +73,8 @@ export function statusBarGlyphSources(evidence: StatusBarEvidence): IconSource[]
 }
 
 export async function createStatusBar(evidence: StatusBarEvidence,
-  icons: IconButtonLibrary, cssFontFamily: string): Promise<ComponentNode> {
+  icons: IconButtonLibrary, cssFontFamily: string,
+  theme: UiKitThemeVariables): Promise<ComponentNode> {
   const available = (await figma.listAvailableFontsAsync()).map((item) => item.fontName);
   const font = requiredFont({ cssStack: cssFontFamily, platform: 'macos',
     weight: 400, style: 'normal' }, available);
@@ -89,8 +91,8 @@ export async function createStatusBar(evidence: StatusBarEvidence,
   status.paddingTop = evidence.paddingTop;
   status.paddingBottom = evidence.height - evidence.paddingTop - evidence.itemHeight;
   status.resize(evidence.width, evidence.height);
-  status.fills = [paint(evidence.background)];
-  status.strokes = [paint('rgb(51, 51, 51)')];
+  status.fills = [boundUiKitPaint(theme, 'surfaceSecondary')];
+  status.strokes = [boundUiKitPaint(theme, 'controlBorder')];
   status.strokeTopWeight = 1;
   status.strokeLeftWeight = 1;
   status.strokeRightWeight = 0;
@@ -108,12 +110,12 @@ export async function createStatusBar(evidence: StatusBarEvidence,
     region.fills = [];
     region.strokes = [];
     if (item.name === 'Backlinks') {
-      addText(status, region, 'Backlinks', item.text!, font, evidence,
+      addText(status, region, 'Backlinks', item.text!, font, evidence, theme,
         item.width - 8, 4);
     } else if (item.name === 'Word count') {
-      addText(status, region, 'Words', item.words!, font, evidence,
+      addText(status, region, 'Words', item.words!, font, evidence, theme,
         item.wordWidth!, 4);
-      addText(status, region, 'Characters', item.characters!, font, evidence,
+      addText(status, region, 'Characters', item.characters!, font, evidence, theme,
         item.characterWidth!, 4 + item.wordWidth! + item.segmentGap!);
     } else {
       const glyph = icons.createGlyph(`Status Bar / ${item.name}`);
@@ -121,7 +123,10 @@ export async function createStatusBar(evidence: StatusBarEvidence,
       region.appendChild(glyph);
       glyph.x = 4;
       glyph.y = 1;
-      if (item.name === 'Sync') recolorGlyph(glyph, evidence.syncColor);
+      if (item.name === 'Sync' && !rebindGlyphTone(glyph, theme.primitive.colors.icon,
+        theme.colors.textError, theme.primitive.dark.colors.icon)) {
+        throw new Error('Application Shell: traço visível do Sync não foi vinculado.');
+      }
     }
   }
   // The observed item widths exactly account for the sample bar width. Figma may
@@ -137,7 +142,7 @@ export async function createStatusBar(evidence: StatusBarEvidence,
 
 function addText(parent: ComponentNode, region: FrameNode, propertyName: string,
   value: string, font: FontName, evidence: StatusBarEvidence,
-  width: number, x: number): void {
+  theme: UiKitThemeVariables, width: number, x: number): void {
   const node = figma.createText();
   node.name = propertyName;
   region.appendChild(node);
@@ -147,32 +152,9 @@ function addText(parent: ComponentNode, region: FrameNode, propertyName: string,
   node.textAutoResize = 'NONE';
   node.resize(width, evidence.itemHeight);
   node.characters = value;
-  node.fills = [paint(evidence.color)];
+  node.fills = [boundUiKitPaint(theme, 'textMuted')];
   node.x = x;
   node.y = 0;
   const property = parent.addComponentProperty(propertyName, 'TEXT', value);
   node.componentPropertyReferences = { characters: property };
-}
-
-function recolorGlyph(instance: InstanceNode, css: string): void {
-  const color = paint(css);
-  let changed = 0;
-  for (const node of instance.findAll(() => true)) {
-    if ('strokes' in node && node.strokes.length) {
-      node.strokes = node.strokes.map((stroke) => stroke.type === 'SOLID' ? color : stroke);
-      changed++;
-    }
-    if ('fills' in node && node.fills !== figma.mixed && node.fills.length) {
-      node.fills = node.fills.map((fill) => fill.type === 'SOLID' ? color : fill);
-      changed++;
-    }
-  }
-  if (!changed) throw new Error('Application Shell: cor observada do Sync não foi aplicada.');
-}
-
-function paint(css: string): SolidPaint {
-  const match = /^rgb\((\d+), (\d+), (\d+)\)$/.exec(css);
-  if (!match) throw new Error(`Application Shell: cor inválida ${css}.`);
-  return { type: 'SOLID', color: { r: Number(match[1]) / 255,
-    g: Number(match[2]) / 255, b: Number(match[3]) / 255 } };
 }

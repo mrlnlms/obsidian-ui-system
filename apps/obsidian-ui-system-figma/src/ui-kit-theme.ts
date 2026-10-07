@@ -89,6 +89,7 @@ const scopes: Record<UiKitColorRole, VariableScope[]> = {
   sliderTrack: ['FRAME_FILL', 'SHAPE_FILL'], sliderThumb: ['SHAPE_FILL'],
   noticeSurface: ['FRAME_FILL', 'SHAPE_FILL'], noticeText: ['TEXT_FILL'],
   textWarning: ['TEXT_FILL', 'SHAPE_FILL'],
+  textError: ['TEXT_FILL', 'SHAPE_FILL', 'STROKE_COLOR'],
 };
 
 /** Paired values and bounded Obsidian roles justify these aliases; future divergence may split them. */
@@ -183,7 +184,7 @@ export function classifyUiKitPaint(paint: Paint, field: PaintField,
         role === 'surfacePrimaryAlt' || role === 'modalBorder' ||
         role === 'menuBorder' || role === 'sliderTrack' || role === 'sliderThumb' ||
         role === 'noticeSurface' || role === 'noticeText' ||
-        role === 'textWarning') continue;
+        role === 'textWarning' || role === 'textError') continue;
     if (sameColor(paint.color, evidence.roles[role][mode])) return role;
   }
   if (sameColor(paint.color, evidence.roles.controlFill[mode])) {

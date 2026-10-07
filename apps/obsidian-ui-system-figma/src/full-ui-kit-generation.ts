@@ -136,7 +136,7 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
       workspaceTab: workspaceTab.set, viewHeader: viewHeader.component,
       outlineView: outlineResult.component, outlineTab: outlineResult.tab,
       iconButtons, sideModel, headerModel, workspaceModel,
-    });
+    }, uiKitTheme);
     await generatePublicApiBatch(publicEvidence, uiKitTheme, searchModel.fontFamily,
       iconButtons, publicControls, button, search);
     verifyPrimitiveThemeModes(primitiveTheme, iconButtons, rows,

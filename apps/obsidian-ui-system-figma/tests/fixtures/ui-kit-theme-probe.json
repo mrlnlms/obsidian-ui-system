@@ -136,6 +136,11 @@
       "darkCss": "rgb(233, 151, 63)",
       "lightCss": "rgb(236, 117, 0)",
       "source": "--text-warning in paired Package v1"
+    },
+    "textError": {
+      "darkCss": "rgb(251, 70, 76)",
+      "lightCss": "rgb(233, 49, 71)",
+      "source": "--text-error on status-bar sync icon in Obsidian Desktop Dark/Light CLI eval 2026-10-07"
     }
   }
 }

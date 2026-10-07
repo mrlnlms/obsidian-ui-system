@@ -8,6 +8,7 @@ import { createStatusBar, readStatusBarEvidence, statusBarGlyphSources,
 import { hasExposableChildren } from './public-api-batch-generation';
 import { createVaultProfile, readVaultProfileEvidence, vaultProfileGlyphSources,
   type VaultProfileEvidence } from './application-shell-profile';
+import { boundUiKitPaint, type UiKitThemeVariables } from './ui-kit-theme';
 
 export interface ApplicationShellEvidence {
   ribbonWidth: number;
@@ -138,7 +139,7 @@ interface Sources {
 }
 
 export async function generateApplicationShell(evidence: ApplicationShellEvidence,
-  sources: Sources): Promise<{ component: ComponentNode; preview: FrameNode }> {
+  sources: Sources, theme: UiKitThemeVariables): Promise<{ component: ComponentNode; preview: FrameNode }> {
   const mainTab = sources.workspaceTab.children.find((node): node is ComponentNode =>
     node.type === 'COMPONENT' && node.variantProperties?.Context === 'Main' &&
     node.variantProperties?.State === 'Active');
@@ -168,11 +169,11 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
       sources.sideModel.headerHeight, sources.sideModel.background);
     const rightSlot = createRightSidedock(evidence, sources);
     const statusSource = await createStatusBar(evidence.status,
-      sources.iconButtons, sources.headerModel.typography.fontFamily);
+      sources.iconButtons, sources.headerModel.typography.fontFamily, theme);
     const profileSource = await createVaultProfile(evidence.vaultProfile,
       sources.iconButtons, sources.sideModel.width,
       sources.headerModel.typography.fontFamily);
-    const leftSource = createLeftSidedock(evidence, sources, profileSource);
+    const leftSource = createLeftSidedock(evidence, sources, profileSource, theme);
 
     const shell = figma.createComponent();
     shell.name = 'Obsidian / Application Shell';
@@ -252,7 +253,7 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
     tab.layoutGrow = 1;
     tab.minWidth = 1;
     tab.maxWidth = 320;
-    tab.strokes = [paint(evidence.borderColor)];
+    tab.strokes = [boundUiKitPaint(theme, 'controlBorder')];
     tab.strokeAlign = 'OUTSIDE';
     tab.strokeTopWeight = 1;
     tab.strokeLeftWeight = 1;
@@ -292,7 +293,7 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
     right.layoutSizingVertical = 'FILL';
     right.layoutSizingHorizontal = 'FIXED';
     right.minWidth = rightMinimumWidth(evidence);
-    right.strokes = [paint(evidence.borderColor)];
+    right.strokes = [boundUiKitPaint(theme, 'controlBorder')];
     edgeStroke(right, 'LEFT');
     if (hasExposableChildren(right.findAll(() => true))) right.isExposedInstance = true;
     body.primaryAxisAlignItems = 'MIN';
@@ -350,12 +351,14 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
     const slotProbe = createSidedockSlotProbe(shell);
     const probeLeft = slotProbe.findOne((node) => node.name === 'Left Sidedock / Files');
     const probeRight = slotProbe.findOne((node) => node.name === 'Right Sidedock');
+    const probeMain = slotProbe.findOne((node) => node.name === 'Main Workspace');
     const probeSlots = Object.values(slotProbe.componentPropertyDefinitions)
       .filter((property) => property.type === 'SLOT');
     if (probeLeft?.type !== 'INSTANCE' || probeRight?.type !== 'INSTANCE' ||
+        probeMain?.type !== 'SLOT' ||
         (await probeLeft.getMainComponentAsync())?.id !== leftSource.id ||
         (await probeRight.getMainComponentAsync())?.id !== rightSlot.id ||
-        probeSlots.length !== 2) {
+        probeSlots.length !== 3) {
       throw new Error('Application Shell Slot probe: fontes canônicas ou Slots divergiram.');
     }
     const slotPreview = createSidedockSlotPreview(slotProbe, evidence);
@@ -392,11 +395,11 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
   }
 }
 
-/** Isolated linked-instance probe: editable slot content controls each side's Hug width. */
+/** Linked-instance probe: sidedock slots resize, and the Main Workspace accepts content. */
 function createSidedockSlotProbe(shell: ComponentNode): ComponentNode {
   const probe = shell.clone();
   probe.name = 'Obsidian / Application Shell / Sidedock Slots (probe)';
-  probe.description = 'Shell com Sidedocks redimensionáveis na instância: selecione o painel dentro do Slot e arraste sua borda. O Application Shell original permanece disponível.';
+  probe.description = 'Shell com Sidedocks redimensionáveis e Main Workspace editável na instância. Arraste conteúdo para o Slot central ou ajuste a largura dos painéis laterais.';
   const body = probe.findOne((node) => node.name === 'Workspace regions');
   if (body?.type !== 'FRAME') throw new Error('Application Shell Slot probe: regiões ausentes.');
   const left = body.children.find((node) => node.name === 'Left Sidedock / Files');
@@ -410,7 +413,38 @@ function createSidedockSlotProbe(shell: ComponentNode): ComponentNode {
   if (rightSwap) probe.deleteComponentProperty(rightSwap);
   wrapSidedockInSlot(probe, body, left, 'Left Sidedock slot');
   wrapSidedockInSlot(probe, body, right, 'Right Sidedock slot');
+  wrapMainWorkspaceInSlot(probe, body);
   return probe;
+}
+
+function wrapMainWorkspaceInSlot(component: ComponentNode, body: FrameNode): void {
+  const main = body.children.find((node) => node.name === 'Main Workspace');
+  if (main?.type !== 'FRAME') {
+    throw new Error('Application Shell Slot probe: Main Workspace ausente.');
+  }
+  const index = body.children.indexOf(main);
+  const known = new Set(Object.keys(component.componentPropertyDefinitions));
+  const slot = component.createSlot();
+  const property = Object.keys(component.componentPropertyDefinitions).find((key) =>
+    !known.has(key) && component.componentPropertyDefinitions[key]?.type === 'SLOT');
+  if (!property) throw new Error('Application Shell Slot probe: propriedade Main Workspace ausente.');
+  component.editComponentProperty(property, { name: 'Main Workspace content',
+    description: 'Área central para inserir Components na instância do Shell.' });
+  slot.name = 'Main Workspace';
+  body.insertChild(index, slot);
+  slot.resize(main.width, main.height);
+  slot.layoutMode = 'VERTICAL';
+  slot.itemSpacing = 0;
+  slot.paddingLeft = 0;
+  slot.paddingRight = 0;
+  slot.paddingTop = 0;
+  slot.paddingBottom = 0;
+  slot.fills = main.fills;
+  for (const child of [...main.children]) slot.appendChild(child);
+  slot.layoutSizingHorizontal = 'FILL';
+  slot.layoutSizingVertical = 'FILL';
+  slot.minWidth = main.minWidth;
+  main.remove();
 }
 
 function wrapSidedockInSlot(component: ComponentNode, body: FrameNode,
@@ -466,11 +500,17 @@ function createSidedockSlotPreview(probe: ComponentNode,
   if (body?.type !== 'FRAME' || leftSlot?.type !== 'SLOT' ||
       rightSlot?.type !== 'SLOT' || left?.type !== 'INSTANCE' ||
       right?.type !== 'INSTANCE' || ribbon?.type !== 'INSTANCE' ||
-      main?.type !== 'FRAME' || header?.type !== 'INSTANCE' ||
+      main?.type !== 'SLOT' || header?.type !== 'INSTANCE' ||
       content?.type !== 'INSTANCE') {
     throw new Error('Application Shell Slot probe: composição inválida.');
   }
   const verify = (): void => {
+    if (main.layoutMode !== 'VERTICAL' ||
+        main.layoutSizingHorizontal !== 'FILL' ||
+        main.children.map((child) => child.name).join('|') !==
+          'Workspace Tabs|View Header / chrome|Main Content') {
+      throw new Error('Application Shell Slot probe: Main Workspace perdeu conteúdo ou layout.');
+    }
     if (leftSlot.layoutSizingHorizontal !== 'HUG' ||
         rightSlot.layoutSizingHorizontal !== 'HUG' ||
         Math.abs(leftSlot.width - left.width) > 1 ||
@@ -534,7 +574,7 @@ function createRibbon(evidence: ApplicationShellEvidence, icons: IconButtonLibra
 }
 
 function createLeftSidedock(evidence: ApplicationShellEvidence, sources: Sources,
-  profileSource: ComponentNode): ComponentNode {
+  profileSource: ComponentNode, theme: UiKitThemeVariables): ComponentNode {
   const host = figma.createComponent();
   host.name = 'Obsidian / Side Panel / Left / Files + Vault Profile';
   host.description = 'Instância redimensionável do Side Panel canônico com Files e rodapé do vault.';
@@ -560,7 +600,7 @@ function createLeftSidedock(evidence: ApplicationShellEvidence, sources: Sources
   });
   const header = panel.findOne((node) => node.name === 'Tab header / 40 px');
   if (header?.type !== 'FRAME') throw new Error('Application Shell: header esquerdo ausente.');
-  header.strokes = [paint(evidence.borderColor)];
+  header.strokes = [boundUiKitPaint(theme, 'controlBorder')];
   header.strokeBottomWeight = 1;
   header.strokeTopWeight = 0;
   header.strokeLeftWeight = 0;
@@ -599,7 +639,9 @@ function createRightSidedock(evidence: ApplicationShellEvidence, sources: Source
     evidence.rightSampleWidth, evidence.right.headerHeight);
   header.layoutSizingHorizontal = 'FILL';
   header.paddingLeft = evidence.right.tabLeft;
-  header.paddingRight = evidence.right.toggleRight;
+  // The Desktop crop places the collapse glyph about 8 px closer to the panel edge
+  // than the first projection; keep the tab strip anchored at its observed left inset.
+  header.paddingRight = 0;
   header.paddingTop = evidence.right.tabTop;
   header.strokes = [paint(evidence.borderColor)];
   header.strokeBottomWeight = 1;
@@ -632,11 +674,11 @@ function createRightSidedock(evidence: ApplicationShellEvidence, sources: Source
   spacer.minWidth = 1;
   const toggle = frame(header, 'Collapse right sidedock', 'HORIZONTAL',
     evidence.right.toggleWidth, evidence.right.toggleHeight);
+  toggle.paddingTop = (evidence.right.toggleHeight - 16) / 2;
+  toggle.paddingBottom = toggle.paddingTop;
   const toggleGlyph = sources.iconButtons.createGlyph('Sidedock / Collapse');
   toggleGlyph.name = 'Collapse right glyph';
   toggle.appendChild(toggleGlyph);
-  toggleGlyph.x = 6;
-  toggleGlyph.y = 4;
   toggleGlyph.rotation = 180;
 
   const outline = sources.outlineView.createInstance();
@@ -650,6 +692,7 @@ function createRightSidedock(evidence: ApplicationShellEvidence, sources: Source
   outline.componentPropertyReferences = { mainComponent: hostedProperty };
   if (tabs.children.length !== 5 ||
       Math.abs(tabs.width - 152) > 0.5 ||
+      Math.abs(toggle.x + toggle.width - header.width) > 1 ||
       panel.componentPropertyDefinitions[hostedProperty]?.type !== 'INSTANCE_SWAP') {
     throw new Error('Application Shell: host direito não preservou tabs ou slot.');
   }

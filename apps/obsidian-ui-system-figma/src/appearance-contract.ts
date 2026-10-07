@@ -22,7 +22,7 @@ export const legacyUiKitColorRoles = ['surfacePrimary', 'surfaceSecondary', 'for
 export const uiKitColorRoles = [...legacyUiKitColorRoles, 'iconActive',
   'toggleTrackOff', 'toggleThumb', 'tooltipSurface', 'tooltipText', 'sortIcon',
   'surfacePrimaryAlt', 'modalBorder', 'menuBorder', 'sliderTrack',
-  'sliderThumb', 'noticeSurface', 'noticeText', 'textWarning'] as const;
+  'sliderThumb', 'noticeSurface', 'noticeText', 'textWarning', 'textError'] as const;
 
 export type UiKitColorRole = typeof uiKitColorRoles[number];
 export const uiKitVariableName = (role: UiKitColorRole): string => `ui-kit/${role}`;
@@ -41,6 +41,7 @@ export const uiKitWebSyntax: Record<UiKitColorRole, string> = {
   menuBorder: '--menu-border-color', sliderTrack: '--slider-track-background',
   sliderThumb: '--slider-thumb-background', noticeSurface: '--notice-background',
   noticeText: '--notice-color', textWarning: '--text-warning',
+  textError: '--text-error',
 };
 
 /** The guide was added after the first full-kit checkpoint. */

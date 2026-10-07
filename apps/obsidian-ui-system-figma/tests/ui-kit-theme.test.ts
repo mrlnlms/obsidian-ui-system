@@ -100,6 +100,10 @@ test('paired Desktop and Package evidence covers the current kit palette', () =>
     { r: 222 / 255, g: 172 / 255, b: 0 });
   assert.equal(evidence.roles.matchHighlight.opacity, 0.3);
   assert.equal(evidence.roles.selectedOverlay.opacity, 0.067);
+  assert.deepEqual(evidence.roles.textError.dark,
+    { r: 251 / 255, g: 70 / 255, b: 76 / 255 });
+  assert.deepEqual(evidence.roles.textError.light,
+    { r: 233 / 255, g: 49 / 255, b: 71 / 255 });
 });
 
 test('paint classification preserves semantic fill/stroke and selection transparency', () => {

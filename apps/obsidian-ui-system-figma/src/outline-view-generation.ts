@@ -93,7 +93,7 @@ function createActionSet(model: OutlineViewModel, icons: IconButtonLibrary,
     button.isExposedInstance = true;
     if (action.active) {
       if (!rebindGlyphTone(button,
-        theme.primitive.colors.icon, theme.colors.iconActive,
+        theme.primitive.colors.icon, theme.colors.textNormal,
         theme.primitive.dark.colors.icon)) {
         throw new Error('Outline View: cor do controle ativo não vinculada.');
       }

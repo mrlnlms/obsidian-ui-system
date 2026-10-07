@@ -121,7 +121,10 @@ test('Faint glyph tone replaces an inherited Variable binding after RGB normaliz
   try {
     const source = { id: 'icon-muted' } as Variable;
     const faint = { id: 'disclosure-faint' } as Variable;
-    const vector = { strokes: [
+    const vector = { fills: [
+      { type: 'SOLID', color: { r: 0, g: 0, b: 0 }, opacity: 0,
+        boundVariables: { color: { type: 'VARIABLE_ALIAS', id: source.id } } },
+    ], strokes: [
       { type: 'SOLID', color: { r: 0, g: 0, b: 0 },
         boundVariables: { color: { type: 'VARIABLE_ALIAS', id: source.id } } },
       { type: 'SOLID', color: { r: 1, g: 1, b: 1 }, visible: false },
@@ -131,6 +134,8 @@ test('Faint glyph tone replaces an inherited Variable binding after RGB normaliz
       { r: 179 / 255, g: 179 / 255, b: 179 / 255 }), 1);
     assert.equal((vector.strokes[0] as SolidPaint).boundVariables?.color?.id, faint.id);
     assert.equal((vector.strokes[1] as SolidPaint).visible, false);
+    assert.equal((vector.fills[0] as SolidPaint).opacity, 0);
+    assert.equal((vector.fills[0] as SolidPaint).boundVariables?.color?.id, source.id);
     vector.strokes = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }];
     (vector as VectorNode & { boundVariables: unknown }).boundVariables = {
       strokes: [[{ type: 'VARIABLE_ALIAS', id: source.id }]],
