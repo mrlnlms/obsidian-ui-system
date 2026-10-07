@@ -260,6 +260,8 @@ Captured control states are variants; useful labels, values and messages are tex
 
 The first Figma Desktop generation stopped at `set_isExposedInstance`: a nested instance without exposed children/properties cannot be promoted to its parent Component. The public batch now leaves bare Toggle and Glyph instances unexposed and checks for exposable descendants before exposing the other nested instances. The corrected generation completed in Figma Desktop and the user accepted this batch; the visual details above remain a separate validation step.
 
+**Confirmation Modal correction (user-confirmed in Figma Desktop 2026-10-06):** the user observed overlapping footer buttons, with one leaving the modal in the checkbox variant. The captured action container contains a checkbox button before `mod-cta` and `mod-cancel`; indexing its children assigned the checkbox text to the CTA. The generator now identifies each action by its observed class and positions the two Button instances from their measured widths, the captured 8 px gap and the modal's right inset. The user confirmed the corrected result. The `PopoverSuggest` 14 px empty shell shown in the same Desktop review remains the documented partial projection. The rest of the generated batch worked in a minimal review; detailed per-family validation is still open.
+
 ## 5. UI Kit componentization rule
 
 A component does **not** need every possible hover/pressed/light state before it can exist as a Component.

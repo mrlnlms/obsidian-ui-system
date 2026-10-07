@@ -1,7 +1,7 @@
 import { requiredFont, fontFailure } from './font-resolution';
 import { boundUiKitPaint, type UiKitColorRole,
   type UiKitThemeVariables } from './ui-kit-theme';
-import { publicDomFind, publicDomText, publicSpecimen,
+import { confirmationActions, publicDomFind, publicDomText, publicSpecimen,
   type PublicApiEvidence, type PublicApiId } from './public-api-batch-data';
 import type { IconButtonLibrary } from './icon-button-generation';
 import type { PublicControlsLibrary } from './public-controls-generation';
@@ -481,20 +481,26 @@ function confirmationSet(evidence: PublicApiEvidence, button: ComponentSetNode,
         const content = label(root, 'Content',
           publicDomFind(dom, 'modal-content')?.text ?? '',
           16, 50, root.width - 32, font, theme);
-        const actions = publicDomFind(dom, 'modal-button-container')?.children ?? [];
+        const actions = confirmationActions(dom);
         const confirm = nested(root, stateComponent(button, 'CTA'), 'Confirm Button',
-          root.width - 170, root.height - 46);
-        setNestedText(confirm, 'Label', actions[0]?.text ?? '');
+          0, root.height - 46);
+        setNestedText(confirm, 'Label', actions.confirm);
         const cancel = nested(root, stateComponent(button, 'Normal'), 'Cancel Button',
-          root.width - 87, root.height - 46);
-        setNestedText(cancel, 'Label', actions[1]?.text ?? '');
+          0, root.height - 46);
+        setNestedText(cancel, 'Label', actions.cancel);
+        cancel.x = root.width - 16 - cancel.width;
+        confirm.x = cancel.x - actions.gap - confirm.width;
+        if (confirm.x < 16 || confirm.x + confirm.width + actions.gap > cancel.x + 0.5 ||
+          cancel.x + cancel.width > root.width - 16 + 0.5) {
+          throw new Error('Public API: botões do Confirmation Modal saíram da caixa.');
+        }
         const texts = [property(title, 'Title'), property(content, 'Content')];
         if (state === 'with-checkbox') {
           const checkbox = rect(root, 'Checkbox', 18, root.height - 72, 16, 16,
             theme, 'controlFill', 4);
           checkbox.constraints = { horizontal: 'MIN', vertical: 'MAX' };
           const check = label(root, 'Checkbox label',
-            publicDomText(dom).find((item) => item.includes('Remember')) ?? '',
+            actions.checkbox ?? '',
             42, root.height - 72, 310, font, theme);
           texts.push(property(check, 'Checkbox label'));
         }

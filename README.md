@@ -16,23 +16,25 @@ These are products developed in this repository. Skills installed to help an age
 
 ## Current status
 
-The v0.1.0 scope demonstrates an end-to-end path from Obsidian capture to a Figma UI Kit:
+The v0.1.0 release established the first end-to-end path from Obsidian capture to a Figma UI Kit. Development since that release has expanded the generated kit:
 
 - Mapping renders 59 specimens across 26 public API families and exports canonical observed evidence: specimens, states, tokens, environment, and snapshots. Its Layout Lab measures experimental sizing behavior and keeps inference separate.
 - **Export Obsidian UI Figma Package** creates one validated ZIP from a consistent Mapping capture and Lab run.
 - A development CLI can aggregate controlled Dark/Light Mapping and Layout Lab exports into Package v2 with separate per-mode evidence. The Figma plugin accepts v2 for a bounded Button normal action with three Variable bindings (radius, background and text color); its full UI Kit action still uses v1.
-- The Figma plugin imports that ZIP and generates native, editable Button and Search Component Sets. Those two components are the validated pilots; the broader library remains future work.
+- The Figma plugin imports one complete Package v1 ZIP and generates the implemented UI Kit in one action. It includes native, editable Button and Search sets, reusable navigation and icon components, hosted Files, Search, Bookmarks and Outline Views, and a first batch covering the captured public API families.
+- The bounded internal compositions and Dark/Light appearance have been validated in Figma Desktop for their documented samples. The corrected public API batch generated in Desktop; detailed per-family visual, property, resize, theme and regeneration checks remain open. A focused Search View fidelity extension also awaits Desktop comparison.
 - Obsidian UI Skill has a product location and purpose, but no implemented skill yet.
 
 ## How it works
 
 1. **Observe and map:** Mapping turns the real Obsidian UI into structured evidence. Layout Lab contributes separately labeled experimental measurements and inferences; semantic comparison tracks changes between snapshots.
-2. **Design:** Mapping generates a Figma Package from the evidence. The Figma plugin turns it into an editable UI Kit and structured design; Button and Search are the currently validated components.
+2. **Design:** Mapping generates a Figma Package from the evidence. The Figma plugin turns it into an editable UI Kit with public API components and hosted Views; validation scope varies by component.
 3. **Implement:** The future Skill is intended to help agents turn structured designs into Obsidian implementations.
 
 `Obsidian UI → Mapping → structured evidence → Figma Package → Figma UI Kit → structured design → Skill → Obsidian implementation`. The Skill and the full implementation leg are future work.
 
 The [snapshot schema](packages/ui-schema/README.md) defines the current canonical capture contract. The [Figma Package guide](docs/integration/figma-package/figma-package.md) describes the transfer format and its limits.
+The [UI system map](docs/ui-system-map.md) records the current component status and next work.
 
 ## Quick start
 
@@ -61,6 +63,7 @@ See [development setup](docs/development.md) for the vault and local workflow, a
 ## Documentation
 
 - [Technical documentation index](docs/README.md)
+- [Current UI system map and next work](docs/ui-system-map.md)
 - [Developing and testing the monorepo](docs/development.md)
 - [Mapping inventory](docs/obsidian-ui-mapping/capture/public-ui-inventory.md) and [snapshot guide](docs/obsidian-ui-mapping/capture/snapshot.md)
 - [Figma plugin setup](apps/obsidian-ui-system-figma/README.md) and [component reconstruction rules](docs/obsidian-ui-system-figma/components/component-reconstruction.md)

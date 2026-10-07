@@ -109,3 +109,19 @@ export function publicDomText(root: PublicDom): string[] {
     root.tag !== 'input' ? root.properties.value : undefined);
   return [...(own ? [own] : []), ...root.children.flatMap(publicDomText)];
 }
+
+/** The checkbox is also a button in the captured action container. */
+export function confirmationActions(root: PublicDom): {
+  confirm: string; cancel: string; checkbox?: string; gap: number;
+} {
+  const container = publicDomFind(root, 'modal-button-container');
+  const action = (className: string) => container?.children.find((child) =>
+    child.classes.includes(className));
+  const confirm = action('mod-cta')?.text;
+  const cancel = action('mod-cancel')?.text;
+  const gap = Number.parseFloat(container?.styles.gap ?? '');
+  if (!confirm || !cancel || !Number.isFinite(gap)) {
+    throw new Error('Public API: ações do Confirmation Modal incompletas.');
+  }
+  return { confirm, cancel, checkbox: action('mod-checkbox')?.text, gap };
+}

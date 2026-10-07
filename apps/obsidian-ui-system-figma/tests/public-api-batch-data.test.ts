@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { readFigmaPackage } from '../src/package-data';
-import { publicApiVariants, publicDomFind, publicDomText,
+import { confirmationActions, publicApiVariants, publicDomFind, publicDomText,
   publicSpecimen, readPublicApiEvidence } from '../src/public-api-batch-data';
 import { hasExposableChildren } from '../src/public-api-batch-generation';
 
@@ -23,6 +23,18 @@ test('the closed public inventory has one captured specimen for every observed v
   const group = publicSpecimen(evidence, 'obsidian.setting-group', 'with-search').dom;
   assert.ok(publicDomFind(group, 'setting-group-search'));
   assert.ok(publicDomText(group).length > 0);
+});
+
+test('confirmation actions distinguish the checkbox from the two footer buttons', () => {
+  const evidence = readPublicApiEvidence(input);
+  const standard = confirmationActions(publicSpecimen(evidence,
+    'obsidian.confirmation-modal', 'standard').dom);
+  const withCheckbox = confirmationActions(publicSpecimen(evidence,
+    'obsidian.confirmation-modal', 'with-checkbox').dom);
+  assert.deepEqual(standard, { confirm: 'Confirm', cancel: 'Cancel',
+    checkbox: undefined, gap: 8 });
+  assert.deepEqual(withCheckbox, { confirm: 'Confirm', cancel: 'Cancel',
+    checkbox: 'Remember example choice', gap: 8 });
 });
 
 test('incomplete or duplicate public specimens fail before node generation', () => {
