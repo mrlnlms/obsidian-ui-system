@@ -155,6 +155,7 @@ interface Sources {
   bookmarksTab: ComponentNode;
   workspaceTab: ComponentSetNode;
   viewHeader: ComponentNode;
+  viewHeaderTrail: ComponentNode;
   outlineView: ComponentNode;
   outlineTab: ComponentNode;
   iconButtons: IconButtonLibrary;
@@ -430,8 +431,9 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
     const leftViews = createLeftSidedockViews(leftSource, sources);
     const rightViews = createRightSidedockViews(rightSlot, evidence, sources);
     const mainTabs = createMainWorkspaceTabVariants(shell, sources, evidence, theme);
+    const mainHeader = createMainViewHeaderVariants(sources);
     const slotProbe = createSidedockSlotProbe(shell, leftViews.files, rightViews.outline,
-      mainTabs.defaultVariant);
+      mainTabs.defaultVariant, mainHeader.markdown);
     const probeLeft = slotProbe.findOne((node) => node.name === 'Left Sidedock / Files');
     const probeRight = slotProbe.findOne((node) => node.name === 'Right Sidedock');
     const probeMain = slotProbe.findOne((node) => node.name === 'Main Workspace');
@@ -445,7 +447,7 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
       throw new Error('Application Shell Slot probe: fontes canônicas ou Slots divergiram.');
     }
     const slotPreview = await createSidedockSlotPreview(slotProbe, evidence, sources,
-      leftViews.pluginTabs, leftViews.panels, rightViews, mainTabs.set);
+      leftViews.pluginTabs, leftViews.panels, rightViews, mainTabs.set, mainHeader);
     const rightEdge = figma.currentPage.children.filter((node) =>
       node !== shell && node !== contentSlot && node !== rightSlot &&
       node !== ribbonSource && node !== statusSource && node !== profileSource &&
@@ -455,6 +457,8 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
       !leftViews.pluginIcons.includes(node as ComponentNode) &&
       node !== rightViews.set &&
       node !== mainTabs.set &&
+      node !== mainHeader.set && node !== mainHeader.trails &&
+      node !== mainHeader.pluginTitle &&
       !Object.values(rightViews.panels).includes(node as ComponentNode) &&
       !rightViews.placeholders.includes(node as ComponentNode) &&
       !rightViews.icons.includes(node as ComponentNode) &&
@@ -499,6 +503,12 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
     });
     mainTabs.set.x = rightViews.set.x;
     mainTabs.set.y = rightViews.set.y + rightViews.set.height + 64;
+    mainHeader.trails.x = mainTabs.set.x;
+    mainHeader.trails.y = mainTabs.set.y + mainTabs.set.height + 64;
+    mainHeader.set.x = mainHeader.trails.x + mainHeader.trails.width + 64;
+    mainHeader.set.y = mainHeader.trails.y;
+    mainHeader.pluginTitle.x = mainHeader.set.x + mainHeader.set.width + 64;
+    mainHeader.pluginTitle.y = mainHeader.set.y;
     shell.x = leftSource.x + leftSource.width + 64;
     preview.x = shell.x + shell.width + 64;
     slotProbe.x = preview.x + preview.width + 64;
@@ -1056,10 +1066,155 @@ function createMainWorkspaceTabVariants(shell: ComponentNode, sources: Sources,
   return { set, defaultVariant };
 }
 
+export const MAIN_HEADER_LEVELS = ['0', '1', '2', '3'] as const;
+
+export function mainHeaderAncestorPositions(levels: number, total: number): number[] {
+  if (!Number.isInteger(levels) || !Number.isInteger(total) ||
+      levels < 0 || levels > total || total < 1) {
+    throw new Error('Application Shell Slot probe: quantidade de ancestrais inválida.');
+  }
+  return Array.from({ length: levels }, (_, index) => total - levels + index + 1);
+}
+
+export function mainHeaderNaturalAncestorWidth(children: ReadonlyArray<{
+  width: number; maxWidth: number | null }>): number {
+  return children.reduce((width, child) => width +
+    (child.maxWidth ?? child.width), 0);
+}
+
+function createMainViewHeaderVariants(sources: Sources): { set: ComponentSetNode;
+  trails: ComponentSetNode; markdown: ComponentNode; plugin: ComponentNode;
+  pluginTitle: ComponentNode } {
+  if (sources.viewHeaderTrail.name !== 'Obsidian / Breadcrumb Trail / Markdown') {
+    throw new Error('Application Shell Slot probe: Breadcrumb Trail canônico ausente.');
+  }
+  const trailVariants = MAIN_HEADER_LEVELS.map((levels) => {
+    const variant = sources.viewHeaderTrail.clone();
+    variant.name = `Levels=${levels}`;
+    const ancestors = variant.findOne((node) => node.name === 'Ancestor trail');
+    const title = variant.findOne((node) => node.name === 'Current Title');
+    if (ancestors?.type !== 'FRAME' || title?.type !== 'TEXT' ||
+        ancestors.children.length !== 6) {
+      throw new Error('Application Shell Slot probe: anatomia canônica do breadcrumb ausente.');
+    }
+    const visible = new Set(mainHeaderAncestorPositions(Number(levels), 3));
+    for (const child of [...ancestors.children]) {
+      const position = Number(child.name.match(/\d+$/)?.[0]);
+      if (!visible.has(position)) child.remove();
+    }
+    if (levels === '0') {
+      ancestors.remove();
+      // A title without ancestors owns the flexible middle area, including a
+      // Plugin title longer than the short Markdown fixture title.
+      title.maxWidth = null;
+    } else {
+      ancestors.maxWidth = mainHeaderNaturalAncestorWidth(ancestors.children.map((child) => ({
+        width: child.width,
+        maxWidth: 'maxWidth' in child && typeof child.maxWidth === 'number'
+          ? child.maxWidth : null,
+      })));
+    }
+    return variant;
+  });
+  const trails = figma.combineAsVariants(trailVariants, figma.currentPage);
+  trails.name = 'Obsidian / Main Workspace / Breadcrumb Levels (probe)';
+  if (trails.componentPropertyDefinitions.Levels?.type !== 'VARIANT') {
+    throw new Error('Application Shell Slot probe: níveis do breadcrumb ausentes.');
+  }
+  trailVariants.forEach((variant, index) => {
+    variant.x = 20;
+    variant.y = 20 + index * (variant.height + 20);
+  });
+  trails.resizeWithoutConstraints(sources.viewHeaderTrail.width + 40,
+    trailVariants.length * (sources.viewHeaderTrail.height + 20) + 20);
+
+  const markdown = sources.viewHeader.clone();
+  markdown.name = 'Mode=Markdown';
+  const markdownTrail = markdown.findOne((node) => node.name === 'Breadcrumb Trail');
+  if (markdownTrail?.type !== 'INSTANCE') {
+    throw new Error('Application Shell Slot probe: trail do header Markdown ausente.');
+  }
+  markdownTrail.swapComponent(trailVariants[3]!);
+  markdownTrail.setProperties({ Levels: '3' });
+
+  const pluginTitle = sources.viewHeaderTrail.clone();
+  pluginTitle.name = 'Obsidian / Main Workspace / Plugin Title (probe)';
+  const pluginAncestors = pluginTitle.findOne((node) => node.name === 'Ancestor trail');
+  const pluginTitleText = pluginTitle.findOne((node) => node.name === 'Current Title');
+  if (pluginAncestors?.type !== 'FRAME' || pluginTitleText?.type !== 'TEXT') {
+    throw new Error('Application Shell Slot probe: título canônico do Plugin ausente.');
+  }
+  pluginAncestors.remove();
+  pluginTitleText.maxWidth = null;
+
+  const plugin = markdown.clone();
+  plugin.name = 'Mode=Plugin';
+  const pluginTrail = plugin.findOne((node) => node.name === 'Breadcrumb Trail');
+  const actions = plugin.findOne((node) => node.name === 'Actions');
+  const navigation = plugin.findOne((node) => node.name === 'Navigation');
+  if (pluginTrail?.type !== 'INSTANCE' || actions?.type !== 'FRAME' ||
+      navigation?.type !== 'FRAME' || actions.children.length !== 2) {
+    throw new Error('Application Shell Slot probe: estrutura do header Plugin ausente.');
+  }
+  pluginTrail.swapComponent(pluginTitle);
+  const pluginTitleNode = pluginTrail.findOne((node) => node.name === 'Current Title');
+  const titleProperty = pluginTitleNode?.type === 'TEXT'
+    ? pluginTitleNode.componentPropertyReferences?.characters : null;
+  const editableTitle = titleProperty ?? Object.keys(pluginTrail.componentProperties)
+    .find((key) => key.startsWith('Title#') &&
+      pluginTrail.componentProperties[key]?.type === 'TEXT');
+  if (!editableTitle) {
+    throw new Error('Application Shell Slot probe: título editável do Plugin ausente.');
+  }
+  pluginTrail.setProperties({ [editableTitle]: 'My Plugin' });
+  const more = actions.children.find((node) => node.name === 'Glyph / More options');
+  if (more?.type !== 'INSTANCE') {
+    throw new Error('Application Shell Slot probe: menu de três pontos ausente.');
+  }
+  for (const child of [...actions.children]) if (child !== more) child.remove();
+  actions.layoutMode = 'HORIZONTAL';
+  actions.primaryAxisSizingMode = 'AUTO';
+  actions.counterAxisSizingMode = 'FIXED';
+  actions.counterAxisAlignItems = 'CENTER';
+  actions.itemSpacing = 0;
+  actions.maxWidth = null;
+  actions.layoutSizingHorizontal = 'HUG';
+  const known = new Set(Object.keys(plugin.componentPropertyDefinitions));
+  const slot = plugin.createSlot();
+  const slotProperty = Object.keys(plugin.componentPropertyDefinitions).find((key) =>
+    !known.has(key) && plugin.componentPropertyDefinitions[key]?.type === 'SLOT');
+  if (!slotProperty) throw new Error('Application Shell Slot probe: Slot de ações ausente.');
+  plugin.editComponentProperty(slotProperty, { name: 'Plugin actions',
+    description: 'Insira aqui Components de botões da View do plugin.' });
+  slot.name = 'Plugin actions';
+  actions.insertChild(0, slot);
+  slot.layoutMode = 'HORIZONTAL';
+  slot.itemSpacing = 0;
+  slot.fills = [];
+  slot.strokes = [];
+  slot.resize(28, 24);
+  slot.minWidth = 28;
+  slot.layoutSizingHorizontal = 'HUG';
+  slot.layoutSizingVertical = 'FIXED';
+
+  const set = figma.combineAsVariants([markdown, plugin], figma.currentPage);
+  set.name = 'Obsidian / Main Workspace / View Header (probe)';
+  if (set.componentPropertyDefinitions.Mode?.type !== 'VARIANT') {
+    throw new Error('Application Shell Slot probe: modos do View Header ausentes.');
+  }
+  markdown.x = 20;
+  markdown.y = 20;
+  plugin.x = 20;
+  plugin.y = markdown.height + 40;
+  set.resizeWithoutConstraints(markdown.width + 40,
+    markdown.height + plugin.height + 60);
+  return { set, trails, markdown, plugin, pluginTitle };
+}
+
 /** Linked-instance probe: sidedock slots resize, and the Main Workspace accepts content. */
 function createSidedockSlotProbe(shell: ComponentNode,
   filesLeft: ComponentNode, outlineRight: ComponentNode,
-  mainTabs: ComponentNode): ComponentNode {
+  mainTabs: ComponentNode, mainHeader: ComponentNode): ComponentNode {
   const probe = shell.clone();
   probe.name = 'Obsidian / Application Shell / Sidedock Slots (probe)';
   probe.description = 'Shell com Sidedocks redimensionáveis, Main Workspace editável e controles de visibilidade estrutural na instância.';
@@ -1094,6 +1249,12 @@ function createSidedockSlotProbe(shell: ComponentNode,
   bar.parent.insertChild(bar.parent.children.indexOf(bar), barInstance);
   barInstance.layoutSizingHorizontal = 'FILL';
   bar.remove();
+  const header = probe.findOne((node) => node.name === 'View Header / chrome');
+  if (header?.type !== 'INSTANCE' || header.parent?.type !== 'SLOT') {
+    throw new Error('Application Shell Slot probe: View Header no Main Workspace ausente.');
+  }
+  header.swapComponent(mainHeader);
+  header.layoutSizingHorizontal = 'FILL';
   const ribbon = body.children.find((node) => node.name === 'Ribbon');
   const leftSlot = body.children.find((node) => node.name === 'Left Sidedock slot');
   const rightSlot = body.children.find((node) => node.name === 'Right Sidedock slot');
@@ -1176,7 +1337,8 @@ async function createSidedockSlotPreview(probe: ComponentNode,
   probeTabSet: ComponentSetNode,
   probePanels: Record<'Files' | 'Search' | 'Bookmarks' | 'Plugin', ComponentNode>,
   rightViews: ReturnType<typeof createRightSidedockViews>,
-  mainTabSet: ComponentSetNode
+  mainTabSet: ComponentSetNode,
+  mainHeader: ReturnType<typeof createMainViewHeaderVariants>
 ): Promise<FrameNode> {
   const preview = figma.createFrame();
   preview.name = 'Application Shell / Sidedock Slots resize probe';
@@ -1260,6 +1422,9 @@ async function createSidedockSlotPreview(probe: ComponentNode,
     }
   };
   verify();
+  if ((await header.getMainComponentAsync())?.id !== mainHeader.markdown.id) {
+    throw new Error('Application Shell Slot probe: header Markdown canônico do probe ausente.');
+  }
   for (const count of MAIN_WORKSPACE_TAB_COUNTS) {
     for (const side of MAIN_WORKSPACE_ACTIVE_SIDES) {
       mainTabs.setProperties({ Count: count, Active: side });
@@ -1342,6 +1507,111 @@ async function createSidedockSlotPreview(probe: ComponentNode,
     }
   }
   mainTabs.setProperties({ Count: '2', Active: 'Right' });
+  verify();
+  header.setProperties({ Mode: 'Markdown' });
+  for (const levels of MAIN_HEADER_LEVELS) {
+    const trail = header.findOne((node) => node.name === 'Breadcrumb Trail');
+    if (trail?.type !== 'INSTANCE') {
+      throw new Error('Application Shell Slot probe: Breadcrumb Trail Markdown ausente.');
+    }
+    trail.setProperties({ Levels: levels });
+    const ancestor = trail.findOne((node) => node.name === 'Ancestor trail');
+    const segments = ancestor?.type === 'FRAME' ? ancestor.children.filter((node) =>
+      node.name.startsWith('Breadcrumb Segment ')) : [];
+    const separators = ancestor?.type === 'FRAME' ? ancestor.children.filter((node) =>
+      node.name.startsWith('Separator ')) : [];
+    const title = trail.findOne((node) => node.name === 'Current Title');
+    const actions = header.findOne((node) => node.name === 'Actions');
+    const naturalAncestorWidth = ancestor?.type === 'FRAME'
+      ? mainHeaderNaturalAncestorWidth(ancestor.children.map((child) => ({
+        width: child.width,
+        maxWidth: 'maxWidth' in child && typeof child.maxWidth === 'number'
+          ? child.maxWidth : null,
+      }))) : 0;
+    if (header.componentProperties.Mode?.value !== 'Markdown' ||
+        trail.componentProperties.Levels?.value !== levels ||
+        segments.length !== Number(levels) ||
+        separators.length !== Number(levels) ||
+        (levels === '0' ? ancestor !== null : ancestor?.type !== 'FRAME') ||
+        title?.type !== 'TEXT' || actions?.type !== 'FRAME' ||
+        actions.children.length !== 2 ||
+        !actions.children.some((node) => node.name === 'Glyph / More options') ||
+        !actions.children.some((node) =>
+          node.name.startsWith('Glyph / Current view: editing')) ||
+        (ancestor?.type === 'FRAME' &&
+          Math.abs((ancestor.maxWidth ?? 0) - naturalAncestorWidth) > 1) ||
+        Math.abs(header.width - main.width) > 1) {
+      throw new Error(`Application Shell Slot probe: header Markdown Levels=${levels} divergente.`);
+    }
+    verify();
+    instance.resize(probe.width + 400, probe.height + 80);
+    verify();
+    if (Math.abs(header.width - main.width) > 1 ||
+        (ancestor?.type === 'FRAME' && title?.type === 'TEXT' &&
+          trail.width > naturalAncestorWidth + title.width + trail.itemSpacing + 2 &&
+          Math.abs(ancestor.width - naturalAncestorWidth) > 1)) {
+      throw new Error('Application Shell Slot probe: resize do header Markdown divergente.');
+    }
+    instance.resize(probe.width, probe.height);
+  }
+  header.setProperties({ Mode: 'Plugin' });
+  if ((await header.getMainComponentAsync())?.id !== mainHeader.plugin.id) {
+    throw new Error('Application Shell Slot probe: header Plugin não foi selecionado.');
+  }
+  const pluginTrail = header.findOne((node) => node.name === 'Breadcrumb Trail');
+  const pluginActions = header.findOne((node) => node.name === 'Actions');
+  const pluginNav = header.findOne((node) => node.name === 'Navigation');
+  const headerActionSlot = pluginActions?.type === 'FRAME'
+    ? pluginActions.children.find((node) => node.name === 'Plugin actions') : null;
+  const pluginTitle = pluginTrail?.type === 'INSTANCE'
+    ? pluginTrail.findOne((node) => node.name === 'Current Title') : null;
+  if (header.componentProperties.Mode?.value !== 'Plugin' ||
+      pluginTrail?.type !== 'INSTANCE' ||
+      (await pluginTrail.getMainComponentAsync())?.id !== mainHeader.pluginTitle.id ||
+      pluginTrail.componentProperties.Levels !== undefined ||
+      pluginTrail.findOne((node) => node.name === 'Ancestor trail') !== null ||
+      pluginTitle?.type !== 'TEXT' || pluginTitle.characters !== 'My Plugin' ||
+      pluginTitle.width <= sources.headerModel.title.rect.width ||
+      pluginNav?.type !== 'FRAME' || pluginNav.children.length !== 2 ||
+      pluginActions?.type !== 'FRAME' || pluginActions.layoutSizingHorizontal !== 'HUG' ||
+      headerActionSlot?.type !== 'SLOT' || headerActionSlot.children.length !== 0 ||
+      !pluginActions.children.some((node) => node.name === 'Glyph / More options') ||
+      pluginActions.children.length !== 2) {
+    throw new Error('Application Shell Slot probe: header Plugin divergente.');
+  }
+  const actionSource = figma.createComponent();
+  actionSource.name = 'Application Shell / temporary header action insertion check';
+  actionSource.resize(28, 24);
+  const firstAction = actionSource.createInstance();
+  const secondAction = actionSource.createInstance();
+  headerActionSlot.appendChild(firstAction);
+  headerActionSlot.appendChild(secondAction);
+  const verifyPluginHeader = (): void => {
+    if (headerActionSlot.children.length !== 2 ||
+        headerActionSlot.width < firstAction.width + secondAction.width - 1 ||
+        Math.abs(pluginActions.x + pluginActions.width + header.paddingRight -
+          header.width) > 1 ||
+        Math.abs(header.width - main.width) > 1) {
+      throw new Error('Application Shell Slot probe: ações Plugin não acompanham o resize.');
+    }
+    verify();
+  };
+  verifyPluginHeader();
+  instance.resize(probe.width + 160, probe.height + 80);
+  verifyPluginHeader();
+  instance.resize(probe.width, probe.height);
+  firstAction.remove();
+  secondAction.remove();
+  actionSource.remove();
+  header.setProperties({ Mode: 'Markdown' });
+  if ((await header.getMainComponentAsync())?.id !== mainHeader.markdown.id) {
+    throw new Error('Application Shell Slot probe: header Markdown não restaurou.');
+  }
+  const restoredTrail = header.findOne((node) => node.name === 'Breadcrumb Trail');
+  if (restoredTrail?.type !== 'INSTANCE') {
+    throw new Error('Application Shell Slot probe: header Markdown não restaurou.');
+  }
+  restoredTrail.setProperties({ Levels: '3' });
   verify();
   left.resize(left.width + 40, left.height);
   verify();

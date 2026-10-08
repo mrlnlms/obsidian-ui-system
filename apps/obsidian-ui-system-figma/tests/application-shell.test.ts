@@ -4,6 +4,7 @@ import { applicationShellGlyphSources, assertShellAdjacency, assertShellResize,
   assertSidedockProbeLayout, assertLeftSidedockSelection, assertPluginHostedSlotLayout,
   leftSidedockViewChoices, RIGHT_SIDEDOCK_VIEWS, rightSidedockProbeMinimumWidth,
   MAIN_WORKSPACE_TAB_COUNTS, MAIN_WORKSPACE_ACTIVE_SIDES,
+  MAIN_HEADER_LEVELS, mainHeaderAncestorPositions, mainHeaderNaturalAncestorWidth,
   assertMainWorkspaceTabsLayout,
   readApplicationShellEvidence } from
   '../src/application-shell-generation';
@@ -161,6 +162,19 @@ test('Main Workspace tab counts and active edge preserve adjacency through resiz
       }
     }
   }
+});
+
+test('Markdown header levels retain the ancestors nearest to the title', () => {
+  assert.deepEqual(MAIN_HEADER_LEVELS, ['0', '1', '2', '3']);
+  assert.deepEqual(MAIN_HEADER_LEVELS.map((levels) =>
+    mainHeaderAncestorPositions(Number(levels), 3)),
+  [[], [3], [2, 3], [1, 2, 3]]);
+  assert.throws(() => mainHeaderAncestorPositions(4, 3), /ancestrais inválida/);
+  assert.throws(() => mainHeaderAncestorPositions(-1, 3), /ancestrais inválida/);
+  assert.equal(mainHeaderNaturalAncestorWidth([
+    { width: 38, maxWidth: 128 }, { width: 7, maxWidth: 7 },
+    { width: 45, maxWidth: 112 }, { width: 7, maxWidth: 7 },
+  ]), 254, 'the wide header uses natural caps instead of widths compressed in the sample');
 });
 
 test('Left Sidedock View pairs each canonical content with its active tab', () => {

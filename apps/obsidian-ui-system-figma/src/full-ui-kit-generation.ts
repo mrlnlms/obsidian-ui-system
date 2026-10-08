@@ -142,6 +142,7 @@ export async function generateFullUiKit(input: ImportedPackage): Promise<{
       searchView: searchResult.component, searchTab,
       bookmarksView: bookmarksResult.component, bookmarksTab,
       workspaceTab: workspaceTab.set, viewHeader: viewHeader.component,
+      viewHeaderTrail: viewHeader.trail,
       outlineView: outlineResult.component, outlineTab: outlineResult.tab,
       iconButtons, sideModel, headerModel, workspaceModel,
     }, uiKitTheme);
