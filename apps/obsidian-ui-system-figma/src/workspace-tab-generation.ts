@@ -250,7 +250,8 @@ function createIcon(state: 'Active' | 'Inactive',
     component.description = `Ícone Files observado; cor e opacidade ${state} no sidedock Dark.`;
     component.resize(16, 16);
     component.fills = [];
-    const glyph = glyphs.createGlyph(`Workspace tab / ${state}`,
+    // The Workspace Tab sample shows Bookmarks; Files uses the observed Side Panel glyph.
+    const glyph = glyphs.createGlyph('Sidedock tab / Files',
       state === 'Active' ? 'Selected' : 'Muted');
     glyph.name = 'Glyph';
     component.appendChild(glyph);

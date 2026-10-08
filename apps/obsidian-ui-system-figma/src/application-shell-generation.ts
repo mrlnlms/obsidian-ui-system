@@ -171,6 +171,7 @@ type RightSidedockView = typeof RIGHT_SIDEDOCK_VIEWS[number];
 
 export const MAIN_WORKSPACE_TAB_COUNTS = ['1', '2', '3', '4'] as const;
 export const MAIN_WORKSPACE_ACTIVE_SIDES = ['Left', 'Right'] as const;
+export const MAIN_TAB_LIST_RIGHT_INSET = 32;
 
 export function assertMainWorkspaceTabsLayout(layout: { count: number;
   active: 'Left' | 'Right'; rowWidth: number; tabs: ReadonlyArray<{
@@ -433,7 +434,7 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
     const mainTabs = createMainWorkspaceTabVariants(shell, sources, evidence, theme);
     const mainHeader = createMainViewHeaderVariants(sources);
     const slotProbe = createSidedockSlotProbe(shell, leftViews.files, rightViews.outline,
-      mainTabs.defaultVariant, mainHeader.markdown);
+      mainTabs.defaultVariant, mainHeader.markdown, sources, evidence);
     const probeLeft = slotProbe.findOne((node) => node.name === 'Left Sidedock / Files');
     const probeRight = slotProbe.findOne((node) => node.name === 'Right Sidedock');
     const probeMain = slotProbe.findOne((node) => node.name === 'Main Workspace');
@@ -717,6 +718,11 @@ function createProbeSidePanel(source: ComponentNode, tabs: ComponentNode,
   view?: ComponentNode): ComponentNode {
   const panel = source.clone();
   panel.name = `Obsidian / Side Panel / Left / ${name} (probe)`;
+  const oldToggle = panel.findOne((node) => node.name === 'Collapse sidedock');
+  if (oldToggle?.type !== 'FRAME') {
+    throw new Error(`Application Shell Slot probe: controle esquerdo ${name} ausente.`);
+  }
+  oldToggle.remove();
   const tabArea = panel.findOne((node) => node.name === 'Tab group area');
   const tabGroup = tabArea?.type === 'FRAME' ? tabArea.children[0] : null;
   if (tabArea?.type !== 'FRAME' || tabGroup?.type !== 'INSTANCE') {
@@ -821,6 +827,11 @@ function createRightSidedockViews(source: ComponentNode,
     const panel = source.clone();
     panel.name = `Obsidian / Side Panel / Right / ${name} (probe)`;
     panel.minWidth = rightMinWidth;
+    const oldToggle = panel.findOne((node) => node.name === 'Collapse right sidedock');
+    if (oldToggle?.type !== 'FRAME') {
+      throw new Error(`Application Shell Slot probe: controle direito ${name} ausente.`);
+    }
+    oldToggle.remove();
     const tabs = panel.findOne((node) => node.name === 'Right WorkspaceTabs');
     const hosted = panel.findOne((node) => node.name === 'Hosted Outline View');
     if (tabs?.type !== 'FRAME' || hosted?.type !== 'INSTANCE' || tabs.children.length !== 5) {
@@ -957,7 +968,7 @@ function createMainWorkspaceTabVariants(shell: ComponentNode, sources: Sources,
       bar.name = `Count=${count}, Active=${side}`;
       // The tab-list control is absolute; reserve its width and an 8 px gap so
       // the tab row alone receives the remaining Auto Layout fill width.
-      bar.paddingRight = 16 + 28 + evidence.mainTabs.newTabGap;
+      bar.paddingRight = MAIN_TAB_LIST_RIGHT_INSET + 28 + evidence.mainTabs.newTabGap;
       const oldRow = bar.findOne((node) =>
         node.name === 'Main tabs / two canonical instances');
       const inactive = oldRow?.type === 'FRAME' ? oldRow.children.find((node) =>
@@ -984,6 +995,15 @@ function createMainWorkspaceTabVariants(shell: ComponentNode, sources: Sources,
       const row = frame(bar, 'Main tabs', 'HORIZONTAL',
         Number(count) * evidence.mainTabs.tabWidth, evidence.mainTabs.headerHeight);
       bar.insertChild(1, row);
+      const leftToggle = frame(bar, 'Toggle left sidedock', 'HORIZONTAL',
+        sources.sideModel.toggleWidth, evidence.mainTabs.headerHeight);
+      leftToggle.layoutMode = 'NONE';
+      bar.insertChild(1, leftToggle);
+      const leftGlyph = sources.iconButtons.createGlyph('Sidedock / Collapse');
+      leftGlyph.name = 'Toggle left glyph';
+      leftToggle.appendChild(leftGlyph);
+      leftGlyph.x = sources.sideModel.toggleIconX;
+      leftGlyph.y = sources.sideModel.toggleIconY;
       row.layoutGrow = 1;
       row.minWidth = 1;
       row.maxWidth = Number(count) * evidence.mainTabs.tabWidth;
@@ -1031,7 +1051,7 @@ function createMainWorkspaceTabVariants(shell: ComponentNode, sources: Sources,
       menu.layoutMode = 'NONE';
       menu.layoutPositioning = 'ABSOLUTE';
       menu.constraints = { horizontal: 'MAX', vertical: 'MIN' };
-      menu.x = bar.width - 16 - menu.width;
+      menu.x = bar.width - MAIN_TAB_LIST_RIGHT_INSET - menu.width;
       menu.y = 0;
       const glyph = sources.iconButtons.createGlyph('Search / Context down', 'Muted');
       glyph.name = 'Tab list glyph';
@@ -1136,6 +1156,20 @@ function createMainViewHeaderVariants(sources: Sources): { set: ComponentSetNode
   }
   markdownTrail.swapComponent(trailVariants[3]!);
   markdownTrail.setProperties({ Levels: '3' });
+  const markdownActions = markdown.findOne((node) => node.name === 'Actions');
+  const markdownMore = markdownActions?.type === 'FRAME'
+    ? markdownActions.children.find((node) => node.name === 'Glyph / More options') : null;
+  if (markdownActions?.type !== 'FRAME' || markdownMore?.type !== 'INSTANCE') {
+    throw new Error('Application Shell Slot probe: menu Markdown ausente.');
+  }
+  const horizontalMore = sources.iconButtons.create('Search / More', 'Toolbar');
+  horizontalMore.name = markdownMore.name;
+  markdownActions.insertChild(markdownActions.children.indexOf(markdownMore), horizontalMore);
+  horizontalMore.x = markdownMore.x;
+  horizontalMore.y = markdownMore.y;
+  horizontalMore.constraints = markdownMore.constraints;
+  horizontalMore.isExposedInstance = true;
+  markdownMore.remove();
 
   const pluginTitle = sources.viewHeaderTrail.clone();
   pluginTitle.name = 'Obsidian / Main Workspace / Plugin Title (probe)';
@@ -1214,7 +1248,8 @@ function createMainViewHeaderVariants(sources: Sources): { set: ComponentSetNode
 /** Linked-instance probe: sidedock slots resize, and the Main Workspace accepts content. */
 function createSidedockSlotProbe(shell: ComponentNode,
   filesLeft: ComponentNode, outlineRight: ComponentNode,
-  mainTabs: ComponentNode, mainHeader: ComponentNode): ComponentNode {
+  mainTabs: ComponentNode, mainHeader: ComponentNode,
+  sources: Sources, evidence: ApplicationShellEvidence): ComponentNode {
   const probe = shell.clone();
   probe.name = 'Obsidian / Application Shell / Sidedock Slots (probe)';
   probe.description = 'Shell com Sidedocks redimensionáveis, Main Workspace editável e controles de visibilidade estrutural na instância.';
@@ -1269,6 +1304,17 @@ function createSidedockSlotProbe(shell: ComponentNode,
     const property = probe.addComponentProperty(name, 'BOOLEAN', true);
     node.componentPropertyReferences = { ...node.componentPropertyReferences, visible: property };
   }
+  const rightToggle = frame(probe, 'Toggle right sidedock', 'HORIZONTAL',
+    evidence.right.toggleWidth, evidence.right.toggleHeight);
+  rightToggle.layoutPositioning = 'ABSOLUTE';
+  rightToggle.constraints = { horizontal: 'MAX', vertical: 'MIN' };
+  rightToggle.paddingTop = (evidence.right.toggleHeight - 16) / 2;
+  rightToggle.x = probe.width - rightToggle.width;
+  rightToggle.y = evidence.right.tabTop;
+  const toggleGlyph = sources.iconButtons.createGlyph('Sidedock / Collapse');
+  toggleGlyph.name = 'Toggle right glyph';
+  rightToggle.appendChild(toggleGlyph);
+  toggleGlyph.rotation = 180;
   return probe;
 }
 
@@ -1358,13 +1404,14 @@ async function createSidedockSlotPreview(probe: ComponentNode,
   const main = instance.findOne((node) => node.name === 'Main Workspace');
   const mainTabs = instance.findOne((node) => node.name === 'Workspace Tabs');
   const header = instance.findOne((node) => node.name === 'View Header / chrome');
+  const rightToggle = instance.findOne((node) => node.name === 'Toggle right sidedock');
   const content = instance.findOne((node) => node.name === 'Main Content');
   const status = instance.findOne((node) => node.name === 'Status Bar');
   if (body?.type !== 'FRAME' || leftSlot?.type !== 'SLOT' ||
       rightSlot?.type !== 'SLOT' || left?.type !== 'INSTANCE' ||
       right?.type !== 'INSTANCE' || ribbon?.type !== 'INSTANCE' ||
       main?.type !== 'SLOT' || mainTabs?.type !== 'INSTANCE' ||
-      header?.type !== 'INSTANCE' ||
+      header?.type !== 'INSTANCE' || rightToggle?.type !== 'FRAME' ||
       content?.type !== 'INSTANCE' || status?.type !== 'INSTANCE') {
     throw new Error('Application Shell Slot probe: composição inválida ' +
       JSON.stringify({ body: body?.type, leftSlot: leftSlot?.type,
@@ -1389,6 +1436,21 @@ async function createSidedockSlotPreview(probe: ComponentNode,
     throw new Error('Application Shell Slot probe: controles de visibilidade desconectados.');
   }
   const verify = (): void => {
+    const tabList = mainTabs.findOne((node) => node.name === 'Tab list');
+    const leftToggle = mainTabs.findOne((node) => node.name === 'Toggle left sidedock');
+    if (tabList?.type !== 'FRAME' || !rightToggle.visible ||
+        Math.abs(rightToggle.x + rightToggle.width - instance.width) > 1 ||
+        Math.abs(rightToggle.y - evidence.right.tabTop) > 1 ||
+        (rightSlot.visible && rightToggle.x < rightSlot.x - 1) ||
+        (!rightSlot.visible && (rightToggle.x < main.x - 1 ||
+          main.x + tabList.x + tabList.width > rightToggle.x - 3))) {
+      throw new Error('Application Shell Slot probe: toggle direito não acompanha o Shell.');
+    }
+    if (leftToggle?.type !== 'FRAME' || !leftToggle.visible ||
+        Math.abs(leftToggle.x - mainTabs.paddingLeft) > 1 ||
+        left.findOne((node) => node.name === 'Collapse sidedock') !== null) {
+      throw new Error('Application Shell Slot probe: toggle esquerdo ausente ou duplicado.');
+    }
     if (main.layoutMode !== 'VERTICAL' ||
         main.layoutSizingHorizontal !== 'FILL' ||
         mainTabs.layoutSizingHorizontal !== 'FILL' ||
@@ -1425,10 +1487,15 @@ async function createSidedockSlotPreview(probe: ComponentNode,
   if ((await header.getMainComponentAsync())?.id !== mainHeader.markdown.id) {
     throw new Error('Application Shell Slot probe: header Markdown canônico do probe ausente.');
   }
+  const horizontalMoreGlyph = sources.iconButtons.icons.get('lucide-more-horizontal');
+  if (!horizontalMoreGlyph) {
+    throw new Error('Application Shell Slot probe: glifo horizontal de ações ausente.');
+  }
   for (const count of MAIN_WORKSPACE_TAB_COUNTS) {
     for (const side of MAIN_WORKSPACE_ACTIVE_SIDES) {
       mainTabs.setProperties({ Count: count, Active: side });
       const row = mainTabs.findOne((node) => node.name === 'Main tabs');
+      const leftToggle = mainTabs.findOne((node) => node.name === 'Toggle left sidedock');
       const newTab = mainTabs.findOne((node) => node.name === 'New tab');
       const menu = mainTabs.findOne((node) => node.name === 'Tab list');
       const menuGlyph = mainTabs.findOne((node) => node.name === 'Tab list glyph');
@@ -1445,13 +1512,19 @@ async function createSidedockSlotPreview(probe: ComponentNode,
         node.variantProperties.Active === side);
       if (!expected || mainTabs.componentProperties.Count?.value !== count ||
           mainTabs.componentProperties.Active?.value !== side ||
-          row?.type !== 'FRAME' || newTab?.type !== 'FRAME' ||
+          row?.type !== 'FRAME' || leftToggle?.type !== 'FRAME' ||
+          newTab?.type !== 'FRAME' ||
           menu?.type !== 'FRAME' || menuGlyph?.type !== 'INSTANCE' ||
           menu.layoutPositioning !== 'ABSOLUTE' ||
           cells.length !== Number(count) || !leftShoulder || !rightShoulder) {
         throw new Error(`Application Shell Slot probe: Count=${count}, Active=${side} ausente.`);
       }
       const checkTabs = async (): Promise<void> => {
+        if (Math.abs(leftToggle.x - mainTabs.paddingLeft) > 1 ||
+            Math.abs(row.x - (leftToggle.x + leftToggle.width +
+              evidence.mainTabs.newTabGap)) > 1) {
+          throw new Error('Application Shell Slot probe: toggle esquerdo perdeu o espaço das abas.');
+        }
         const tabs = await Promise.all(cells.map(async (cell, index) => {
           const tab = cell.children[0];
           const source = sources.workspaceTab.children.find((node): node is ComponentNode =>
@@ -1484,10 +1557,11 @@ async function createSidedockSlotPreview(probe: ComponentNode,
             right: activeCell.x + rightShoulder.x,
             size: evidence.mainTabs.activeChrome.shoulderSize / 2 },
           newTabX: newTab.x, barWidth: mainTabs.width,
-          paddingLeft: mainTabs.paddingLeft,
+          paddingLeft: row.x,
           gap: evidence.mainTabs.newTabGap, newTabWidth: newTab.width,
           maxTabWidth: evidence.mainTabs.tabWidth,
-          menu: { x: menu.x, width: menu.width, rightInset: 16 } });
+          menu: { x: menu.x, width: menu.width,
+            rightInset: MAIN_TAB_LIST_RIGHT_INSET } });
         if (Math.abs(menuGlyph.x - 6) > 1 ||
             Math.abs(menuGlyph.y - 12) > 1) {
           throw new Error('Application Shell Slot probe: seta da lista de abas desalinhada.');
@@ -1522,6 +1596,8 @@ async function createSidedockSlotPreview(probe: ComponentNode,
       node.name.startsWith('Separator ')) : [];
     const title = trail.findOne((node) => node.name === 'Current Title');
     const actions = header.findOne((node) => node.name === 'Actions');
+    const markdownMore = actions?.type === 'FRAME'
+      ? actions.children.find((node) => node.name === 'Glyph / More options') : null;
     const naturalAncestorWidth = ancestor?.type === 'FRAME'
       ? mainHeaderNaturalAncestorWidth(ancestor.children.map((child) => ({
         width: child.width,
@@ -1535,7 +1611,9 @@ async function createSidedockSlotPreview(probe: ComponentNode,
         (levels === '0' ? ancestor !== null : ancestor?.type !== 'FRAME') ||
         title?.type !== 'TEXT' || actions?.type !== 'FRAME' ||
         actions.children.length !== 2 ||
-        !actions.children.some((node) => node.name === 'Glyph / More options') ||
+        markdownMore?.type !== 'INSTANCE' ||
+        markdownMore.componentProperties[sources.iconButtons.iconProperty]?.value !==
+          horizontalMoreGlyph.id ||
         !actions.children.some((node) =>
           node.name.startsWith('Glyph / Current view: editing')) ||
         (ancestor?.type === 'FRAME' &&
@@ -1561,6 +1639,8 @@ async function createSidedockSlotPreview(probe: ComponentNode,
   const pluginTrail = header.findOne((node) => node.name === 'Breadcrumb Trail');
   const pluginActions = header.findOne((node) => node.name === 'Actions');
   const pluginNav = header.findOne((node) => node.name === 'Navigation');
+  const pluginMore = pluginActions?.type === 'FRAME'
+    ? pluginActions.children.find((node) => node.name === 'Glyph / More options') : null;
   const headerActionSlot = pluginActions?.type === 'FRAME'
     ? pluginActions.children.find((node) => node.name === 'Plugin actions') : null;
   const pluginTitle = pluginTrail?.type === 'INSTANCE'
@@ -1575,7 +1655,9 @@ async function createSidedockSlotPreview(probe: ComponentNode,
       pluginNav?.type !== 'FRAME' || pluginNav.children.length !== 2 ||
       pluginActions?.type !== 'FRAME' || pluginActions.layoutSizingHorizontal !== 'HUG' ||
       headerActionSlot?.type !== 'SLOT' || headerActionSlot.children.length !== 0 ||
-      !pluginActions.children.some((node) => node.name === 'Glyph / More options') ||
+      pluginMore?.type !== 'INSTANCE' ||
+      pluginMore.componentProperties[sources.iconButtons.iconProperty]?.value !==
+        horizontalMoreGlyph.id ||
       pluginActions.children.length !== 2) {
     throw new Error('Application Shell Slot probe: header Plugin divergente.');
   }
@@ -1641,6 +1723,19 @@ async function createSidedockSlotPreview(probe: ComponentNode,
       instance.resize(probe.width, probe.height);
     }
   }
+  instance.setProperties({ [showRight]: false });
+  header.setProperties({ Mode: 'Plugin' });
+  const hiddenMore = header.findOne((node) => node.name === 'Glyph / More options');
+  const hiddenMoreBox = hiddenMore?.absoluteBoundingBox;
+  const hiddenHeaderBox = header.absoluteBoundingBox;
+  if (hiddenMore?.type !== 'INSTANCE' || !hiddenMore.visible ||
+      !hiddenMoreBox || !hiddenHeaderBox ||
+      hiddenMoreBox.x + hiddenMoreBox.width >
+        hiddenHeaderBox.x + hiddenHeaderBox.width + 1) {
+    throw new Error('Application Shell Slot probe: menu horizontal Plugin oculto sem Right Sidedock.');
+  }
+  verify();
+  header.setProperties({ Mode: 'Markdown' });
   instance.setProperties({ [showRibbon]: true, [showLeft]: true, [showRight]: true });
   verify();
   for (const choice of leftSidedockViewChoices(sources)) {
@@ -1754,7 +1849,7 @@ async function createSidedockSlotPreview(probe: ComponentNode,
       ? panel.findOne((node) => node.name === 'Right tab header') : null;
     const tabs = panel?.type === 'INSTANCE'
       ? panel.findOne((node) => node.name === 'Right WorkspaceTabs') : null;
-    const toggle = panel?.type === 'INSTANCE'
+    const oldToggle = panel?.type === 'INSTANCE'
       ? panel.findOne((node) => node.name === 'Collapse right sidedock') : null;
     const hosted = panel?.type === 'INSTANCE' ? panel.children[1] : null;
     const source = rightViews.panels[name];
@@ -1767,14 +1862,14 @@ async function createSidedockSlotPreview(probe: ComponentNode,
       ? tabs.children[RIGHT_SIDEDOCK_VIEWS.indexOf(name)] : null;
     if (right.componentProperties.View?.value !== name ||
         panel?.type !== 'INSTANCE' || rightHeader?.type !== 'FRAME' ||
-        tabs?.type !== 'FRAME' || toggle?.type !== 'FRAME' ||
+        tabs?.type !== 'FRAME' || oldToggle !== null ||
         tabs.children.length !== 6 || selected?.type !== 'INSTANCE' ||
         (selected.componentProperties.State?.value &&
           selected.componentProperties.State.value !== 'Active') ||
         Math.abs(tabs.width - (6 * 28 + 5 * evidence.right.tabGap)) > 1 ||
         Math.abs(panel.width - right.width) > 1 ||
         Math.abs(rightHeader.width - right.width) > 1 ||
-        tabs.x + tabs.width > toggle.x + 1 ||
+        tabs.x + tabs.width > rightHeader.width - rightToggle.width + 1 ||
         (name === 'Plugin' && (hosted?.type !== 'SLOT' || hosted.children.length !== 0)) ||
         (name !== 'Plugin' && (hosted?.type !== 'INSTANCE' ||
           actualView !== expectedView ||
@@ -1793,7 +1888,7 @@ async function createSidedockSlotPreview(probe: ComponentNode,
           Math.abs(hosted.width - panel.width) > 1 ||
           Math.abs(hosted.height - (panel.height - rightHeader.height)) > 1 ||
           Math.abs(hosted.y - rightHeader.height) > 1 ||
-          tabs.x + tabs.width > toggle.x + 1) {
+          tabs.x + tabs.width > rightHeader.width - rightToggle.width + 1) {
         throw new Error(`Application Shell Slot probe: resize direito ${name} divergente.`);
       }
       verify();
