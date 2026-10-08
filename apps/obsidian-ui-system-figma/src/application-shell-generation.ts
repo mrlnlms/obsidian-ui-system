@@ -168,6 +168,46 @@ export const RIGHT_SIDEDOCK_VIEWS = [
 ] as const;
 type RightSidedockView = typeof RIGHT_SIDEDOCK_VIEWS[number];
 
+export const MAIN_WORKSPACE_TAB_COUNTS = ['1', '2', '3', '4'] as const;
+export const MAIN_WORKSPACE_ACTIVE_SIDES = ['Left', 'Right'] as const;
+
+export function assertMainWorkspaceTabsLayout(layout: { count: number;
+  active: 'Left' | 'Right'; rowWidth: number; tabs: ReadonlyArray<{
+    x: number; width: number; active: boolean }>;
+  dividers: ReadonlyArray<{ x: number; tabIndex: number }>;
+  shoulders: { left: number; right: number; size: number };
+  newTabX: number; barWidth: number; paddingLeft: number; gap: number;
+  newTabWidth: number; maxTabWidth: number;
+  menu: { x: number; width: number; rightInset: number } }): void {
+  const { count, active, rowWidth, tabs, shoulders, dividers } = layout;
+  const activeIndex = active === 'Left' ? 0 : count - 1;
+  if (count < 1 || count > 4 || tabs.length !== count || rowWidth < 1 ||
+      tabs.filter((tab) => tab.active).length !== 1 ||
+      !tabs[activeIndex]?.active ||
+      Math.abs(tabs[0]!.x) > 1 ||
+      tabs.some((tab, index) => tab.width < 1 ||
+        Math.abs(tab.width - rowWidth / count) > 1 ||
+        (index > 0 && Math.abs(tab.x - (tabs[index - 1]!.x +
+          tabs[index - 1]!.width)) > 1)) ||
+      dividers.length !== count - 1 ||
+      dividers.some((divider) => divider.tabIndex === activeIndex ||
+        Math.abs(divider.x - (tabs[divider.tabIndex]!.x +
+          tabs[divider.tabIndex]!.width - 1)) > 1) ||
+      Math.abs(tabs[count - 1]!.x + tabs[count - 1]!.width - rowWidth) > 1 ||
+      Math.abs(shoulders.left - (tabs[activeIndex]!.x - shoulders.size)) > 1 ||
+      Math.abs(shoulders.right - (tabs[activeIndex]!.x +
+        tabs[activeIndex]!.width)) > 1 ||
+      Math.abs(rowWidth - Math.min(count * layout.maxTabWidth,
+        layout.menu.x - 2 * layout.gap - layout.newTabWidth -
+        layout.paddingLeft)) > 1 ||
+      Math.abs(layout.newTabX - (layout.paddingLeft + rowWidth + layout.gap)) > 1 ||
+      layout.newTabX + layout.newTabWidth + layout.gap > layout.menu.x + 1 ||
+      Math.abs(layout.menu.x + layout.menu.width + layout.menu.rightInset -
+        layout.barWidth) > 1) {
+    throw new Error('Application Shell Slot probe: composição das abas principais divergente.');
+  }
+}
+
 export function rightSidedockProbeMinimumWidth(right: ApplicationShellEvidence['right']): number {
   return right.tabLeft + RIGHT_SIDEDOCK_VIEWS.length * 28 +
     (RIGHT_SIDEDOCK_VIEWS.length - 1) * right.tabGap + right.toggleWidth + 1;
@@ -389,7 +429,9 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
       profileSource, leftSource, evidence, 'restored');
     const leftViews = createLeftSidedockViews(leftSource, sources);
     const rightViews = createRightSidedockViews(rightSlot, evidence, sources);
-    const slotProbe = createSidedockSlotProbe(shell, leftViews.files, rightViews.outline);
+    const mainTabs = createMainWorkspaceTabVariants(shell, sources, evidence, theme);
+    const slotProbe = createSidedockSlotProbe(shell, leftViews.files, rightViews.outline,
+      mainTabs.defaultVariant);
     const probeLeft = slotProbe.findOne((node) => node.name === 'Left Sidedock / Files');
     const probeRight = slotProbe.findOne((node) => node.name === 'Right Sidedock');
     const probeMain = slotProbe.findOne((node) => node.name === 'Main Workspace');
@@ -403,7 +445,7 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
       throw new Error('Application Shell Slot probe: fontes canônicas ou Slots divergiram.');
     }
     const slotPreview = await createSidedockSlotPreview(slotProbe, evidence, sources,
-      leftViews.pluginTabs, leftViews.panels, rightViews);
+      leftViews.pluginTabs, leftViews.panels, rightViews, mainTabs.set);
     const rightEdge = figma.currentPage.children.filter((node) =>
       node !== shell && node !== contentSlot && node !== rightSlot &&
       node !== ribbonSource && node !== statusSource && node !== profileSource &&
@@ -412,6 +454,7 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
       node !== leftViews.pluginTabs &&
       !leftViews.pluginIcons.includes(node as ComponentNode) &&
       node !== rightViews.set &&
+      node !== mainTabs.set &&
       !Object.values(rightViews.panels).includes(node as ComponentNode) &&
       !rightViews.placeholders.includes(node as ComponentNode) &&
       !rightViews.icons.includes(node as ComponentNode) &&
@@ -454,6 +497,8 @@ export async function generateApplicationShell(evidence: ApplicationShellEvidenc
       icon.x = iconStart + index * 24;
       icon.y = rightViews.set.y;
     });
+    mainTabs.set.x = rightViews.set.x;
+    mainTabs.set.y = rightViews.set.y + rightViews.set.height + 64;
     shell.x = leftSource.x + leftSource.width + 64;
     preview.x = shell.x + shell.width + 64;
     slotProbe.x = preview.x + preview.width + 64;
@@ -881,9 +926,140 @@ function createRightSidedockViews(source: ComponentNode,
   return { set, outline: variants[4]!, panels, placeholders, icons };
 }
 
+function createMainWorkspaceTabVariants(shell: ComponentNode, sources: Sources,
+  evidence: ApplicationShellEvidence, theme: UiKitThemeVariables): { set: ComponentSetNode;
+    defaultVariant: ComponentNode } {
+  const original = shell.findOne((node) => node.name === 'Workspace Tabs');
+  if (original?.type !== 'FRAME') {
+    throw new Error('Application Shell Slot probe: barra de abas principal ausente.');
+  }
+  const variants: ComponentNode[] = [];
+  const shoulderSize = evidence.mainTabs.activeChrome.shoulderSize / 2;
+  const titleProperty = Object.keys(sources.workspaceTab.componentPropertyDefinitions)
+    .find((key) => key.startsWith('Title#') &&
+      sources.workspaceTab.componentPropertyDefinitions[key]?.type === 'TEXT');
+  if (!titleProperty) throw new Error('Application Shell Slot probe: título de aba ausente.');
+  for (const count of MAIN_WORKSPACE_TAB_COUNTS) {
+    for (const side of MAIN_WORKSPACE_ACTIVE_SIDES) {
+      const clone = original.clone();
+      figma.currentPage.appendChild(clone);
+      const bar = figma.createComponentFromNode(clone);
+      bar.name = `Count=${count}, Active=${side}`;
+      // The tab-list control is absolute; reserve its width and an 8 px gap so
+      // the tab row alone receives the remaining Auto Layout fill width.
+      bar.paddingRight = 16 + 28 + evidence.mainTabs.newTabGap;
+      const oldRow = bar.findOne((node) =>
+        node.name === 'Main tabs / two canonical instances');
+      const inactive = oldRow?.type === 'FRAME' ? oldRow.children.find((node) =>
+        node.name === 'Workspace Tab / previous note') : null;
+      const selected = oldRow?.type === 'FRAME' ? oldRow.children.find((node) =>
+        node.name === 'Workspace Tab / plugin context') : null;
+      const leftShoulder = oldRow?.type === 'FRAME' ? oldRow.children.find((node) =>
+        node.name === 'Active tab left shoulder') : null;
+      const rightShoulder = oldRow?.type === 'FRAME' ? oldRow.children.find((node) =>
+        node.name === 'Active tab right shoulder') : null;
+      if (oldRow?.type !== 'FRAME' || inactive?.type !== 'INSTANCE' ||
+          selected?.type !== 'INSTANCE' || leftShoulder?.type !== 'FRAME' ||
+          rightShoulder?.type !== 'FRAME') {
+        throw new Error('Application Shell Slot probe: fontes de aba principal ausentes.');
+      }
+      const inactiveSource = inactive.clone();
+      const activeSource = selected.clone();
+      const leftSource = leftShoulder.clone();
+      const rightSource = rightShoulder.clone();
+      for (const source of [inactiveSource, activeSource, leftSource, rightSource]) {
+        figma.currentPage.appendChild(source);
+      }
+      oldRow.remove();
+      const row = frame(bar, 'Main tabs', 'HORIZONTAL',
+        Number(count) * evidence.mainTabs.tabWidth, evidence.mainTabs.headerHeight);
+      bar.insertChild(1, row);
+      row.layoutGrow = 1;
+      row.minWidth = 1;
+      row.maxWidth = Number(count) * evidence.mainTabs.tabWidth;
+      row.clipsContent = false;
+      const activeIndex = side === 'Left' ? 0 : Number(count) - 1;
+      for (let index = 0; index < Number(count); index += 1) {
+        const cell = frame(row, `Tab ${index + 1}`, 'HORIZONTAL',
+          evidence.mainTabs.tabWidth, evidence.mainTabs.headerHeight);
+        cell.layoutGrow = 1;
+        cell.minWidth = 1;
+        cell.maxWidth = evidence.mainTabs.tabWidth;
+        cell.paddingTop = evidence.mainTabs.headerHeight - 34;
+        cell.clipsContent = false;
+        const tab = (index === activeIndex ? activeSource : inactiveSource).clone();
+        tab.name = `Workspace Tab / ${index + 1}`;
+        cell.appendChild(tab);
+        tab.layoutSizingHorizontal = 'FILL';
+        tab.minWidth = 1;
+        if (index !== activeIndex && index > 0) {
+          tab.setProperties({ [titleProperty]: 'New tab' });
+        }
+        if (index === activeIndex) {
+          for (const [source, x, constraint] of [
+            [leftSource, -shoulderSize, 'MIN'],
+            [rightSource, cell.width, 'MAX'],
+          ] as const) {
+            const shoulder = source.clone();
+            cell.appendChild(shoulder);
+            shoulder.layoutPositioning = 'ABSOLUTE';
+            shoulder.constraints = { horizontal: constraint, vertical: 'MAX' };
+            shoulder.x = x;
+            shoulder.y = evidence.mainTabs.headerHeight - shoulderSize;
+          }
+        } else {
+          const divider = frame(cell, 'Inactive tab divider', 'HORIZONTAL', 1, 14);
+          divider.layoutPositioning = 'ABSOLUTE';
+          divider.constraints = { horizontal: 'MAX', vertical: 'CENTER' };
+          divider.fills = [boundUiKitPaint(theme, 'controlBorder')];
+          divider.x = cell.width - 1;
+          divider.y = 13;
+        }
+      }
+      const menu = frame(bar, 'Tab list', 'HORIZONTAL', 28,
+        evidence.mainTabs.headerHeight);
+      menu.layoutMode = 'NONE';
+      menu.layoutPositioning = 'ABSOLUTE';
+      menu.constraints = { horizontal: 'MAX', vertical: 'MIN' };
+      menu.x = bar.width - 16 - menu.width;
+      menu.y = 0;
+      const glyph = sources.iconButtons.createGlyph('Search / Context down', 'Muted');
+      glyph.name = 'Tab list glyph';
+      menu.appendChild(glyph);
+      glyph.x = 6;
+      glyph.y = 12;
+      inactiveSource.remove();
+      activeSource.remove();
+      leftSource.remove();
+      rightSource.remove();
+      variants.push(bar);
+    }
+  }
+  const set = figma.combineAsVariants(variants, figma.currentPage);
+  set.name = 'Obsidian / Main Workspace / Tabs (probe)';
+  set.description = 'Count controla 1 a 4 abas; Active coloca a aba ativa à esquerda ou à direita. As demais abas permanecem inativas.';
+  if (set.children.length !== 8 ||
+      set.componentPropertyDefinitions.Count?.type !== 'VARIANT' ||
+      set.componentPropertyDefinitions.Active?.type !== 'VARIANT') {
+    throw new Error('Application Shell Slot probe: controles Count/Active ausentes.');
+  }
+  variants.forEach((variant, index) => {
+    variant.x = 20;
+    variant.y = 20 + index * (evidence.mainTabs.headerHeight + 20);
+  });
+  set.resizeWithoutConstraints(original.width + 40,
+    variants.length * (evidence.mainTabs.headerHeight + 20) + 20);
+  const defaultVariant = variants.find((variant) =>
+    variant.variantProperties?.Count === '2' &&
+    variant.variantProperties.Active === 'Right');
+  if (!defaultVariant) throw new Error('Application Shell Slot probe: abas padrão ausentes.');
+  return { set, defaultVariant };
+}
+
 /** Linked-instance probe: sidedock slots resize, and the Main Workspace accepts content. */
 function createSidedockSlotProbe(shell: ComponentNode,
-  filesLeft: ComponentNode, outlineRight: ComponentNode): ComponentNode {
+  filesLeft: ComponentNode, outlineRight: ComponentNode,
+  mainTabs: ComponentNode): ComponentNode {
   const probe = shell.clone();
   probe.name = 'Obsidian / Application Shell / Sidedock Slots (probe)';
   probe.description = 'Shell com Sidedocks redimensionáveis, Main Workspace editável e controles de visibilidade estrutural na instância.';
@@ -909,6 +1085,15 @@ function createSidedockSlotProbe(shell: ComponentNode,
   wrapSidedockInSlot(probe, body, left, 'Left Sidedock slot');
   wrapSidedockInSlot(probe, body, right, 'Right Sidedock slot');
   wrapMainWorkspaceInSlot(probe, body);
+  const bar = probe.findOne((node) => node.name === 'Workspace Tabs');
+  if (bar?.type !== 'FRAME' || bar.parent?.type !== 'SLOT') {
+    throw new Error('Application Shell Slot probe: barra no Main Workspace ausente.');
+  }
+  const barInstance = mainTabs.createInstance();
+  barInstance.name = 'Workspace Tabs';
+  bar.parent.insertChild(bar.parent.children.indexOf(bar), barInstance);
+  barInstance.layoutSizingHorizontal = 'FILL';
+  bar.remove();
   const ribbon = body.children.find((node) => node.name === 'Ribbon');
   const leftSlot = body.children.find((node) => node.name === 'Left Sidedock slot');
   const rightSlot = body.children.find((node) => node.name === 'Right Sidedock slot');
@@ -990,7 +1175,8 @@ async function createSidedockSlotPreview(probe: ComponentNode,
   evidence: ApplicationShellEvidence, sources: Sources,
   probeTabSet: ComponentSetNode,
   probePanels: Record<'Files' | 'Search' | 'Bookmarks' | 'Plugin', ComponentNode>,
-  rightViews: ReturnType<typeof createRightSidedockViews>
+  rightViews: ReturnType<typeof createRightSidedockViews>,
+  mainTabSet: ComponentSetNode
 ): Promise<FrameNode> {
   const preview = figma.createFrame();
   preview.name = 'Application Shell / Sidedock Slots resize probe';
@@ -1008,18 +1194,21 @@ async function createSidedockSlotPreview(probe: ComponentNode,
   const right = rightSlot?.type === 'SLOT' ? rightSlot.children[0] : null;
   const ribbon = instance.findOne((node) => node.name === 'Ribbon');
   const main = instance.findOne((node) => node.name === 'Main Workspace');
+  const mainTabs = instance.findOne((node) => node.name === 'Workspace Tabs');
   const header = instance.findOne((node) => node.name === 'View Header / chrome');
   const content = instance.findOne((node) => node.name === 'Main Content');
   const status = instance.findOne((node) => node.name === 'Status Bar');
   if (body?.type !== 'FRAME' || leftSlot?.type !== 'SLOT' ||
       rightSlot?.type !== 'SLOT' || left?.type !== 'INSTANCE' ||
       right?.type !== 'INSTANCE' || ribbon?.type !== 'INSTANCE' ||
-      main?.type !== 'SLOT' || header?.type !== 'INSTANCE' ||
+      main?.type !== 'SLOT' || mainTabs?.type !== 'INSTANCE' ||
+      header?.type !== 'INSTANCE' ||
       content?.type !== 'INSTANCE' || status?.type !== 'INSTANCE') {
     throw new Error('Application Shell Slot probe: composição inválida ' +
       JSON.stringify({ body: body?.type, leftSlot: leftSlot?.type,
         rightSlot: rightSlot?.type, left: left?.type, right: right?.type,
-        ribbon: ribbon?.type, main: main?.type, header: header?.type,
+        ribbon: ribbon?.type, main: main?.type, tabs: mainTabs?.type,
+        header: header?.type,
         content: content?.type, status: status?.type }));
   }
   const property = (name: string): string => {
@@ -1040,6 +1229,8 @@ async function createSidedockSlotPreview(probe: ComponentNode,
   const verify = (): void => {
     if (main.layoutMode !== 'VERTICAL' ||
         main.layoutSizingHorizontal !== 'FILL' ||
+        mainTabs.layoutSizingHorizontal !== 'FILL' ||
+        mainTabs.isExposedInstance ||
         main.children.map((child) => child.name).join('|') !==
           'Workspace Tabs|View Header / chrome|Main Content') {
       throw new Error('Application Shell Slot probe: Main Workspace perdeu conteúdo ou layout.');
@@ -1068,6 +1259,89 @@ async function createSidedockSlotPreview(probe: ComponentNode,
         content: content.width, header: header.width }, evidence);
     }
   };
+  verify();
+  for (const count of MAIN_WORKSPACE_TAB_COUNTS) {
+    for (const side of MAIN_WORKSPACE_ACTIVE_SIDES) {
+      mainTabs.setProperties({ Count: count, Active: side });
+      const row = mainTabs.findOne((node) => node.name === 'Main tabs');
+      const newTab = mainTabs.findOne((node) => node.name === 'New tab');
+      const menu = mainTabs.findOne((node) => node.name === 'Tab list');
+      const menuGlyph = mainTabs.findOne((node) => node.name === 'Tab list glyph');
+      const cells = row?.type === 'FRAME' ? row.children.filter((node): node is FrameNode =>
+        node.type === 'FRAME' && node.name.startsWith('Tab ')) : [];
+      const activeIndex = side === 'Left' ? 0 : Number(count) - 1;
+      const activeCell = cells[activeIndex];
+      const leftShoulder = activeCell?.type === 'FRAME' ? activeCell.children.find((node) =>
+        node.name === 'Active tab left shoulder') : null;
+      const rightShoulder = activeCell?.type === 'FRAME' ? activeCell.children.find((node) =>
+        node.name === 'Active tab right shoulder') : null;
+      const expected = mainTabSet.children.find((node): node is ComponentNode =>
+        node.type === 'COMPONENT' && node.variantProperties?.Count === count &&
+        node.variantProperties.Active === side);
+      if (!expected || mainTabs.componentProperties.Count?.value !== count ||
+          mainTabs.componentProperties.Active?.value !== side ||
+          row?.type !== 'FRAME' || newTab?.type !== 'FRAME' ||
+          menu?.type !== 'FRAME' || menuGlyph?.type !== 'INSTANCE' ||
+          menu.layoutPositioning !== 'ABSOLUTE' ||
+          cells.length !== Number(count) || !leftShoulder || !rightShoulder) {
+        throw new Error(`Application Shell Slot probe: Count=${count}, Active=${side} ausente.`);
+      }
+      const checkTabs = async (): Promise<void> => {
+        const tabs = await Promise.all(cells.map(async (cell, index) => {
+          const tab = cell.children[0];
+          const source = sources.workspaceTab.children.find((node): node is ComponentNode =>
+            node.type === 'COMPONENT' &&
+            node.variantProperties?.Context === 'Main' &&
+            node.variantProperties.State === (index === activeIndex ? 'Active' : 'Inactive'));
+          if (tab?.type !== 'INSTANCE' || !source ||
+              (await tab.getMainComponentAsync())?.id !== source.id ||
+              Math.abs(tab.width - cell.width) > 1) {
+            throw new Error('Application Shell Slot probe: aba canônica divergente.');
+          }
+          return { x: cell.x, width: cell.width, active: index === activeIndex };
+        }));
+        const dividers = cells.flatMap((cell, index) => {
+          const divider = cell.children.find((node) =>
+            node.name === 'Inactive tab divider');
+          if (index === activeIndex) {
+            if (divider) throw new Error('Application Shell Slot probe: divisor sobre aba ativa.');
+            return [];
+          }
+          if (divider?.type !== 'FRAME' || divider.height !== 14 ||
+              Math.abs(divider.y - 13) > 1) {
+            throw new Error('Application Shell Slot probe: divisor curto ausente.');
+          }
+          return [{ x: cell.x + divider.x, tabIndex: index }];
+        });
+        assertMainWorkspaceTabsLayout({ count: Number(count), active: side,
+          rowWidth: row.width, tabs, dividers,
+          shoulders: { left: activeCell.x + leftShoulder.x,
+            right: activeCell.x + rightShoulder.x,
+            size: evidence.mainTabs.activeChrome.shoulderSize / 2 },
+          newTabX: newTab.x, barWidth: mainTabs.width,
+          paddingLeft: mainTabs.paddingLeft,
+          gap: evidence.mainTabs.newTabGap, newTabWidth: newTab.width,
+          maxTabWidth: evidence.mainTabs.tabWidth,
+          menu: { x: menu.x, width: menu.width, rightInset: 16 } });
+        if (Math.abs(menuGlyph.x - 6) > 1 ||
+            Math.abs(menuGlyph.y - 12) > 1) {
+          throw new Error('Application Shell Slot probe: seta da lista de abas desalinhada.');
+        }
+        if (Math.abs(leftShoulder.y - (row.height -
+            evidence.mainTabs.activeChrome.shoulderSize / 2)) > 1 ||
+            Math.abs(rightShoulder.y - leftShoulder.y) > 1) {
+          throw new Error('Application Shell Slot probe: ombros da aba ativa desalinhados.');
+        }
+        verify();
+      };
+      await checkTabs();
+      instance.resize(probe.width + 160, probe.height + 80);
+      await checkTabs();
+      instance.resize(probe.width, probe.height);
+      await checkTabs();
+    }
+  }
+  mainTabs.setProperties({ Count: '2', Active: 'Right' });
   verify();
   left.resize(left.width + 40, left.height);
   verify();

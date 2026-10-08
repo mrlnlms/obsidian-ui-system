@@ -3,6 +3,8 @@ import test from 'node:test';
 import { applicationShellGlyphSources, assertShellAdjacency, assertShellResize,
   assertSidedockProbeLayout, assertLeftSidedockSelection, assertPluginHostedSlotLayout,
   leftSidedockViewChoices, RIGHT_SIDEDOCK_VIEWS, rightSidedockProbeMinimumWidth,
+  MAIN_WORKSPACE_TAB_COUNTS, MAIN_WORKSPACE_ACTIVE_SIDES,
+  assertMainWorkspaceTabsLayout,
   readApplicationShellEvidence } from
   '../src/application-shell-generation';
 import { canonicalGlyphs, observedUiKitGlyphSources } from '../src/glyph-library';
@@ -128,6 +130,39 @@ test('Sidedock probe rejects gaps, stale content widths and detached Status Bar'
     status: { ...layout.status, x: 598 } }), /reflow horizontal/);
 });
 
+test('Main Workspace tab counts and active edge preserve adjacency through resize', () => {
+  assert.deepEqual(MAIN_WORKSPACE_TAB_COUNTS, ['1', '2', '3', '4']);
+  assert.deepEqual(MAIN_WORKSPACE_ACTIVE_SIDES, ['Left', 'Right']);
+  for (const barWidth of [360, 665, 900]) {
+    for (const countText of MAIN_WORKSPACE_TAB_COUNTS) {
+      for (const active of MAIN_WORKSPACE_ACTIVE_SIDES) {
+        const count = Number(countText);
+        const rowWidth = Math.min(count * 200, barWidth - 92);
+        const tabWidth = rowWidth / count;
+        const activeIndex = active === 'Left' ? 0 : count - 1;
+        const tabs = Array.from({ length: count }, (_, index) => ({
+          x: index * tabWidth, width: tabWidth, active: index === activeIndex,
+        }));
+        const dividers = tabs.flatMap((tab, index) => index === activeIndex ? [] :
+          [{ x: tab.x + tab.width - 1, tabIndex: index }]);
+        const layout = { count, active, rowWidth, tabs, dividers,
+          shoulders: { left: tabs[activeIndex]!.x - 10,
+            right: tabs[activeIndex]!.x + tabWidth, size: 10 },
+          newTabX: 8 + rowWidth + 8, barWidth, paddingLeft: 8,
+          gap: 8, newTabWidth: 24, maxTabWidth: 200,
+          menu: { x: barWidth - 44, width: 28, rightInset: 16 } };
+        assert.doesNotThrow(() => assertMainWorkspaceTabsLayout(layout));
+        assert.throws(() => assertMainWorkspaceTabsLayout({ ...layout,
+          shoulders: { ...layout.shoulders, right: layout.shoulders.right - 2 } }),
+        /abas principais divergente/);
+        assert.throws(() => assertMainWorkspaceTabsLayout({ ...layout,
+          dividers: [...dividers, { x: 0, tabIndex: activeIndex }] }),
+        /abas principais divergente/);
+      }
+    }
+  }
+});
+
 test('Left Sidedock View pairs each canonical content with its active tab', () => {
   const choices = leftSidedockViewChoices({ filesView: 'File Explorer', filesTab: 'Files',
     searchView: 'Search View', searchTab: 'Search',
@@ -217,6 +252,7 @@ test('Ribbon and right tabs resolve through the shared canonical glyph catalog',
   assert.equal(catalog.byUse.get('Vault / Help'), 'help');
   assert.equal(catalog.byUse.get('Vault / Settings'), 'lucide-settings');
   assert.equal(catalog.byUse.get('Main tabs / New tab'), 'lucide-plus');
+  assert.equal(catalog.byUse.get('Search / Context down'), 'lucide-chevron-down');
   assert.equal(catalog.byUse.get('Ribbon / Create new canvas'), 'lucide-layout-dashboard');
   for (const title of ['Files', 'Search', 'Bookmarks']) {
     assert.notEqual(catalog.byUse.get('Ribbon / Create new canvas'),
